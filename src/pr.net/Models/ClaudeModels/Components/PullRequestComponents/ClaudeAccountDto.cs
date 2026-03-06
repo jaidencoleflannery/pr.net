@@ -2,13 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class AccountDto {
+public class ClaudeAccountDto {
     
     [JsonPropertyName("display_name")]
     public string DisplayName { get; set; } = string.Empty;
 
     [JsonPropertyName("links")]
-    public LinksDto Links { get; set; }
+    public ClaudeLinksDto Links { get; set; } = new ClaudeLinksDto();
 
     [JsonPropertyName("type")]
     public string Type { get; set; } = string.Empty;

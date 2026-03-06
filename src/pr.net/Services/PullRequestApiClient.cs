@@ -1,3 +1,4 @@
+using System.Text.Json;
 using pr.net.Models;
 
 namespace pr.net.Services;
@@ -12,10 +13,11 @@ public static class PullRequestApiClient {
             : throw new Exception($"Failed to get pull review {request.Id}'s data, status code: {response.StatusCode}");
     }
 
-    public static async Task<string> RequestReview(HttpClient httpClient, IConfiguration configuration, AuthService authService, string diff) {
+    public static async Task<string> RequestReview(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, string diff) {
+        List<string> instructions = await contextService.GetInstructions();
         var message = new HttpRequestMessage(HttpMethod.Post, configuration["pr.net.ChatUrl"]);
         message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetChatBearerToken(configuration));
-        message.Content = JsonContent.Create(/* place object to send to anthropic here */);
+        message.Content = new StringContent(diff, System.Text.Encoding.UTF8);
     }
 
 }
