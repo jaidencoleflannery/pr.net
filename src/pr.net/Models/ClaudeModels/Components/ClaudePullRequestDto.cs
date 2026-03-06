@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class PullRequestDto {
+public class ClaudePullRequestDto {
 
     [JsonPropertyName("id")]
    public string Id { get; set; } = string.Empty;

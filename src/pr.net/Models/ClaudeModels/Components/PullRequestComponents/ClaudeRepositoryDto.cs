@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class RepositoryDto {
+public class ClaudeRepositoryDto {
 
     [JsonPropertyName("type")]
     public string Type { get; set; } = string.Empty;
@@ -11,6 +11,6 @@ public class RepositoryDto {
     public string FullName { get; set; } = string.Empty;
 
     [JsonPropertyName("links")]
-    public LinksDto Links { get; set; } = new LinksDto();
+    public ClaudeLinksDto Links { get; set; } = new ClaudeLinksDto();
 
 }
