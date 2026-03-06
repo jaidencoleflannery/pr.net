@@ -4,31 +4,45 @@ namespace pr.net.Services;
 
 public class AuthService {
 
-    private string _bearerToken = string.Empty;
-    private System.Threading.Timer? _timer;
-    private bool _expired = true;
-    private bool Expired { 
-        get => _expired; 
+    private string _repoBearerToken = string.Empty;
+    private System.Threading.Timer? _repoTokenTimer;
+    private bool _repoTokenExpired = true;
+    private bool RepoTokenExpired { 
+        get => _repoTokenExpired; 
         set {
-            _timer?.Dispose();
-            if(!Expired)
-                _timer = new Timer(_ => _expired = true, null, TimeSpan.FromMinutes(30), Timeout.InfiniteTimeSpan);
+            _repoTokenTimer?.Dispose();
+            if(!RepoTokenExpired)
+                _repoTokenTimer = new Timer(_ => _repoTokenExpired = true, null, TimeSpan.FromMinutes(30), Timeout.InfiniteTimeSpan);
         }
     }
 
-    public string GetBearerToken(IConfiguration configuration) =>
-        (_bearerToken == null || _expired == true)
+    public string GetRepoBearerToken(IConfiguration configuration) =>
+        (_repoBearerToken == null || _repoTokenExpired == true)
             ? RefreshBearerToken(configuration)
-            : _bearerToken;
+            : _repoBearerToken;
 
     public string RefreshBearerToken(IConfiguration configuration) {
-        Expired = false;
+        RepoTokenExpired = false;
         return Convert.ToBase64String(
             Encoding.ASCII.GetBytes(
-                $"{configuration["pr.net.Email"]}:{System.Environment.GetEnvironmentVariable("pr.net.Token")}"
+                $"{configuration["pr.net.RepoEmail"]}:{System.Environment.GetEnvironmentVariable("PR_NET_REPO_TOKEN")}"
             )
         ); 
     }
 
+   private string _chatBearerToken = string.Empty;  
+
+    public string GetChatBearerToken(IConfiguration configuration) =>
+        (_chatBearerToken == null)
+            ? RefreshChatBearerToken(configuration)
+            : _chatBearerToken;
+
+    public string RefreshChatBearerToken(IConfiguration configuration) {
+        return Convert.ToBase64String(
+            Encoding.ASCII.GetBytes(
+                $"{System.Environment.GetEnvironmentVariable("PR_NET_CLAUDE_TOKEN")}"
+            )
+        ); 
+    }
     
 }

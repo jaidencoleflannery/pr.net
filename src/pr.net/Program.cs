@@ -16,11 +16,16 @@ public class Program {
 
         builder.Services.AddSingleton<RequestEngine>();
         builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddSingleton<AuthService>();
 
         var app = builder.Build();
         
         app.MapGet("/", () => "Server is running.");
-        app.MapPost("/pullrequestcreated", (ILogger<RequestEngine> logger, HttpClient httpClient, IConfiguration configuration, RequestEngine requestEngine, PullRequestDto request) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, request));
+        app.MapPost("/pullrequestcreated", (
+            ILogger<RequestEngine> logger, HttpClient httpClient, 
+            IConfiguration configuration, AuthService authService, 
+            RequestEngine requestEngine, PullRequestDto request
+            ) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, authService, request));
 
         app.Run();
     }
