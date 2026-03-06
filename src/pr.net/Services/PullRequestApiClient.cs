@@ -1,4 +1,6 @@
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 using pr.net.Models;
 
 namespace pr.net.Services;
@@ -17,6 +19,16 @@ public static class PullRequestApiClient {
         List<string> instructions = await contextService.GetInstructions();
         var message = new HttpRequestMessage(HttpMethod.Post, configuration["pr.net.ChatUrl"]);
         message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetChatBearerToken(configuration));
+        StringBuilder instructionsBuilder = new StringBuilder();
+        foreach(var instruction in instructions)
+            instructionsBuilder.AppendLine(instruction);
+        var json = new ClaudeRequestDto()
+        {
+            Model = "claude-sonnet-4-20250514",
+            MaxTokens = 1024,
+            System = instructionsBuilder.ToString(),
+            Messages = new Message[] { Role = "user", Content = "What is a monad?"}
+        }
         message.Content = new StringContent(diff, System.Text.Encoding.UTF8);
     }
 
