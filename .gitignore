@@ -1,0 +1,171 @@
+# Build artifacts
+bin/
+obj/
+artifacts/
+publish/
+Debug*/
+Release*/
+x64/
+x86/
+ARM/
+Build/
+Builds/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+.nuget/
+project.lock.json
+project.assets.json
+project.fragment.lock.json
+PackageArtifacts/
+global.json
+
+# Project & solution user files
+*.vcxproj.user
+*.csproj.user
+*.fsproj.user
+
+# Visual Studio
+.vs/
+*.suo
+*.sln.docstates
+*.user
+*.userosscache
+*.cache
+*.launchSettings.json
+*.vsconfig
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+.history/
+
+# MonoDevelop
+*.pidb
+*.userprefs
+*.usjr
+*.mdb
+
+# MSBuild binary log
+*.binlog
+
+# OS junk
+.DS_Store
+Thumbs.db
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+__MACOSX/
+*.stackdump
+$RECYCLE.BIN/
+*~
+.nfs*
+
+# Test results / coverage
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*/
+coverage.*
+BenchmarkDotNet.Artifacts/
+# JetBrains dotCover / dotTrace
+*.profraw
+*.profdata
+*.dcvr
+*.dotCover
+*.dotTrace
+*.dotMemory
+
+# Logs / temp
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*.swn
+tmp/
+temp/
+.cache/
+logs/
+obj/**/*.cache
+
+# Node tooling
+node_modules/
+bower_components/
+
+# Secrets
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Development*
+appsettings.*
+appsettings*
+secrets.json
+local.settings.json
+.env
+.env.*
+# Any file named exactly “secrets.*” or ending “.secret” or “.pw”
+secrets.*
+*.secret
+*.pw
+
+# Docker
+.docker/
+docker-compose.*.override.yml
+
+# Terraform / Pulumi
+.terraform/
+terraform.tfstate*
+.pulumi/
+*.pem
+*.pfx
+
+# Mobile / cross-platform
+*.apk
+*.aab
+*.ipa
+*.app
+*.xcarchive
+*.dSYM
+*.xcuserstate
+*.storyboardc
+obj/**/*.pdb
+bin/**/*.pdb
+
+# Unity
+Library/
+Temp/
+Logs/
+MemoryCaptures/
+Assets/AssetStoreTools*
+*.unitypackage
+*.pidb
+Build/
+Builds/
+
+# Documentation outputs
+_site/
+_html/
+docs/_build/
+*.docfx
+
+# Live Share
+.vsls/
+.vscode-test/
+
+# StyleCop
+StyleCopReport.xml
+stylecop.json.cache
