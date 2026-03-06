@@ -1,6 +1,17 @@
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+using pr.net.Models;
+using pr.net.Services;
+using static pr.net.Services.RequestEngine;
 
-app.MapGet("/pullrequestcreated", () => ProcessNewPullRequest());
+public class Program {
+    public static void Main(string[] args) {
+        var builder = WebApplication.CreateBuilder(args);
+        var app = builder.Build();
+        
+        var _requestEngine = new RequestEngine();
 
-app.Run();
+        app.MapGet("/", () => "Server is running.");
+        app.MapGet("/pullrequestcreated", (ILogger<RequestEngine> logger, PullRequestDto request) => _requestEngine.ProcessNewPullRequest(logger, request));
+
+        app.Run();
+    }
+}

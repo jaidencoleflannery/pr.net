@@ -5,12 +5,15 @@ namespace pr.net.Models;
 public class LinksDto {
     
     [JsonPropertyName("self")]
-    public LinkDto Self { get; set; }
+    public LinkDto Self { get; set; } = new LinkDto();
 
     [JsonPropertyName("avatar")]
-    public LinkDto Avatar { get; set; }
+    public LinkDto Avatar { get; set; } = new LinkDto();
 
     [JsonPropertyName("html")]
-    public LinkDto Html { get; set; }
+    public LinkDto Html { get; set; } = new LinkDto();
+
+    [JsonPropertyName("diff")]
+    public LinkDto? Diff { get; set; } = null;
 
 }

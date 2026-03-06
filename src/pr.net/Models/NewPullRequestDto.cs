@@ -5,14 +5,14 @@ namespace pr.net.Models;
 public class NewPullRequestDto {
 
     [JsonPropertyName("actor")]
-    public AccountDto Account { get; set; }
+    public AccountDto Account { get; set; } = new AccountDto();
 
 
     [JsonPropertyName("pullrequest")]
-    public PullRequest PullRequest { get; set; } 
+    public PullRequestDto PullRequest { get; set; } = new PullRequestDto();
 
 
     [JsonPropertyName("repository")]
-    public RepositoryDto Repository { get; set; }
+    public RepositoryDto Repository { get; set; } = new RepositoryDto();
 
 } 

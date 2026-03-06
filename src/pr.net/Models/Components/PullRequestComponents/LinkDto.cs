@@ -5,6 +5,6 @@ namespace pr.net.Models;
 public class LinkDto {
 
     [JsonPropertyName("href")]
-    public string Hred { get; set; } = string.Empty;
+    public string Href { get; set; } = string.Empty;
     
 }
