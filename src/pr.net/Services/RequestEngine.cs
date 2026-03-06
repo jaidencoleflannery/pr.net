@@ -6,7 +6,7 @@ public class RequestEngine {
     public void ProcessNewPullRequest(ILogger logger, HttpClient httpClient, IConfiguration configuration, AuthService authService, PullRequestDto request) {
         try {
             var content = request.ToRequestPullReviewDto(); 
-            var response = PullRequestApiClient.GetPullReviewData(httpClient, configuration, content);
+            var response = PullRequestApiClient.GetPullReviewData(httpClient, configuration, authService, content);
             var review = PullRequestApiClient.RequestReview(httpClient, configuration, response);
             return;
         } catch (Exception exception) {
