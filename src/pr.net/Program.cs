@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Serilog;
 using pr.net.Models;
 using pr.net.Services;
@@ -14,11 +15,12 @@ public class Program {
         );
 
         builder.Services.AddSingleton<RequestEngine>();
+        builder.Services.AddSingleton<HttpClient>();
 
         var app = builder.Build();
         
         app.MapGet("/", () => "Server is running.");
-        app.MapPost("/pullrequestcreated", (ILogger<RequestEngine> logger, RequestEngine engine, PullRequestDto request) => engine.ProcessNewPullRequest(logger, request));
+        app.MapPost("/pullrequestcreated", (ILogger<RequestEngine> logger, HttpClient httpClient, IConfiguration configuration, RequestEngine requestEngine, PullRequestDto request) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, request));
 
         app.Run();
     }

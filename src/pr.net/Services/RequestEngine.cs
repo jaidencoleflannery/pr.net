@@ -3,14 +3,15 @@ using pr.net.Models;
 namespace pr.net.Services;
 
 public class RequestEngine {
-    public bool ProcessNewPullRequest(ILogger logger, PullRequestDto request) {
+    public void ProcessNewPullRequest(ILogger logger, HttpClient httpClient, IConfiguration configuration, PullRequestDto request) {
         try {
             var content = request.ToRequestPullReviewDto(); 
-            var response = PullRequestApiClient.GetPullReviewData(content);
-            return true;
+            var response = PullRequestApiClient.GetPullReviewData(httpClient, configuration, content);
+            var review = PullRequestApiClient.RequestReview(httpClient, configuration, response);
+            return;
         } catch (Exception exception) {
-            Console.WriteLine()
-            return false;
+            logger.LogError(exception, $"{DateTime.Now}: Error processing pull request with Id: {request.Id} for Repository: {request.Destination.Repository.FullName}. Review not posted.");
+            return;
         }
     }
 }
