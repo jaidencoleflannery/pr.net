@@ -18,7 +18,7 @@ public class Program {
         builder.Services.AddSingleton<RequestEngine>();
         builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<AuthService>();
-        builder.Services.AddSingleton<LocalContextService>();
+        builder.Services.AddSingleton<IContextService, LocalContextService>();
 
         var app = builder.Build();
 

@@ -20,28 +20,28 @@ public class ClaudePullRequestDto {
    public bool Draft { get; set; }
 
    [JsonPropertyName("author")]
-   public AccountDto Author { get; set; } = new AccountDto();
+   public ClaudeAccountDto Author { get; set; } = new ClaudeAccountDto();
 
    [JsonPropertyName("source")]
-   public SourceDto Source { get; set; } = new SourceDto();
+   public ClaudeSourceDto Source { get; set; } = new ClaudeSourceDto();
 
    [JsonPropertyName("destination")]
-   public DestinationDto Destination { get; set; } = new DestinationDto();
+   public ClaudeDestinationDto Destination { get; set; } = new ClaudeDestinationDto();
 
    [JsonPropertyName("merge_commit")]
-   public CommitDto MergeCommit { get; set; } = new CommitDto();
+   public ClaudeCommitDto MergeCommit { get; set; } = new ClaudeCommitDto();
 
    [JsonPropertyName("participants")]
-   public List<AccountDto> Participants { get; set; } = new List<AccountDto>();
+   public List<ClaudeAccountDto> Participants { get; set; } = new List<ClaudeAccountDto>();
 
    [JsonPropertyName("reviewers")]
-   public List<AccountDto> Reviewers { get; set; } = new List<AccountDto>();
+   public List<ClaudeAccountDto> Reviewers { get; set; } = new List<ClaudeAccountDto>();
 
    [JsonPropertyName("close_source_branch")]
    public bool CloseSourceBranch { get; set; }
 
    [JsonPropertyName("closed_by")]
-   public AccountDto ClosedBy { get; set; } = new AccountDto();
+   public ClaudeAccountDto ClosedBy { get; set; } = new ClaudeAccountDto();
 
    [JsonPropertyName("reason")]
    public string Reason { get; set; } = string.Empty;
@@ -53,6 +53,6 @@ public class ClaudePullRequestDto {
    public DateTime UpdatedOn { get; set; }
 
    [JsonPropertyName("links")]
-   public LinksDto Links { get; set; } = new LinksDto();
+   public ClaudeLinksDto Links { get; set; } = new ClaudeLinksDto();
 
 }
