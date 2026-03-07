@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class ClaudePullRequestDto {
+public class PullRequestDto {
 
     [JsonPropertyName("id")]
    public string Id { get; set; } = string.Empty;
@@ -20,28 +20,28 @@ public class ClaudePullRequestDto {
    public bool Draft { get; set; }
 
    [JsonPropertyName("author")]
-   public ClaudeAccountDto Author { get; set; } = new ClaudeAccountDto();
+   public AccountDto Author { get; set; } = new AccountDto();
 
    [JsonPropertyName("source")]
-   public ClaudeSourceDto Source { get; set; } = new ClaudeSourceDto();
+   public SourceDto Source { get; set; } = new SourceDto();
 
    [JsonPropertyName("destination")]
-   public ClaudeDestinationDto Destination { get; set; } = new ClaudeDestinationDto();
+   public DestinationDto Destination { get; set; } = new DestinationDto();
 
    [JsonPropertyName("merge_commit")]
-   public ClaudeCommitDto MergeCommit { get; set; } = new ClaudeCommitDto();
+   public CommitDto MergeCommit { get; set; } = new CommitDto();
 
    [JsonPropertyName("participants")]
-   public List<ClaudeAccountDto> Participants { get; set; } = new List<ClaudeAccountDto>();
+   public List<AccountDto> Participants { get; set; } = new List<AccountDto>();
 
    [JsonPropertyName("reviewers")]
-   public List<ClaudeAccountDto> Reviewers { get; set; } = new List<ClaudeAccountDto>();
+   public List<AccountDto> Reviewers { get; set; } = new List<AccountDto>();
 
    [JsonPropertyName("close_source_branch")]
    public bool CloseSourceBranch { get; set; }
 
    [JsonPropertyName("closed_by")]
-   public ClaudeAccountDto ClosedBy { get; set; } = new ClaudeAccountDto();
+   public AccountDto ClosedBy { get; set; } = new AccountDto();
 
    [JsonPropertyName("reason")]
    public string Reason { get; set; } = string.Empty;
@@ -53,6 +53,6 @@ public class ClaudePullRequestDto {
    public DateTime UpdatedOn { get; set; }
 
    [JsonPropertyName("links")]
-   public ClaudeLinksDto Links { get; set; } = new ClaudeLinksDto();
+   public LinksDto Links { get; set; } = new LinksDto();
 
 }

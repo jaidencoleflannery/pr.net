@@ -7,12 +7,16 @@ using pr.net.Endpoints;
 public class Program {
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
+        string? env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         builder.Host.UseSerilog(
-            (ctx, config) => 
+            (ctx, config) => {
                 config
                     .ReadFrom.Configuration(ctx.Configuration)
-                    .WriteTo.Console()
-                    /* .WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Month) we do not need to write to a file when using aws */
+                    .WriteTo.Console();
+                    if(env == "Development")
+                        config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Month);
+                    if(env == "Production") { /* configure provider's logging system, if not reliant on console logging */ } 
+            }
         );
 
         builder.Services.AddSingleton<RequestEngine>();
@@ -24,7 +28,7 @@ public class Program {
 
         app.MapPullRequestEndpoints();
         
-        app.MapGet("/", () => "Server is running."); 
+        app.MapGet("/", () => $"Server is running in {env} mode."); 
         app.Run();
     }
 }

@@ -1,6 +1,6 @@
 namespace pr.net.Models;
 
-public class ClaudeRequestPullReviewDto {
+public class RequestPullReviewDto {
  
     public string Id { get; set; } = string.Empty;
     public string RepoSlug { get; set; } = string.Empty;

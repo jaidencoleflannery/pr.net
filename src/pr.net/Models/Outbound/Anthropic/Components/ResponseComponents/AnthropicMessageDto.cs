@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class MessageDto {
+public class AnthropicMessageDto : MessageDto {
 
     [JsonPropertyName("role")] 
     public string Role { get; set; } = string.Empty;

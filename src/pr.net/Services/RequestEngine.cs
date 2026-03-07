@@ -4,7 +4,7 @@ using pr.net.Models;
 namespace pr.net.Services;
 
 public class RequestEngine {
-    public async Task ProcessNewPullRequest(ILogger logger, HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, ClaudeNewPullRequestDto request) {
+    public async Task ProcessNewPullRequest(ILogger logger, HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, NewPullRequestDto request) {
         var pullRequest = request.PullRequest;
         try {
             ClaudeRequestPullReviewDto content = pullRequest.ToRequestPullReviewDto(); 
