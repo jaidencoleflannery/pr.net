@@ -19,7 +19,7 @@ public static class PullRequestApiClient {
     }
 
     // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
-    public static async Task<List<PropertiesDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<string> diffSections, string requestId) {
+    public static async Task<List<PropertiesDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<string> diffSections, int requestId) {
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
         List<string> instructions = await contextService.GetInstructions() 
@@ -86,7 +86,7 @@ public static class PullRequestApiClient {
             throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
     }
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<PropertiesDto> reviews, string requestId) {
+    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<PropertiesDto> reviews, int requestId) {
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
         var exceptions = new List<Exception>();
