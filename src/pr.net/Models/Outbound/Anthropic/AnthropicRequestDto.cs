@@ -16,4 +16,7 @@ public class ClaudeRequestDto {
     [JsonPropertyName("system")]
     public string System { get; set; } = string.Empty;
 
+    [JsonPropertyName("output_config")]
+    public AnthropicOutputConfig? OutputConfig { get; set; } = new AnthropicOutputConfig();
+
 }

@@ -18,17 +18,22 @@ public static class PullRequestApiClient {
         }
     }
 
-    public static async Task<string> RequestReview(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, string diff, RequestPullReviewDto request) {
-        List<string> instructions = await contextService.GetInstructions() 
-            ?? throw new InvalidOperationException("Could not fetch instructions.");
+    // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
+    public static async Task<string> RequestReview(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, string diffSection, RequestPullReviewDto request) {
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
+        List<string> instructions = await contextService.GetInstructions() 
+            ?? throw new InvalidOperationException("Could not fetch instructions.");
         string? url = GetUrl(provider.Value)
             ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
         string model = configuration["Chat:Model"] 
             ?? throw new InvalidOperationException("Configuration for Chat:Model could not be found or read."); 
+        string maxTokensString = configuration["Chat:MaxTokens"]
+            ?? throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read.");
+        if(!int.TryParse(maxTokensString, out var maxTokens))
+            throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
 
-        // instructions is a per line array so we can do optionally do weird stuff to it in other places
+        // instructions is a per line array so we can optionally do weird stuff to it in other places
         StringBuilder instructionsBuilder = new StringBuilder();
         foreach(var instruction in instructions)
             instructionsBuilder.AppendLine(instruction);
@@ -36,10 +41,10 @@ public static class PullRequestApiClient {
         var messages = new List<MessageDto>();
         switch(provider) {
                 case Provider.Anthropic: 
-                    messages.Add(new AnthropicMessageDto() { Role = "user", Content = $"{diff}"});
+                    messages.Add(new AnthropicMessageDto() { Role = "user", Content = $"{diffSection}"});
                     var json = new ClaudeRequestDto() {
                         Model = model,
-                        MaxTokens = 1024,
+                        MaxTokens = maxTokens,
                         System = instructionsBuilder.ToString(),
                         Messages = messages 
                     };
@@ -47,7 +52,6 @@ public static class PullRequestApiClient {
 
                 // currently not configured
                 case Provider.OpenAi:
-                    url = "https://api.openai.com/v1/responses";
                     break;
 
                 // currently not configured

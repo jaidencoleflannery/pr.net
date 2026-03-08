@@ -19,11 +19,12 @@ public static class Providers {
             ? url
             : throw new InvalidOperationException("Provider's url could not be found.");
 
-    private static Dictionary<string, Provider> ProviderMap =
+    // these being readonly makes them persist for each call, otherwise these calls will be incredibly slow
+    private static readonly Dictionary<string, Provider> ProviderMap =
         Enum.GetValues<Provider>()
             .ToDictionary(p => p.ToString(), p => p);
 
-    private static Dictionary<Provider, string> UrlMap = 
+    private static readonly Dictionary<Provider, string> UrlMap = 
         new() {
             [Provider.Anthropic] = "https://api.anthropic.com/v1/messages",
             [Provider.OpenAi] = "https://api.openai.com/v1/responses"
