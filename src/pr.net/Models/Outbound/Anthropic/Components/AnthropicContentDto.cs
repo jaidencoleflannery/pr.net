@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class AnthropicContent {
+public class AnthropicContentDto {
 
     [JsonPropertyName("raw")]
     public string Raw { get; set; } = string.Empty;

@@ -1,6 +1,4 @@
-using System.Net.Http;
 using Serilog;
-using pr.net.Models;
 using pr.net.Services;
 using pr.net.Endpoints;
 
@@ -14,15 +12,19 @@ public class Program {
                     .ReadFrom.Configuration(ctx.Configuration)
                     .WriteTo.Console();
                     if(env == "Development")
-                        config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Month);
-                    if(env == "Production") { /* configure provider's logging system, if not reliant on console logging */ } 
+                        config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Day);
+                    if(env == "Production") { /* if not reliant on console logging, configure provider's logging system */ } 
             }
         );
 
         builder.Services.AddSingleton<RequestEngine>();
         builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<AuthService>();
-        builder.Services.AddSingleton<IContextService, LocalContextService>();
+        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            builder.Services.AddSingleton<IContextService, LocalContextService>();
+        // contextservice will depend on the provider, and will have to be hotswapped here:
+        // else 
+        //      builder.Services.AddSingleton<IContextService, {providerContextService}>
 
         var app = builder.Build();
 

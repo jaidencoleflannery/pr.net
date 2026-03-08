@@ -4,6 +4,7 @@ namespace pr.net.Services;
 
 public class AuthService {
 
+    // repo's token expires, refresh it intermittently 
     private string _repoBearerToken = string.Empty;
     private System.Threading.Timer? _repoTokenTimer;
     private bool _repoTokenExpired = true;
@@ -37,12 +38,11 @@ public class AuthService {
             ? RefreshChatBearerToken(configuration)
             : _chatBearerToken;
 
-    public string RefreshChatBearerToken(IConfiguration configuration) {
-        return Convert.ToBase64String(
+    public string RefreshChatBearerToken(IConfiguration configuration) =>
+        _chatBearerToken = Convert.ToBase64String(
             Encoding.ASCII.GetBytes(
-                $"{System.Environment.GetEnvironmentVariable("PR_NET_CLAUDE_TOKEN")}"
+                $"{System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")}"
             )
         ); 
-    }
     
 }

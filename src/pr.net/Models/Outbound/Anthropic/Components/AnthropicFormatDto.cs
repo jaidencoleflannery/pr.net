@@ -2,12 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class AnthropicFormat {
+public class AnthropicFormatDto {
 
     [JsonPropertyName("type")]
     public string? Type { get; set; } = "json_schema";
 
     [JsonPropertyName("schema")]
-    public AnthropicSchema? Scheme { get; set; } = new AnthropicSchema();
+    public AnthropicSchemaDto? Scheme { get; set; } = new AnthropicSchemaDto();
 
 }

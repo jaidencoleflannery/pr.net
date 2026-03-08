@@ -1,6 +1,16 @@
+using pr.net.Models.Incoming;
+
 namespace pr.net.Models;
 
 public class RequestPullReviewDto {
+
+    public RequestPullReviewDto() { }
+
+    public RequestPullReviewDto(NewPullRequestDto request) {
+        this.Id = request.PullRequest.Id;
+        this.RepoSlug = request.Repository.FullName;
+        this.Url = request.PullRequest.Links.Diff!.Href ?? string.Empty;
+    }
  
     public string Id { get; set; } = string.Empty;
     public string RepoSlug { get; set; } = string.Empty;

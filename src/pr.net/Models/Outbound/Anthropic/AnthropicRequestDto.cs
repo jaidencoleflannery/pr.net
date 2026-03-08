@@ -2,7 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class ClaudeRequestDto {
+public class AnthropicRequestDto : RequestDto {
+
+    public AnthropicRequestDto() { }
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = string.Empty;            

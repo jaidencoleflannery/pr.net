@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using pr.net.Models.Incoming;
 
 namespace pr.net.Models;
 

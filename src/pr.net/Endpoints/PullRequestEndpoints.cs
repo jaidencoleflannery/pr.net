@@ -15,7 +15,7 @@ public static class PullRequestEndpoints {
             [FromServices] AuthService authService, 
             [FromServices] RequestEngine requestEngine, 
             [FromServices] IContextService contextService,
-            [FromBody] ClaudeNewPullRequestDto request
+            [FromBody] NewPullRequestDto request
             ) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, authService, contextService, request));
     } 
 

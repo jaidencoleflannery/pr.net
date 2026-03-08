@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class AnthropicInline {
+public class AnthropicInlineDto {
 
     [JsonPropertyName("path")]
     public string Path { get; set; } = string.Empty;
