@@ -23,12 +23,9 @@ public class AuthService {
             : _repoBearerToken;
 
     public string RefreshBearerToken(IConfiguration configuration) {
-        RepoTokenExpired = false;
-        return Convert.ToBase64String(
-            Encoding.ASCII.GetBytes(
-                $"{configuration["pr.net.RepoEmail"]}:{System.Environment.GetEnvironmentVariable("PR_NET_REPO_TOKEN")}"
-            )
-        ); 
+        RepoTokenExpired = false; 
+        return System.Environment.GetEnvironmentVariable("PR_NET_REPO_TOKEN") 
+            ?? throw new InvalidOperationException("PR_NET_REPO_TOKEN environment variable not found");
     }
 
    private string _chatBearerToken = string.Empty;  

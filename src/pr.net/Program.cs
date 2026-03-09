@@ -18,7 +18,8 @@ public class Program {
         );
 
         builder.Services.AddSingleton<RequestEngine>();
-        builder.Services.AddSingleton<HttpClient>();
+        // no redirects - we have to handle them due to auth stripping
+        builder.Services.AddSingleton<HttpClient>(_ => new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false }));
         builder.Services.AddSingleton<AuthService>();
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             builder.Services.AddSingleton<IContextService, LocalContextService>();
@@ -28,6 +29,8 @@ public class Program {
 
         var app = builder.Build();
 
+        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            app.MapTestPullRequestEndpoints(); 
         app.MapPullRequestEndpoints();
         
         app.MapGet("/", () => $"Server is running in {env} mode."); 

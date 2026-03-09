@@ -9,10 +9,11 @@ namespace pr.net.Services;
 public static class PullRequestApiClient {
     public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, AuthService authService, RequestPullReviewDto request) {
         using (var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
+            
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetRepoBearerToken(configuration));
             var response = await httpClient.SendAsync(message);
 
-            return response.IsSuccessStatusCode
+            return (response!= null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
                 : throw new Exception($"Failed to get pull review {request.Id}'s data, status: {response.StatusCode} - {response.Content}");
         }
