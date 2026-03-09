@@ -24,11 +24,12 @@ public class Program {
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             builder.Services.AddSingleton<IContextService, LocalContextService>();
         // contextservice will depend on the provider, and will have to be hotswapped here:
-        // else 
-        //      builder.Services.AddSingleton<IContextService, {providerContextService}>
+        /* else 
+            builder.Services.AddSingleton<IContextService, {providerContextService}> */
 
         var app = builder.Build();
 
+        // these endpoints give you payload examples
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             app.MapTestPullRequestEndpoints(); 
         app.MapPullRequestEndpoints();

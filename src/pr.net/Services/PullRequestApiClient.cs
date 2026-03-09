@@ -23,8 +23,8 @@ public static class PullRequestApiClient {
     public static async Task<List<PropertiesDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<string> diffSections, int requestId) {
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
-        List<string> instructions = await contextService.GetInstructions() 
-            ?? throw new InvalidOperationException("Could not fetch instructions.");
+        List<string> instructions = await contextService.GetInstructions();
+            // ?? throw new InvalidOperationException("Could not fetch instructions.");
         string? url = GetUrl(provider.Value)
             ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
         string model = configuration["Chat:Model"] 
@@ -44,6 +44,7 @@ public static class PullRequestApiClient {
             case Provider.Anthropic: 
                 var messages = diffSections
                     .Select<string, MessageDto>(diff => new AnthropicMessageDto() { Role = "user", Content = diff })
+                    .Where(diff => ((AnthropicMessageDto)diff).Content.Length > 0)
                     .ToList();
                 requestDtos = messages
                     .Select<MessageDto, RequestDto>(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, System = instructionsBuilder.ToString(), OutputConfig = new AnthropicOutputConfig() })
@@ -65,9 +66,13 @@ public static class PullRequestApiClient {
         // iterate over every instance of requestDtos and send them individually 
         var responses = new List<PropertiesDto>();
         var exceptions = new List<Exception>();
-        foreach(var requestDto in requestDtos)
+        System.Uri targetUrl = new System.Uri(configuration["Chat:Url"] ?? throw new InvalidOperationException("Unable to find or read Chat:Url from config."));
+        foreach(var requestDto in requestDtos) {
+            if(requestDto.Messages.Count < 1)
+                continue;
             using (var message = new HttpRequestMessage(HttpMethod.Post, configuration["Chat:Url"])) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetChatBearerToken(configuration));     
+                var bearer = authService.GetChatBearerToken(configuration);
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetChatBearerToken(configuration));
                 message.Content = new StringContent(JsonSerializer.Serialize(requestDto), System.Text.Encoding.UTF8, "application/json");
 
                 var response = await httpClient.SendAsync(message); 
@@ -76,6 +81,7 @@ public static class PullRequestApiClient {
                 else
                     exceptions.Add(new Exception($"Request for review failed for pull review: {requestId}, status code: {response.StatusCode}"));
             }
+        }
 
         if(exceptions.Count > 0)
             foreach(var exception in exceptions)
