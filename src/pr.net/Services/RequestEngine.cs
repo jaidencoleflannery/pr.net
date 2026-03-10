@@ -9,13 +9,13 @@ public class RequestEngine {
             // get the pull request diff and split it per file
             var pullRequestMetadata = new RequestPullReviewDto(request);
             string diff = await PullRequestApiClient.GetPullRequestData(httpClient, configuration, authService, pullRequestMetadata);
-            List<string> diffSections = ParserService.ParseDiff(diff);
+            Dictionary<string, string> diffSections = ParserService.ParseDiff(diff);
 
             // get review for each diff file
             List<AnthropicResponseDto> reviews = await PullRequestApiClient.RequestReviews(httpClient, configuration, authService, contextService, diffSections, pullRequestMetadata.Id);
 
             // push reviews to pull request
-            await PullRequestApiClient.PostReviews(httpClient, configuration, authService, contextService, reviews, pullRequestMetadata.Id);
+            await PullRequestApiClient.PostReviews(httpClient, configuration, authService, contextService, diffSections, reviews, pullRequestMetadata);
 
         } catch (Exception exception) {
             logger.LogError($"{DateTime.Now}: {exception}", $"[ Error processing pull request with Id: {request.PullRequest.Id} for Repository: {request.PullRequest.Destination.Repository.FullName}. Review not posted. ]");

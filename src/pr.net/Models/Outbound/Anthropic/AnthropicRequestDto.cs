@@ -18,10 +18,8 @@ public class AnthropicRequestDto : RequestDto {
     [JsonPropertyName("system")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? System { get; set; } = null;
-
-    /*
+ 
     [JsonPropertyName("output_config")]
     public AnthropicOutputConfig? OutputConfig { get; set; } = new AnthropicOutputConfig();
-    */
  
 }

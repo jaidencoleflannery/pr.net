@@ -20,17 +20,23 @@ public static class PullRequestApiClient {
     }
 
     // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
-    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<string> diffSections, int requestId) {
+    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, Dictionary<string, string> diffSections, int requestId) {
+
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
+
         List<string> instructions = await contextService.GetInstructions();
             // ?? throw new InvalidOperationException("Could not fetch instructions.");
+
         string? url = GetUrl(provider.Value)
             ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
+
         string model = configuration["Chat:Model"] 
             ?? throw new InvalidOperationException("Configuration for Chat:Model could not be found or read."); 
+
         string maxTokensString = configuration["Chat:MaxTokens"]
             ?? throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read.");
+
         if(!int.TryParse(maxTokensString, out var maxTokens))
             throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
 
@@ -45,10 +51,10 @@ public static class PullRequestApiClient {
                 if(diffSections == null)
                     throw new InvalidOperationException($"{nameof(diffSections)} was null.");
                 var messages = diffSections
-                    .Select<string, AnthropicMessageDto>(diff => new AnthropicMessageDto() { Role = "user", Content = diff })
+                    .Select(diff => new AnthropicMessageDto() { Role = "user", Content = diff.Value })
                     .ToList();
                 requestDtos = messages
-                    .Select<MessageDto, AnthropicRequestDto>(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, /*OutputConfig = new AnthropicOutputConfig()*/ })
+                    .Select<MessageDto, AnthropicRequestDto>(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, OutputConfig = new AnthropicOutputConfig() })
                     .ToList();
 
                 break;
@@ -73,35 +79,12 @@ public static class PullRequestApiClient {
             if(requestDto.Messages.Count < 1)
                 continue;
             using (var message = new HttpRequestMessage(HttpMethod.Post, targetUrl)) {
-                // var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-
                 var bearer = authService.GetChatToken(configuration); 
                 message.Headers.Add("x-api-key", authService.GetChatToken(configuration));
                 message.Headers.Add("anthropic-version", "2023-06-01");
-                message.Headers.Add("anthropic-beta", "structured-outputs-2025-11-13");
                 var json = JsonSerializer.Serialize(requestDto);
                 Console.WriteLine(json.ToString());
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                /*
-                var json = JsonSerializer.Serialize(new {
-                    model = model,
-                    max_tokens = 1000, // need to make this configurable
-                    system = instructions,
-                    messages = new[] {
-                        new { 
-                            role = "user",
-                            content = input
-                        }
-                    },
-                });
-
-                request.Content = new StringContent(
-                    json,
-                    Encoding.UTF8,
-                    "application/json"
-                );
-                */
 
                 var response = await httpClient.SendAsync(message); 
                 if(response.IsSuccessStatusCode)
@@ -121,20 +104,31 @@ public static class PullRequestApiClient {
             throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
     }
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<AnthropicResponseDto> reviews, int requestId) {
+    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
+
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
-        var exceptions = new List<Exception>();
+        var exceptions = new List<Exception>(); 
         foreach(var review in reviews) {
-            using (var message = new HttpRequestMessage(HttpMethod.Post, configuration["Repo:Url"])) {
+            Console.WriteLine($"request.Url: {request.Url}");
+            using (var message = new HttpRequestMessage(HttpMethod.Post, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetRepoBearerToken(configuration));     
                 message.Content = new StringContent(JsonSerializer.Serialize(review), System.Text.Encoding.UTF8, "application/json");
 
+                if(diffSections == null)
+                    throw new InvalidOperationException($"{nameof(diffSections)} was null.");
+                var messages = diffSections
+                    .Select(diff => new AnthropicMessageDto() { Role = "user", Content = diff.Value })
+                    .ToList();
+                /*var requestDtos = messages
+                    .Select(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, OutputConfig = new AnthropicOutputConfig() })
+                    .ToList();*/
+                
                 var response = await httpClient.SendAsync(message); 
                 if(response.IsSuccessStatusCode)
                     responses.Add(await response.Content.ReadAsStringAsync());
                 else
-                    exceptions.Add(new Exception($"Post for review failed for pull review: {requestId}, status code: {response.StatusCode}"));
+                    exceptions.Add(new Exception($"Post for review failed for pull review: {request.Id}, status code: {response.StatusCode}"));
             }
         }
 

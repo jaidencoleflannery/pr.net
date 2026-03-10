@@ -6,20 +6,27 @@ namespace pr.net.Services;
 public static class ParserService {
 
     // split diff per file
-    public static List<string> ParseDiff(string diff) {
-        var diffSection = new List<string>();
-        var builder = new StringBuilder();
+    public static Dictionary<string, string> ParseDiff(string diff) {
+        var diffSections = new Dictionary<string, string>();
+        string file = string.Empty;
+        var builder = new StringBuilder(); 
         foreach(var line in diff.Split('\n')) {
-            if(line.StartsWith("diff --git") && builder.Length > 0) {
-                diffSection.Add(builder.ToString());
+            if(line.StartsWith("diff --git")) {
+                foreach(var word in line.Split(' ')) {
+                    if(word.StartsWith(" b/")) {
+                        file = word;
+                        break;
+                    }
+                }
+                diffSections.Add(file, builder.ToString());
                 builder.Clear();
             }
             builder.AppendLine(line);
         }
 
         if(builder.Length > 0)
-            diffSection.Add(builder.ToString());
+            diffSections[file] += builder.ToString();
 
-        return diffSection;
+        return diffSections;
     }
 }

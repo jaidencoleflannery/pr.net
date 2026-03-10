@@ -2,9 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models;
 
-public class AnthropicContentDto {
-
+public class PostPullRequestContentDto {
+    
     [JsonPropertyName("raw")]
-    public string? Raw { get; set; } = string.Empty;
- 
-} 
+    public string? raw { get; set; } = null;
+
+}

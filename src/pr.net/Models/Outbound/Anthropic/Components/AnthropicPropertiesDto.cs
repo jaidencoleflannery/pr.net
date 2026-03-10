@@ -10,12 +10,4 @@ public class AnthropicPropertiesDto : PropertiesDto {
     [JsonPropertyName("inline")]
     public AnthropicInlineDto? Inline { get; set; } = new AnthropicInlineDto();
 
-    // if parent.id is provided, the comment is a reply
-    [JsonPropertyName("parent")]
-    public AnthropicParentDto? Parent { get; set; } = new AnthropicParentDto();
-
-    // makes comments invisible until approved
-    [JsonPropertyName("pending")]
-    public AnthropicPropertiesPendingDto Pending { get; set; } = new AnthropicPropertiesPendingDto();
-    
 }

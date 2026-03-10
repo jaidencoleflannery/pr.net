@@ -11,7 +11,7 @@ public class AnthropicSchemaDto {
     public AnthropicPropertiesDto? Properties { get; set; } = new AnthropicPropertiesDto();
 
     [JsonPropertyName("required")]
-    public List<string> Required { get; set; } = new List<string>() { "content", "inline" };
+    public List<string> Required { get; set; } = new List<string>() { "content", "inline", "raw", "to" };
 
     [JsonPropertyName("additionalProperties")]
     public bool AdditionalProperties { get; set; } = false;
