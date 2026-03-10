@@ -1,0 +1,86 @@
+{
+    "messages": [
+        {
+            "role": "user",
+            "content": "diff --git a/example.txt b/example.txt\nindex 44b99fb..8e39efb 100644\n--- a/example.txt\n\u002B\u002B\u002B b/example.txt\n@@ -1 \u002B1,2 @@\n-Testing example.\n\\ No newline at end of file\n\u002BTesting example.\n\u002BAdded value.\n\\ No newline at end of file\n\n"
+        }
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "max_tokens": 100000,
+    "system": "",
+    "output_config": {
+        "format": {
+            "type": "json_schema",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "object",
+                        "properties": {
+                            "raw": {
+                                "type": "string"
+                            },
+                            "markup": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "raw",
+                            "markup"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "inline": {
+                        "type": "object",
+                        "properties": {
+                            "path": "",
+                            "to": null,
+                            "from": null
+                        },
+                        "required": [
+                            "path",
+                            "to",
+                            "from"
+                        ]
+                    },
+                    "parent": {
+                        "parent": "object",
+                        "properties": {},
+                        "requied": [
+                            "id"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "pending": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "content",
+                    "inline"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "required": [
+            "content",
+            "inline"
+        ],
+        "additionalProperties": false
+    }
+}
+
+
+
+
+{
+    "messages": [
+        {
+            "role": "user",
+            "content": "diff --git a/example.txt b/example.txt\nindex 44b99fb..8e39efb 100644\n--- a/example.txt\n\u002B\u002B\u002B b/example.txt\n@@ -1 \u002B1,2 @@\n-Testing example.\n\\ No newline at end of file\n\u002BTesting example.\n\u002BAdded value.\n\\ No newline at end of file\n\n"
+        }
+    ],
+    "model": "claude-haiku-4-5-20251001",
+    "max_tokens": 8192,
+    "system": ""
+}

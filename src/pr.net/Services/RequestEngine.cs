@@ -12,7 +12,7 @@ public class RequestEngine {
             List<string> diffSections = ParserService.ParseDiff(diff);
 
             // get review for each diff file
-            List<PropertiesDto> reviews = await PullRequestApiClient.RequestReviews(httpClient, configuration, authService, contextService, diffSections, pullRequestMetadata.Id);
+            List<AnthropicResponseDto> reviews = await PullRequestApiClient.RequestReviews(httpClient, configuration, authService, contextService, diffSections, pullRequestMetadata.Id);
 
             // push reviews to pull request
             await PullRequestApiClient.PostReviews(httpClient, configuration, authService, contextService, reviews, pullRequestMetadata.Id);

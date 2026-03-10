@@ -8,6 +8,6 @@ public class AnthropicFormatDto {
     public string? Type { get; set; } = "json_schema";
 
     [JsonPropertyName("schema")]
-    public AnthropicSchemaDto? Scheme { get; set; } = new AnthropicSchemaDto();
+    public AnthropicSchemaDto? Schema { get; set; } = new AnthropicSchemaDto();
 
 }

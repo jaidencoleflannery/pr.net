@@ -20,7 +20,7 @@ public static class PullRequestApiClient {
     }
 
     // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
-    public static async Task<List<PropertiesDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<string> diffSections, int requestId) {
+    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<string> diffSections, int requestId) {
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
         List<string> instructions = await contextService.GetInstructions();
@@ -39,15 +39,16 @@ public static class PullRequestApiClient {
         foreach(var instruction in instructions)
             instructionsBuilder.AppendLine(instruction);
  
-        var requestDtos = new List<RequestDto>();
+        var requestDtos = new List<AnthropicRequestDto>();
         switch(provider) {
             case Provider.Anthropic: 
+                if(diffSections == null)
+                    throw new InvalidOperationException($"{nameof(diffSections)} was null.");
                 var messages = diffSections
-                    .Select<string, MessageDto>(diff => new AnthropicMessageDto() { Role = "user", Content = diff })
-                    .Where(diff => ((AnthropicMessageDto)diff).Content.Length > 0)
+                    .Select<string, AnthropicMessageDto>(diff => new AnthropicMessageDto() { Role = "user", Content = diff })
                     .ToList();
                 requestDtos = messages
-                    .Select<MessageDto, RequestDto>(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, System = instructionsBuilder.ToString(), OutputConfig = new AnthropicOutputConfig() })
+                    .Select<MessageDto, AnthropicRequestDto>(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, /*OutputConfig = new AnthropicOutputConfig()*/ })
                     .ToList();
 
                 break;
@@ -63,21 +64,48 @@ public static class PullRequestApiClient {
                 break;
         }
 
+        // this will have to be dynamic per dealer - move to switch statement !!!
         // iterate over every instance of requestDtos and send them individually 
-        var responses = new List<PropertiesDto>();
+        var responses = new List<AnthropicResponseDto>();
         var exceptions = new List<Exception>();
         System.Uri targetUrl = new System.Uri(configuration["Chat:Url"] ?? throw new InvalidOperationException("Unable to find or read Chat:Url from config."));
         foreach(var requestDto in requestDtos) {
             if(requestDto.Messages.Count < 1)
                 continue;
-            using (var message = new HttpRequestMessage(HttpMethod.Post, configuration["Chat:Url"])) {
-                var bearer = authService.GetChatBearerToken(configuration);
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetChatBearerToken(configuration));
-                message.Content = new StringContent(JsonSerializer.Serialize(requestDto), System.Text.Encoding.UTF8, "application/json");
+            using (var message = new HttpRequestMessage(HttpMethod.Post, targetUrl)) {
+                // var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+
+                var bearer = authService.GetChatToken(configuration); 
+                message.Headers.Add("x-api-key", authService.GetChatToken(configuration));
+                message.Headers.Add("anthropic-version", "2023-06-01");
+                message.Headers.Add("anthropic-beta", "structured-outputs-2025-11-13");
+                var json = JsonSerializer.Serialize(requestDto);
+                Console.WriteLine(json.ToString());
+                message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                /*
+                var json = JsonSerializer.Serialize(new {
+                    model = model,
+                    max_tokens = 1000, // need to make this configurable
+                    system = instructions,
+                    messages = new[] {
+                        new { 
+                            role = "user",
+                            content = input
+                        }
+                    },
+                });
+
+                request.Content = new StringContent(
+                    json,
+                    Encoding.UTF8,
+                    "application/json"
+                );
+                */
 
                 var response = await httpClient.SendAsync(message); 
                 if(response.IsSuccessStatusCode)
-                    responses.Add(await response.Content.ReadFromJsonAsync<PropertiesDto>());
+                    responses.Add(await response.Content.ReadFromJsonAsync<AnthropicResponseDto>());
                 else
                     exceptions.Add(new Exception($"Request for review failed for pull review: {requestId}, status code: {response.StatusCode}"));
             }
@@ -93,7 +121,7 @@ public static class PullRequestApiClient {
             throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
     }
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<PropertiesDto> reviews, int requestId) {
+    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, List<AnthropicResponseDto> reviews, int requestId) {
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
         var exceptions = new List<Exception>();

@@ -6,6 +6,9 @@ public class AnthropicRequestDto : RequestDto {
 
     public AnthropicRequestDto() { }
 
+    [JsonPropertyName("messages")]
+    public new List<AnthropicMessageDto> Messages { get; set; } = new List<AnthropicMessageDto>();
+
     [JsonPropertyName("model")]
     public string Model { get; set; } = string.Empty;            
 
@@ -13,9 +16,12 @@ public class AnthropicRequestDto : RequestDto {
     public int MaxTokens { get; set; } 
 
     [JsonPropertyName("system")]
-    public string System { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? System { get; set; } = null;
 
+    /*
     [JsonPropertyName("output_config")]
     public AnthropicOutputConfig? OutputConfig { get; set; } = new AnthropicOutputConfig();
-
+    */
+ 
 }

@@ -5,7 +5,7 @@ namespace pr.net.Models;
 public class AnthropicPropertiesDto : PropertiesDto {
 
     [JsonPropertyName("content")]
-    public AnthropicContentDto? Content { get; set; } = new AnthropicContentDto();
+    public AnthropicContentDto? Content { get; set; } = new AnthropicContentDto(); 
 
     [JsonPropertyName("inline")]
     public AnthropicInlineDto? Inline { get; set; } = new AnthropicInlineDto();
@@ -16,6 +16,6 @@ public class AnthropicPropertiesDto : PropertiesDto {
 
     // makes comments invisible until approved
     [JsonPropertyName("pending")]
-    public bool Pending { get; set; } = false;
+    public AnthropicPropertiesPendingDto Pending { get; set; } = new AnthropicPropertiesPendingDto();
     
 }

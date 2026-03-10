@@ -28,20 +28,23 @@ public class AuthService {
             ?? throw new InvalidOperationException("PR_NET_REPO_TOKEN environment variable not found.");
     }
 
-   private string _chatBearerToken = string.Empty;  
+   private string _chatToken = string.Empty;  
 
-    public string GetChatBearerToken(IConfiguration configuration) =>
-        string.IsNullOrWhiteSpace(_chatBearerToken)
+    public string GetChatToken(IConfiguration configuration) =>
+        string.IsNullOrWhiteSpace(_chatToken)
             ? RefreshChatBearerToken(configuration)
-            : _chatBearerToken;
+            : _chatToken;
 
     public string RefreshChatBearerToken(IConfiguration configuration) =>
-        _chatBearerToken = Convert.ToBase64String(
+        _chatToken = string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN"))
+                ? throw new InvalidOperationException("PR_NET_CHAT_TOKEN environment variable not found.")
+                : System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")!;
+                /*Convert.ToBase64String(
             Encoding.ASCII.GetBytes(
                 string.IsNullOrWhiteSpace(System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN"))
                 ? throw new InvalidOperationException("PR_NET_CHAT_TOKEN environment variable not found.")
-                : $"{System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")}"
+                : System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")!
             )
-        ); 
+        );  */
     
 }

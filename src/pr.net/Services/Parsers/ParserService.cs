@@ -10,7 +10,7 @@ public static class ParserService {
         var diffSection = new List<string>();
         var builder = new StringBuilder();
         foreach(var line in diff.Split('\n')) {
-            if(line.StartsWith("diff --git")) {
+            if(line.StartsWith("diff --git") && builder.Length > 0) {
                 diffSection.Add(builder.ToString());
                 builder.Clear();
             }

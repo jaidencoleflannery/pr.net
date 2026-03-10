@@ -4,14 +4,16 @@ namespace pr.net.Models;
 
 public class AnthropicInlineDto {
 
-    [JsonPropertyName("path")]
-    public string Path { get; set; } = string.Empty;
+    [JsonPropertyName("type")]
+    public string? Type { get; set; } = "object";
 
-    [JsonPropertyName("to")]
-    public int? To { get; set; } = null;
+    [JsonPropertyName("properties")]
+    public AnthropicInlinePropertiesDto Properties { get; set; } = new AnthropicInlinePropertiesDto();
 
-    // avoid using "from", it is for the previous version of code in the PR
-    [JsonPropertyName("from")]
-    public int? From { get; set; } = null;
+    [JsonPropertyName("required")]
+    public List<string> Required { get; set; } = new List<string>() {"path", "to", "from"};
 
+    [JsonPropertyName("additionalProperties")]
+    public bool AdditionalProperties = false;
+ 
 } 

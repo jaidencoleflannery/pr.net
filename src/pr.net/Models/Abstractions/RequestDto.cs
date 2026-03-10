@@ -4,7 +4,7 @@ namespace pr.net.Models;
 
 public abstract class RequestDto() {
 
-    [JsonPropertyName("messages")]
+    // make sure to override this field and tag as [JsonPropertyName("<provider expected field name>")] in children 
     public List<MessageDto> Messages = new List<MessageDto>();
 
 }
