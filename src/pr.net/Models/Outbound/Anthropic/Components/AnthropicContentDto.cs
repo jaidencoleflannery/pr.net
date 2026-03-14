@@ -4,7 +4,16 @@ namespace pr.net.Models;
 
 public class AnthropicContentDto {
 
-    [JsonPropertyName("raw")]
-    public string? Raw { get; set; } = string.Empty;
- 
-} 
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "object";
+
+    [JsonPropertyName("properties")]
+    public AnthropicContentPropertiesDto? Properties { get; set; } = new AnthropicContentPropertiesDto(); 
+
+    [JsonPropertyName("required")]
+    public List<string> Required { get; set; } = new List<string>() { "raw" };
+
+    [JsonPropertyName("additionalProperties")]
+    public bool AdditionalProperties { get; set; } = false;
+
+}

@@ -13,14 +13,14 @@ public class Program {
                     .WriteTo.Console();
                     if(env == "Development")
                         config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Day);
-                    if(env == "Production") { /* if not reliant on console logging, configure provider's logging system */ } 
+                    if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system */ } 
             }
         );
 
         builder.Services.AddSingleton<RequestEngine>();
         // no redirects - we have to handle them due to auth stripping
         builder.Services.AddSingleton<HttpClient>(_ => new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false }));
-        builder.Services.AddSingleton<AuthService>();
+        builder.Services.AddSingleton<ExternalAuthService>();
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             builder.Services.AddSingleton<IContextService, LocalContextService>();
         // contextservice will depend on the provider, and will have to be hotswapped here:
@@ -30,8 +30,8 @@ public class Program {
         var app = builder.Build();
 
         // these endpoints give you payload examples
-        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-            app.MapTestPullRequestEndpoints(); 
+        app.MapTestPullRequestEndpoints(); 
+
         app.MapPullRequestEndpoints();
         
         app.MapGet("/", () => $"Server is running in {env} mode."); 

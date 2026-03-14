@@ -83,14 +83,15 @@ public static class PullRequestApiClient {
                 message.Headers.Add("x-api-key", authService.GetChatToken(configuration));
                 message.Headers.Add("anthropic-version", "2023-06-01");
                 var json = JsonSerializer.Serialize(requestDto);
-                Console.WriteLine(json.ToString());
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await httpClient.SendAsync(message); 
-                if(response.IsSuccessStatusCode)
+                if(response.IsSuccessStatusCode) {
                     responses.Add(await response.Content.ReadFromJsonAsync<AnthropicResponseDto>());
-                else
+                    Console.WriteLine(responses[0].Content[0].Text);
+                } else {
                     exceptions.Add(new Exception($"Request for review failed for pull review: {requestId}, status code: {response.StatusCode}"));
+                }
             }
         }
 
