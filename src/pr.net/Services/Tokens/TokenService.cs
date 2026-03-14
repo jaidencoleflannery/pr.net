@@ -1,17 +1,20 @@
 using System.Threading;
 
-namespace pr.net.Services;
+namespace pr.net.Services.Tokens;
 
 // we force keys to expire so they can be hotloaded
-public class ExternalAuthService { 
+public class TokenService : ITokenService { 
     // repo token
     private string _repoToken = string.Empty; 
-    private bool _repoTokenExpired { 
+    private bool _repoTokenExpired = true;
+    private bool RepoTokenExpired { 
         get => _repoTokenExpired; 
         set {
             _repoTokenTimer?.Dispose();
-            if(!value)
+            if(!value) {
+                _repoTokenExpired = value;
                 _repoTokenTimer = new Timer(_ => _repoTokenExpired = true, null, TimeSpan.FromMinutes(10), Timeout.InfiniteTimeSpan);
+            }
         }
     }
 
@@ -21,45 +24,49 @@ public class ExternalAuthService {
     // chat token
     private string _chatToken = string.Empty;
 
-    private bool _chatTokenExpired { 
+    private bool _chatTokenExpired = true;
+    private bool ChatTokenExpired { 
         get => _chatTokenExpired; 
         set {
             _chatTokenTimer?.Dispose();
-            if(!value)
+            if(!value) {
+                _chatTokenExpired = value;
                 _chatTokenTimer = new Timer(_ => _chatTokenExpired = true, null, TimeSpan.FromMinutes(10), Timeout.InfiniteTimeSpan);
+            }
         }
     } 
 
     private System.Threading.Timer? _chatTokenTimer;
     private readonly Object _chatLock = new();
 
-    public string GetRepoBearerToken(IConfiguration configuration) =>
-        (_repoToken == null || _repoTokenExpired == true)
-            ? RefreshRepoBearerToken(configuration)
-            : _repoToken;
+    public ValueTask<string> GetRepoTokenAsync() =>
+        ValueTask.FromResult((string.IsNullOrWhiteSpace(_repoToken) || RepoTokenExpired == true)
+            ? RefreshRepoToken()
+            : _repoToken);
  
-    private string RefreshRepoBearerToken(IConfiguration configuration) {
+    private string RefreshRepoToken() {
         lock(_repoLock) {
-            if(!_repoTokenExpired && !string.IsNullOrWhiteSpace(_repoToken))
+            if(!RepoTokenExpired && !string.IsNullOrWhiteSpace(_repoToken))
                 return _repoToken;
 
-            _repoTokenExpired = false; 
+            RepoTokenExpired = false; 
             return _repoToken = System.Environment.GetEnvironmentVariable("PR_NET_REPO_TOKEN") 
                 ?? throw new InvalidOperationException("PR_NET_REPO_TOKEN environment variable not found.");
         }
     }  
 
-    public string GetChatToken(IConfiguration configuration) =>
-        string.IsNullOrWhiteSpace(_chatToken)
-            ? RefreshChatToken(configuration)
-            : _chatToken;
+    // async so that interface can be dynamic
+    public ValueTask<string> GetChatTokenAsync() =>
+        ValueTask.FromResult(string.IsNullOrWhiteSpace(_chatToken) || _chatTokenExpired
+            ? RefreshChatToken()
+            : _chatToken);
 
-    public string RefreshChatToken(IConfiguration configuration) {
+    private string RefreshChatToken() {
         lock(_chatLock) {
-            if(!_chatTokenExpired && !string.IsNullOrWhiteSpace(_chatToken))
+            if(!ChatTokenExpired && !string.IsNullOrWhiteSpace(_chatToken))
                 return _chatToken;
 
-            _chatTokenExpired = false;
+            ChatTokenExpired = false;
             return _chatToken = System.Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")
                 ?? throw new InvalidOperationException("PR_NET_CHAT_TOKEN environment variable not found.");
         };

@@ -2,7 +2,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic;
 
-namespace pr.net.Services;
+namespace pr.net.Services.Instructions;
 
 public class LocalContextService : IContextService {
 

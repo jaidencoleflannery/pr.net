@@ -1,5 +1,8 @@
 using Serilog;
-using pr.net.Services;
+using pr.net.Services.Instructions;
+using pr.net.Services.Tokens;
+using pr.net.Services.Clients;
+using pr.net.Services.Requests;
 using pr.net.Endpoints;
 
 public class Program {
@@ -17,10 +20,10 @@ public class Program {
             }
         );
 
-        builder.Services.AddSingleton<RequestEngine>();
+        builder.Services.AddSingleton<RequestService>();
         // no redirects - we have to handle them due to auth stripping
         builder.Services.AddSingleton<HttpClient>(_ => new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false }));
-        builder.Services.AddSingleton<ExternalAuthService>();
+        builder.Services.AddSingleton<TokenService>();
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             builder.Services.AddSingleton<IContextService, LocalContextService>();
         // contextservice will depend on the provider, and will have to be hotswapped here:
@@ -29,9 +32,8 @@ public class Program {
 
         var app = builder.Build();
 
-        // these endpoints give you payload examples
+        // this endpoint gives you payload examples
         app.MapTestPullRequestEndpoints(); 
-
         app.MapPullRequestEndpoints();
         
         app.MapGet("/", () => $"Server is running in {env} mode."); 

@@ -1,13 +1,14 @@
 using System.Text;
 using System.Text.Json;
 using pr.net.Models;
+using pr.net.Services.Tokens;
 
 using static pr.net.Models.Providers;
 
-namespace pr.net.Services;
+namespace pr.net.Services.Clients;
 
 public static class PullRequestApiClient {
-    public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, AuthService authService, RequestPullReviewDto request) {
+    public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, TokenService authService, RequestPullReviewDto request) {
         using (var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
             
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetRepoBearerToken(configuration));
@@ -20,7 +21,7 @@ public static class PullRequestApiClient {
     }
 
     // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
-    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, Dictionary<string, string> diffSections, int requestId) {
+    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, TokenService authService, IContextService contextService, Dictionary<string, string> diffSections, int requestId) {
 
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
@@ -105,7 +106,7 @@ public static class PullRequestApiClient {
             throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
     }
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, AuthService authService, IContextService contextService, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
+    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, TokenService authService, IContextService contextService, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
 
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
