@@ -33,9 +33,11 @@ public class Program {
         var app = builder.Build();
 
         // this endpoint gives you payload examples
+        /*
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
             app.MapTestPullRequestEndpoints(); 
         }
+        */
         app.MapPullRequestEndpoints();
         
         app.MapGet("/", () => $"Server is running in {env} mode."); 

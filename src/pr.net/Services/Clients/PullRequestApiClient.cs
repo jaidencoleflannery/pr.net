@@ -11,7 +11,7 @@ public static class PullRequestApiClient {
     public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, TokenService authService, RequestPullReviewDto request) {
         using (var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
             
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetRepoBearerToken(configuration));
+            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
             var response = await httpClient.SendAsync(message);
 
             return (response!= null && response.IsSuccessStatusCode)
@@ -80,8 +80,8 @@ public static class PullRequestApiClient {
             if(requestDto.Messages.Count < 1)
                 continue;
             using (var message = new HttpRequestMessage(HttpMethod.Post, targetUrl)) {
-                var bearer = authService.GetChatToken(configuration); 
-                message.Headers.Add("x-api-key", authService.GetChatToken(configuration));
+                var token = await authService.GetTokenAsync(Token.PR_NET_CHAT_TOKEN); 
+                message.Headers.Add("x-api-key", token);
                 message.Headers.Add("anthropic-version", "2023-06-01");
                 var json = JsonSerializer.Serialize(requestDto);
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -114,7 +114,7 @@ public static class PullRequestApiClient {
         foreach(var review in reviews) {
             Console.WriteLine($"request.Url: {request.Url}");
             using (var message = new HttpRequestMessage(HttpMethod.Post, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authService.GetRepoBearerToken(configuration));     
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));     
                 message.Content = new StringContent(JsonSerializer.Serialize(review), System.Text.Encoding.UTF8, "application/json");
 
                 if(diffSections == null)
