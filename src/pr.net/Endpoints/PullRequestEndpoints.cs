@@ -13,7 +13,7 @@ public static class PullRequestEndpoints {
             [FromServices] ILogger<RequestService> logger, 
             [FromServices] HttpClient httpClient, 
             [FromServices] IConfiguration configuration, 
-            [FromServices] TokenService authService, 
+            [FromServices] ITokenService authService, 
             [FromServices] RequestService requestEngine, 
             [FromServices] IContextService contextService,
             [FromBody] NewPullRequestDto request

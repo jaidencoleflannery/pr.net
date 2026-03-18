@@ -5,7 +5,7 @@ namespace pr.net.Models;
 public class AnthropicContentDto {
 
     [JsonPropertyName("type")]
-    public string Type { get; set; } = "object";
+    public string? Type { get; set; } = "object";
 
     [JsonPropertyName("properties")]
     public AnthropicContentPropertiesDto? Properties { get; set; } = new AnthropicContentPropertiesDto(); 

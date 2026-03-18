@@ -8,7 +8,7 @@ using static pr.net.Models.Providers;
 namespace pr.net.Services.Clients;
 
 public static class PullRequestApiClient {
-    public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, TokenService authService, RequestPullReviewDto request) {
+    public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, ITokenService authService, RequestPullReviewDto request) {
         using (var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
             
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
@@ -21,7 +21,7 @@ public static class PullRequestApiClient {
     }
 
     // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
-    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, TokenService authService, IContextService contextService, Dictionary<string, string> diffSections, int requestId) {
+    public static async Task<List<AnthropicResponseDto>> RequestReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IContextService contextService, Dictionary<string, string> diffSections, int requestId) {
 
         Provider? provider = ValidateProvider(configuration["Chat:Provider"])
             ?? throw new InvalidOperationException("Configuration for Chat:Provider could not be found or read."); 
@@ -89,7 +89,6 @@ public static class PullRequestApiClient {
                 var response = await httpClient.SendAsync(message); 
                 if(response.IsSuccessStatusCode) {
                     responses.Add(await response.Content.ReadFromJsonAsync<AnthropicResponseDto>());
-                    Console.WriteLine(responses[0].Content[0].Text);
                 } else {
                     exceptions.Add(new Exception($"Request for review failed for pull review: {requestId}, status code: {response.StatusCode}"));
                 }
@@ -106,31 +105,40 @@ public static class PullRequestApiClient {
             throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
     }
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, TokenService authService, IContextService contextService, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
+    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IContextService contextService, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
 
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
         var exceptions = new List<Exception>(); 
-        foreach(var review in reviews) {
-            Console.WriteLine($"request.Url: {request.Url}");
-            using (var message = new HttpRequestMessage(HttpMethod.Post, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));     
-                message.Content = new StringContent(JsonSerializer.Serialize(review), System.Text.Encoding.UTF8, "application/json");
+        for(int index = 0; index < reviews.Count; index++) {
+            var review = reviews[index];
+            using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments")) {
 
+                review.Content[index].Inline = new AnthropicInlineDto() { Path = ; To = }
+
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));     
+                message.Content = new StringContent(JsonSerializer.Serialize(review.Content[index].Text), System.Text.Encoding.UTF8, "application/json");
+
+                Console.WriteLine($"\n\n{review.Content[index].Text}\n\n");
+
+                Console.WriteLine($"\n\nURL: https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments\n\n");
+
+                /*
                 if(diffSections == null)
                     throw new InvalidOperationException($"{nameof(diffSections)} was null.");
                 var messages = diffSections
                     .Select(diff => new AnthropicMessageDto() { Role = "user", Content = diff.Value })
                     .ToList();
-                /*var requestDtos = messages
+                var requestDtos = messages
                     .Select(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, OutputConfig = new AnthropicOutputConfig() })
-                    .ToList();*/
+                    .ToList();
+                */
                 
                 var response = await httpClient.SendAsync(message); 
                 if(response.IsSuccessStatusCode)
                     responses.Add(await response.Content.ReadAsStringAsync());
                 else
-                    exceptions.Add(new Exception($"Post for review failed for pull review: {request.Id}, status code: {response.StatusCode}"));
+                    exceptions.Add(new Exception($"Post for review failed for pull review: {request.Id}, status: {response.StatusCode}, {await response.Content.ReadAsStringAsync()}"));
             }
         }
 

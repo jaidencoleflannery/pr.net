@@ -10,4 +10,9 @@ public class AnthropicResponseContentDto {
     [JsonPropertyName("text")]
     public string? Text { get; set; } = string.Empty; 
 
+
+    [JsonPropertyName("inline")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AnthropicInlineDto? Inline { get; set; } = null;
+
 }

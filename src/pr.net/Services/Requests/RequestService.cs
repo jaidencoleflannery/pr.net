@@ -9,7 +9,7 @@ public class RequestService {
         ILogger logger, 
         HttpClient httpClient, 
         IConfiguration configuration, 
-        TokenService tokenService, 
+        ITokenService tokenService, 
         IContextService contextService, 
         NewPullRequestDto request
     ) {
