@@ -1,0 +1,68 @@
+{
+    "model": "claude-haiku-4-5-20251001",
+    "id": "msg_01UDHydX4hjUkr31f8dKXnVC",
+    "type": "message",
+    "role": "assistant",
+    "content": [
+        {
+            "type": "text",
+            "text": "{\u0022content\u0022: {\u0022raw\u0022: \u0022This diff shows a change to example.txt where a new line \\\u0022Added value.\\\u0022 has been appended to the file. The original single line \\\u0022Testing example.\\\u0022 remains, and a second line is added without a newline at the end of the file (indicated by the \\\u0022No newline at end of file\\\u0022 marker).\u0022}}",
+            "inline": null
+        }
+    ],
+    "stop_reason": "end_turn",
+    "stop_sequence": null,
+    "usage": {
+        "input_tokens": 285,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 80,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+    }
+}
+
+
+
+
+
+
+{
+    "messages": [],
+    "model": "",
+    "max_tokens": 0,
+    "output_config": {
+        "format": {
+            "type": "json_schema",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "object",
+                        "properties": {
+                            "raw": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "raw",
+                            "to"
+                        ],
+                        "additionalProperties": false
+                    }
+                },
+                "required": [
+                    "content"
+                ],
+                "additionalProperties": false
+            }
+        }
+    }
+}

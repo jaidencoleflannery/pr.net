@@ -12,7 +12,6 @@ public class AnthropicResponseContentDto {
 
 
     [JsonPropertyName("inline")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AnthropicInlineDto? Inline { get; set; } = null;
 
 }

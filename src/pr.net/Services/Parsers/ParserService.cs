@@ -5,6 +5,20 @@ namespace pr.net.Services;
 
 public static class ParserService {
 
+    // get path from diff
+    public static string ParsePathFromDiff(string diff) {
+        foreach(var line in diff.Split('\n')) {
+            if(line.StartsWith("+++ b")) {
+                foreach(var word in line.Split(' ')) {
+                    if(word.StartsWith("b/")) {
+                        return line.Replace("b", "");
+                    }
+                }
+            }
+        }
+        throw new FormatException("Could not parse path from provided diff.");
+    }
+
     // split diff per file
     public static Dictionary<string, string> ParseDiff(string diff) {
         var diffSections = new Dictionary<string, string>();

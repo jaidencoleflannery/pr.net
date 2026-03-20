@@ -47,6 +47,7 @@ public static class PullRequestApiClient {
             instructionsBuilder.AppendLine(instruction);
  
         var requestDtos = new List<AnthropicRequestDto>();
+        Console.WriteLine($"\n\n??? OBJ: {JsonSerializer.Serialize(new AnthropicRequestDto(), new JsonSerializerOptions() { WriteIndented = true })}");
         switch(provider) {
             case Provider.Anthropic: 
                 if(diffSections == null)
@@ -98,6 +99,9 @@ public static class PullRequestApiClient {
         if(exceptions.Count > 0)
             foreach(var exception in exceptions)
                 Console.WriteLine(exception);
+        
+        foreach(var response in responses)
+            Console.WriteLine($"\n\n!!!!!!!!!!!!!!!! RESPONSE: {JsonSerializer.Serialize(response)}\n\n");
 
         if(responses.Count > 0)
             return responses;
@@ -105,7 +109,7 @@ public static class PullRequestApiClient {
             throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
     }
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IContextService contextService, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
+    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IContextService contextService, string path, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
 
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
@@ -114,7 +118,7 @@ public static class PullRequestApiClient {
             var review = reviews[index];
             using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments")) {
 
-                review.Content[index].Inline = new AnthropicInlineDto() { Path = ; To = }
+                review.Content[index].Inline.Path = path;
 
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));     
                 message.Content = new StringContent(JsonSerializer.Serialize(review.Content[index].Text), System.Text.Encoding.UTF8, "application/json");

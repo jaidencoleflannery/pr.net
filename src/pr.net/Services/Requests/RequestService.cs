@@ -19,12 +19,13 @@ public class RequestService {
             string diff = await PullRequestApiClient.GetPullRequestData(httpClient, configuration, tokenService, pullRequestMetadata);
             // split it per file
             Dictionary<string, string> diffSections = ParserService.ParseDiff(diff);
+            string path = ParserService.ParsePathFromDiff(diff); 
 
             // get review for each diff file
             List<AnthropicResponseDto> reviews = await PullRequestApiClient.RequestReviews(httpClient, configuration, tokenService, contextService, diffSections, pullRequestMetadata.Id);
 
             // push reviews to pull request
-            await PullRequestApiClient.PostReviews(httpClient, configuration, tokenService, contextService, diffSections, reviews, pullRequestMetadata);
+            await PullRequestApiClient.PostReviews(httpClient, configuration, tokenService, contextService, path, diffSections, reviews, pullRequestMetadata);
 
             return;
         } catch (Exception exception) {
