@@ -1,10 +1,6 @@
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.VisualBasic;
-
 namespace pr.net.Services.Instructions;
 
-public class LocalContextService : IContextService {
+public class LocalInstructionsService : IInstructionsService {
 
     private string _path = Path.Combine(System.AppContext.BaseDirectory, "CLAUDE.md");
     private List<string>? _instructions = new List<string>();

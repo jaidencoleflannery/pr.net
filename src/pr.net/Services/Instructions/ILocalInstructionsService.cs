@@ -1,4 +1,6 @@
-public interface IContextService {
+namespace pr.net.Services.Instructions;
+
+public interface IInstructionsService {
 
     // this needs to augment depending on the environment
     // if Development, grab from a root dir instructions.md file

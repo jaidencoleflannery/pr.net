@@ -1,6 +1,7 @@
 using pr.net.Models;
 using pr.net.Services.Tokens;
 using pr.net.Services.Clients;
+using pr.net.Services.Instructions;
 
 namespace pr.net.Services.Requests;
 
@@ -10,7 +11,7 @@ public class RequestService {
         HttpClient httpClient, 
         IConfiguration configuration, 
         ITokenService tokenService, 
-        IContextService contextService, 
+        IInstructionsService contextService, 
         NewPullRequestDto request
     ) {
         try {

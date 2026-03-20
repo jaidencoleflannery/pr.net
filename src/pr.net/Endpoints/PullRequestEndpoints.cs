@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using pr.net.Models;
 using pr.net.Services.Requests;
 using pr.net.Services.Tokens;
+using pr.net.Services.Instructions;
 
 namespace pr.net.Endpoints;
 
@@ -15,9 +16,9 @@ public static class PullRequestEndpoints {
             [FromServices] IConfiguration configuration, 
             [FromServices] ITokenService authService, 
             [FromServices] RequestService requestEngine, 
-            [FromServices] IContextService contextService,
+            [FromServices] IInstructionsService instructionsService,
             [FromBody] NewPullRequestDto request
-            ) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, authService, contextService, request));
+            ) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, authService, instructionsService, request));
     } 
 
 }
