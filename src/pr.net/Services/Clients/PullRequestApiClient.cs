@@ -88,8 +88,12 @@ public static class PullRequestApiClient {
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await httpClient.SendAsync(message); 
+                string responseJson = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"--- {JsonSerializer.Serialize(new AnthropicResponseContentDto())}");
+                Console.WriteLine($"--- {responseJson}");
+                AnthropicResponseDto dto = JsonSerializer.Deserialize<AnthropicResponseDto>(responseJson)!;
                 if(response.IsSuccessStatusCode) {
-                    responses.Add(await response.Content.ReadFromJsonAsync<AnthropicResponseDto>());
+                    responses.Add(dto);
                 } else {
                     exceptions.Add(new Exception($"Request for review failed for pull review: {requestId}, status code: {response.StatusCode}"));
                 }
@@ -101,7 +105,7 @@ public static class PullRequestApiClient {
                 Console.WriteLine(exception);
         
         foreach(var response in responses)
-            Console.WriteLine($"\n\n!!!!!!!!!!!!!!!! RESPONSE: {JsonSerializer.Serialize(response)}\n\n");
+            Console.WriteLine($"\n\nRESPONSE: {response.Content[0].Text}\n\n");
 
         if(responses.Count > 0)
             return responses;
@@ -111,19 +115,19 @@ public static class PullRequestApiClient {
 
     public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IContextService contextService, string path, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
 
+        var rev = reviews;
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
         var exceptions = new List<Exception>(); 
         for(int index = 0; index < reviews.Count; index++) {
-            var review = reviews[index];
+            AnthropicResponseDto review = reviews[index];
             using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments")) {
-
-                review.Content[index].Inline.Path = path;
+                review.Content[0].Text.Content.Inline.Path = path;
 
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));     
                 message.Content = new StringContent(JsonSerializer.Serialize(review.Content[index].Text), System.Text.Encoding.UTF8, "application/json");
 
-                Console.WriteLine($"\n\n{review.Content[index].Text}\n\n");
+                Console.WriteLine($"\nCHECKPOINT: {review.Content[index].Text}\n\n");
 
                 Console.WriteLine($"\n\nURL: https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments\n\n");
 

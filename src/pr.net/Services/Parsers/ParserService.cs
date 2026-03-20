@@ -11,7 +11,7 @@ public static class ParserService {
             if(line.StartsWith("+++ b")) {
                 foreach(var word in line.Split(' ')) {
                     if(word.StartsWith("b/")) {
-                        return line.Replace("b", "");
+                        return line.Replace("+++ b", "");
                     }
                 }
             }

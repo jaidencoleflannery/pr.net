@@ -4,11 +4,16 @@ namespace pr.net.Models;
 
 public class AnthropicContentPropertiesInlineDto {
     
-    [JsonPropertyName("to")]
-    public AnthropicContentPropertiesRawDto To { get; set; } = new AnthropicContentPropertiesRawDto();
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "object";
 
-    [JsonPropertyName("path")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Path { get; set; } = null;
+    [JsonPropertyName("properties")]
+    public AnthropicContentPropertiesInlinePropertiesDto Properties { get; set; } = new AnthropicContentPropertiesInlinePropertiesDto();
+
+    [JsonPropertyName("required")]
+    public string[] Required { get; set; } = new string[] { "to" }; 
+
+    [JsonPropertyName("additionalProperties")]
+    public bool AdditionalProperties { get; set; } = false;
 
 }

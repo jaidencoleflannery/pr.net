@@ -5,10 +5,10 @@ namespace pr.net.Models;
 public class AnthropicInlineDto {
 
     [JsonPropertyName("path")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Path { get; set; } = null;
+    public string Path { get; set; } = string.Empty;
 
     [JsonPropertyName("to")]
-    public int? To { get; set; } = null;
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public int To { get; set; } = 0;
 
 } 
