@@ -8,13 +8,14 @@ using pr.net.Services.Instructions;
 namespace pr.net.Services.Requests.Bitbucket;
 
 public class BitbucketRequestService {
-    public async Task ProcessNewPullRequest(
+
+    // returns a dictionary of key: file, value: diff
+    public async Task<Dictionary<string, string>> ProcessNewPullRequest(
         ILogger logger, 
         HttpClient httpClient, 
         IConfiguration configuration, 
         ITokenService tokenService, 
-        IInstructionsService contextService, 
-        IChatService chatService,
+        IInstructionsService instructionsService, 
         BitbucketPullReviewCreatedEventDto prEvent
     ) {
         try {
@@ -23,17 +24,12 @@ public class BitbucketRequestService {
             string diff = await BitbucketApiClient.GetPullRequestData(httpClient, tokenService, pullRequestMetadata);
 
             // split diff per file, diffSections should be key: file, value: diff
-            Dictionary<string, string> diffSections = BitbucketParserService.ParseDiff(diff);
+            Dictionary<string, string> diffSections = BitbucketParserService.ParseDiff(diff); 
 
-            // get review for each diff file and then request reviews
-            List<ChatResponse> reviews = await chatService.RequestReviews(httpClient, configuration, tokenService, contextService, diffSections, pullRequestMetadata.Id);
-            await chatService.PostReviews(httpClient, configuration, tokenService, contextService, diffSections, reviews, pullRequestMetadata);
-
-            return;
+            return diffSections;
         } catch (Exception exception) {
             logger.LogError($"\n{DateTime.Now}: {exception}\n[ Error processing pull request with Id: {prEvent.PullRequest.Id}. Review not posted. ]\n");
-
-            return;
+            throw new Exception("Failed to pull and parse diff.");
         }
     }
 }

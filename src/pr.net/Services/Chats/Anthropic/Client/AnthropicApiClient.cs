@@ -1,20 +1,22 @@
 using System.Text;
 using System.Text.Json;
-using pr.net.Models.Incoming;
 using pr.net.Services.Tokens;
 using pr.net.Services.Instructions;
+using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Incoming.Anthropic;
 
 using static pr.net.Models.Enums.ChatProviders;
 
-namespace pr.net.Services.Clients.Anthropic;
+namespace pr.net.Services.Anthropic;
 
 public static class AnthropicApiClient {
+
     // RequestReview should be given a *section* of the diff, passing the entire diff will reduce the quality of response and should be avoided
     public static async Task<List<ChatResponse>> RequestReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IInstructionsService instructionsService, Dictionary<string, string> diffSections, int requestId) {
 
         ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
 
-        List<string> instructions = await contextService.GetInstructions(configuration["Chat:Provider"]);
+        List<string> instructions = await instructionsService.GetInstructions(configuration["Chat:Provider"] ?? string.Empty);
             // ?? throw new InvalidOperationException("Could not fetch instructions.");
 
         string? url = GetUrl(provider.Value)

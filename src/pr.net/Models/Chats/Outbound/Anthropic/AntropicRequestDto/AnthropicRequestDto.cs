@@ -1,16 +1,14 @@
 using System.Text.Json.Serialization;
 
-namespace pr.net.Models;
+namespace pr.net.Models.Outbound.Anthropic;
 
 public class AnthropicRequestDto {
 
-    public AnthropicRequestDto() { }
-
     [JsonPropertyName("messages")]
-    public new List<AnthropicMessageDto> Messages { get; set; } = new List<AnthropicMessageDto>();
+    public List<AnthropicMessageDto> Messages { get; set; } = new List<AnthropicMessageDto>();
 
     [JsonPropertyName("model")]
-    public string Model { get; set; } = string.Empty;            
+    public string Model { get; set; } = string.Empty;
 
     [JsonPropertyName("max_tokens")]
     public int MaxTokens { get; set; } 
@@ -21,5 +19,5 @@ public class AnthropicRequestDto {
  
     [JsonPropertyName("output_config")]
     public AnthropicOutputConfig? OutputConfig { get; set; } = new AnthropicOutputConfig();
- 
+
 }
