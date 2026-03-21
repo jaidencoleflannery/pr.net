@@ -1,4 +1,4 @@
 # pr.net
-An open source, automated AI pull-request review system.
+an open source, automated AI pull-request review system.
 
-> **Status:** In Development.
+> **status:** in development.
