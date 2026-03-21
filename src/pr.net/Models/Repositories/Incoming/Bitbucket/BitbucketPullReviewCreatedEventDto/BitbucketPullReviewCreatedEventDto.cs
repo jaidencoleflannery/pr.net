@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
+using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Models.Incoming.Bitbucket;
 
-public class BitbucketPullReviewCreatedEventDto {
+public class BitbucketPullReviewCreatedEventDto : PullReviewCreatedEvent {
 
     [JsonPropertyName("pullrequest")]
     public BitbucketPRDto PullRequest { get; set; } = new BitbucketPRDto();
