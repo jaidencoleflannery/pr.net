@@ -1,7 +1,8 @@
 using pr.net.Models.Incoming.Bitbucket;
+using pr.net.Models;
 using pr.net.Services.Tokens;
 using pr.net.Services.Instructions;
-using pr.net.Services.Clients.Bitbucket;
+using pr.net.Services.Clients.Bitbucket; 
 
 namespace pr.net.Services.Requests.Bitbucket;
 
@@ -12,13 +13,12 @@ public class BitbucketRequestService {
         IConfiguration configuration, 
         ITokenService tokenService, 
         IInstructionsService contextService, 
-        PRCreatedEvent prEvent
+        BitbucketPullReviewCreatedEventDto prEvent
     ) {
         try {
             // get the pull request diff
-            RequestPullReviewDto pullRequestMetadata = new RequestPullReviewDto(prEvent);
-
-            string diff = await PullRequestApiClient.GetPullRequestData(httpClient, configuration, tokenService, pullRequestMetadata);
+            BitbucketPullReviewCreatedMetadataDto pullRequestMetadata = new BitbucketPullReviewCreatedMetadataDto(prEvent); // grab necesarry metadata (optimize to just cast directly on receival?)
+            string diff = await BitbucketApiClient.GetPullRequestData(httpClient, tokenService, pullRequestMetadata);
             // split it per file
             Dictionary<string, string> diffSections = ParserService.ParseDiff(diff);
             string path = ParserService.ParsePathFromDiff(diff); 

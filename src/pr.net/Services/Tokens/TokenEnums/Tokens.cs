@@ -10,12 +10,12 @@ public static class Tokens {
     // since we know what Tokens holds, this gives us O(1) lookup time instead of waiting for tostring to lookup the name
     private static Dictionary<Token, string> _tokenToStringMap = Enum.GetValues<Token>().ToDictionary(
         token => token,
-        token => token.ToString()
+        token => token.ToString().ToLower()
     );
 
     // inverse lookup
     private static Dictionary<string, Token> _stringToTokenMap = Enum.GetValues<Token>().ToDictionary(
-        token => token.ToString(),
+        token => token.ToString().ToLower(),
         token => token
     );
 

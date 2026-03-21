@@ -17,7 +17,7 @@ public static class AuthProviders {
     // these being readonly makes them persist for each call, otherwise these calls will be incredibly slow
     private static readonly Dictionary<string, AuthProvider> ProviderMap =
         Enum.GetValues<AuthProvider>()
-            .ToDictionary(p => p.ToString(), p => p);
+            .ToDictionary(p => p.ToString().ToLower(), p => p);
 
     public enum AuthProvider {
         Environment, 

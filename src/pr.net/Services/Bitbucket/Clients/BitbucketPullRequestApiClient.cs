@@ -1,22 +1,19 @@
 using System.Text;
 using System.Text.Json;
-using pr.net.Models;
+using pr.net.Models.Incoming.Bitbucket;
 using pr.net.Services.Tokens;
 
-using static pr.net.Models.Providers;
+namespace pr.net.Services.Clients.Bitbucket;
 
-namespace pr.net.Services.Clients;
-
-public static class PullRequestApiClient {
-    public static async Task<string> GetPullRequestData(HttpClient httpClient, IConfiguration configuration, ITokenService authService, RequestPullReviewDto request) {
-        using (var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
-            
+public static class BitbucketApiClient {
+    public static async Task<string> GetPullRequestData(HttpClient httpClient, ITokenService authService, BitbucketPullReviewCreatedMetadataDto request) {
+        using(var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
             var response = await httpClient.SendAsync(message);
 
             return (response!= null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
-                : throw new Exception($"Failed to get pull review {request.Id}'s data, status: {response.StatusCode} - {response.Content}");
+                : throw new Exception($"Failed to get pull review {request.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
         }
     }
 

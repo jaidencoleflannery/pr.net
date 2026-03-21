@@ -22,14 +22,14 @@ public class Program {
                     .WriteTo.Console();
                     if(env == "Development")
                         config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Day);
-                    if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system */ } 
+                    if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system. ! should be dynamic via config */ } 
             }
         );
 
-        // no redirects - we have to handle them due to auth stripping
+        // no redirects, we have to handle them due to auth stripping
         builder.Services.AddSingleton(_ => new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })); 
 
-        // dynamic services via user's configuration
+        // dynamic services via configuration
 
         string? _repoProvider = null; 
         if((_repoProvider = builder.Configuration["Repo:Provider"]) == null)
@@ -51,7 +51,6 @@ public class Program {
             throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
         ChatProvider chatProvider = ValidateChatProvider(_chatProvider);
 
-        
         switch(repoProvider) {
             case RepoProvider.Bitbucket:
                 builder.Services.AddSingleton<BitbucketRequestService>();
@@ -78,9 +77,10 @@ public class Program {
 
         var app = builder.Build();
  
-        // this endpoint gives you payload examples
+        // this endpoint gives you payload examples (dev only)
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
-            // app.MapIntakeTestingEndpoints(); // needs to be fixed
+            Console.WriteLine("pr.net is running in Development mode.");
+            // app.MapIntakeTestingEndpoints(); // leave disabled unless testing
         }
 
         switch(repoProvider) {

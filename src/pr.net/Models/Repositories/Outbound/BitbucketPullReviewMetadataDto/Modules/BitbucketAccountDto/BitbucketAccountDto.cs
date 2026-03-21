@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace pr.net.Models.Incoming.Bitbucket;
+namespace pr.net.Models.Outbound.Bitbucket;
 
 public class BitbucketAccountDto {
     
