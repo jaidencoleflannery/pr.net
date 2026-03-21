@@ -4,10 +4,11 @@ using pr.net.Services.Tokens;
 using pr.net.Services.Instructions;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming.Anthropic;
+using pr.net.Models.Outbound.Anthropic;
 
 using static pr.net.Models.Enums.ChatProviders;
 
-namespace pr.net.Services.Anthropic;
+namespace pr.net.Services.Chat.Anthropic;
 
 public static class AnthropicApiClient {
 
@@ -39,7 +40,7 @@ public static class AnthropicApiClient {
         var requestDtos = new List<AnthropicRequestDto>();
         Console.WriteLine($"\n\n??? OBJ: {JsonSerializer.Serialize(new AnthropicRequestDto(), new JsonSerializerOptions() { WriteIndented = true })}");
         switch(provider) {
-            case Provider.Anthropic: 
+            case ChatProvider.Anthropic: 
                 if(diffSections == null)
                     throw new InvalidOperationException($"{nameof(diffSections)} was null.");
                 var messages = diffSections

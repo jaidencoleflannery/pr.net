@@ -1,4 +1,4 @@
-namespace pr.net.Services.Instructions;
+namespace pr.net.Services.Chat.Instructions;
 
 public interface IInstructionsService {
 

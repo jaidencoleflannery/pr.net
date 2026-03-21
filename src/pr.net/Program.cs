@@ -1,8 +1,7 @@
 using Serilog;
-using pr.net.Models.Enums;
-using pr.net.Services.Instructions;
+using pr.net.Services.Chat.Instructions;
+using pr.net.Services.Chat;
 using pr.net.Services.Tokens;
-using pr.net.Services.Clients;
 using pr.net.Services.Requests.Bitbucket;
 using pr.net.Endpoints;
 
@@ -74,6 +73,14 @@ public class Program {
 
             // chain other types of instruction sources here
         } 
+
+        switch(chatProvider) {
+            case ChatProvider.Anthropic:
+                builder.Services.AddSingleton<IChatService, AnthropicChatService>();
+                break;
+
+            // chain other types of chat providers here
+        }
 
         var app = builder.Build();
  
