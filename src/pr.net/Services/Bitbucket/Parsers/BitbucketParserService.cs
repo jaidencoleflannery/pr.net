@@ -3,7 +3,7 @@ using pr.net.Models;
 
 namespace pr.net.Services;
 
-public static class ParserService {
+public static class BitbucketParserService {
 
     // get path from diff
     public static string ParsePathFromDiff(string diff) {
