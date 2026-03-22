@@ -10,7 +10,4 @@ public class BitbucketDestinationDto {
     [JsonPropertyName("commit")]
     public BitbucketCommitDto Commit { get; set; } = new BitbucketCommitDto();
 
-    [JsonPropertyName("repository")]
-    public BitbucketPRDto Repository { get; set; } = new BitbucketPRDto();
-
 }
