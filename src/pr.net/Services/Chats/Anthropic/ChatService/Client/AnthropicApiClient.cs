@@ -1,27 +1,17 @@
 using System.Text;
 using System.Text.Json;
+using pr.net.Models.Outbound.Anthropic;
 using pr.net.Services.Tokens;
-using pr.net.Services.Chat.Instructions;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming.Anthropic;
-using pr.net.Models.Outbound.Generic;
-using pr.net.Models.Outbound.Anthropic;
-
-using static pr.net.Models.Enums.ChatProviders;
+using pr.net.Services.Chat.Generic;
 
 namespace pr.net.Services.Chat.Anthropic;
 
-public class AnthropicApiClient {
-
-    private readonly IHttpClientFactory _factory;
-
-    public AnthropicApiClient(IHttpClientFactory factory) {
-        _factory = factory;
-    }
+public class AnthropicApiClient(ITokenService tokenService, HttpClient client) : IChatApiClient {
 
     // RequestReview should be given *individual files* of the cumulative diff, passing the entire diff will reduce the quality of response and should be avoided
-    public async Task<List<ChatResponse>> RequestReviews(ITokenService authService, int requestId) { 
-
+    public async Task<List<ChatResponse>> RequestReviewsAsync(List<AnthropicRequestDto> requestDtos, string url) { 
 
         // iterate over every instance of requestDtos and send them individually 
         var responses = new List<ChatResponse>();
@@ -31,19 +21,19 @@ public class AnthropicApiClient {
             if(requestDto.Messages.Count < 1)
                 continue;
             using (var message = new HttpRequestMessage(HttpMethod.Post, targetUrl)) {
-                var token = await authService.GetTokenAsync(Token.PR_NET_CHAT_TOKEN); 
+                var token = await tokenService.GetTokenAsync(Token.PR_NET_CHAT_TOKEN); 
                 message.Headers.Add("x-api-key", token);
                 message.Headers.Add("anthropic-version", "2023-06-01");
                 var json = JsonSerializer.Serialize(requestDto);
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await httpClient.SendAsync(message); 
+                var response = await client.SendAsync(message); 
                 string responseJson = await response.Content.ReadAsStringAsync();
                 ChatResponse dto = JsonSerializer.Deserialize<AnthropicResponseDto>(responseJson)!;
                 if(response.IsSuccessStatusCode) {
                     responses.Add(dto);
                 } else {
-                    Exception exception = new Exception($"Request for review failed for pull review: {requestId}, status code: {response.StatusCode}");
+                    Exception exception = new Exception($"Request for review failed: {responseJson}");
                     Console.WriteLine(exception);
                     exceptions.Add(exception);
                 }
@@ -53,7 +43,7 @@ public class AnthropicApiClient {
         if(responses.Count > 0)
             return responses;
         else
-            throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
+            throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
     }
 
 }

@@ -2,6 +2,7 @@ using System.Text;
 using pr.net.Services.Chat.Instructions;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Outbound.Anthropic;
+using pr.net.Services.Chat.Generic;
 
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -9,7 +10,7 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration configuration, IInstructionsService instructionsService, IChatApiClient client) : IChatService { 
 
-    public async Task GetReviews(Dictionary<string, string> diffSections) {
+    public async Task GetReviewsAsync(Dictionary<string, string> diffSections) {
         ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
         if(provider != ChatProvider.Anthropic)
             throw new InvalidOperationException("Provider configuration does not match injected service.");
@@ -44,7 +45,7 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
                 .Select(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, OutputConfig = new AnthropicOutputConfig() })
                 .ToList();
 
-        List<ChatResponse> reviews = await client.RequestReviews(tokenService, requestDtos);
+        List<ChatResponse> reviews = await client.RequestReviewsAsync(requestDtos, url);
     } 
 
 }
