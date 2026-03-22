@@ -3,10 +3,12 @@ using pr.net.Services.Chat.Instructions;
 using pr.net.Services.Chat;
 using pr.net.Services.Tokens;
 using pr.net.Services.Requests.Bitbucket;
-using pr.net.Endpoints;
 using pr.net.Services.Clients.Bitbucket;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
+using pr.net.Services.Chat.Anthropic;
+using pr.net.Services.Chat.Generic;
+using pr.net.Endpoints;
 
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
@@ -54,14 +56,14 @@ public class Program {
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
-                builder.Services.AddHttpClient<BitbucketApiClient>()
+                builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
                         AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
                     }); 
                 builder.Services.AddSingleton<IRepositoryRequestService, BitbucketRequestService>();
                 break;
 
-            // chain other repository provider types here - ensure they all have their own request service and apiclient configured, and no redirects
+            // chain other repository provider types here - ensure they all have their own request service and apiclient configured
         } 
 
         switch(authProvider) {
@@ -82,6 +84,10 @@ public class Program {
 
         switch(chatProvider) {
             case ChatProvider.Anthropic:
+                builder.Services.AddHttpClient<IChatApiClient, AnthropicApiClient>()
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
+                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
+                    }); 
                 builder.Services.AddSingleton<IChatService, AnthropicChatService>();
                 break;
 

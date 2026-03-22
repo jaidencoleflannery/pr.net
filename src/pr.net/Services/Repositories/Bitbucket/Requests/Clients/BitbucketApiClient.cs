@@ -1,5 +1,5 @@
 using System.Text.Json;
-using pr.net.Models.Outbound.Bitbucket;
+using pr.net.Models.Bitbucket;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Models.Outbound.Generic;
 using pr.net.Models.Incoming.Generic;

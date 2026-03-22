@@ -1,5 +1,4 @@
-using pr.net.Models.Incoming.Bitbucket;
-using pr.net.Models.Outbound.Bitbucket;
+using pr.net.Models.Bitbucket;
 using pr.net.Services.Clients.Bitbucket; 
 using pr.net.Services.Tokens;
 using pr.net.Services.Repositories.Generic;
@@ -8,7 +7,7 @@ using pr.net.Models.Outbound.Generic;
 
 namespace pr.net.Services.Requests.Bitbucket;
 
-public class BitbucketRequestService(ILogger logger, ITokenService tokenService, IRepositoryApiClient client) : IRepositoryRequestService {
+public class BitbucketRequestService(ILogger<BitbucketRequestService> logger, IRepositoryApiClient client) : IRepositoryRequestService {
 
     // returns a dictionary of key: file, value: diff
     public async Task<Dictionary<string, string>> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
@@ -16,7 +15,7 @@ public class BitbucketRequestService(ILogger logger, ITokenService tokenService,
         try {
             // get the pull request diff
             BitbucketPullReviewCreatedMetadataDto pullRequestMetadata = new(createdEvent); // grab necesarry metadata
-            string diff = await client.GetPullRequestData(tokenService, pullRequestMetadata);
+            string diff = await client.GetPullRequestData(pullRequestMetadata);
 
             // split diff per file, diffSections should be key: file, value: diff
             Dictionary<string, string> diffSections = BitbucketParserService.ParseDiff(diff); 
@@ -29,7 +28,7 @@ public class BitbucketRequestService(ILogger logger, ITokenService tokenService,
 
     // posts reviews to specific pull review
     public async Task PostChatReviews(Dictionary<String, ChatResponse> reviews, PullReviewCreatedMetadata request) {
-        client.PostReviews(reviews, request);
+        //client.PostReviews(reviews, request);
     }
 
 }

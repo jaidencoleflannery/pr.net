@@ -9,14 +9,14 @@ namespace pr.net.Services.Orchestration;
 public class Orchestrator(IRepositoryRequestService repoService, IChatService chatService) {
 
     public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) {
-        // get each file and it's associated diff
+        // get each file's associated diff
         Dictionary<string, string> diffFiles = await repoService.GetPullReviewFiles(prEvent);
 
         // get each file's associated review
         Dictionary<string, ChatResponse> reviews = await chatService.GetChatReviewsAsync(diffFiles);
 
-        // post reviews to pr
-        await repoService.PostChatReviews();
+        // post reviews to branch
+        //await repoService.PostChatReviews();
     }
 
 }

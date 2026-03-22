@@ -1,7 +1,6 @@
-using pr.net.Models.Incoming.Bitbucket;
 using pr.net.Models.Outbound.Generic;
 
-namespace pr.net.Models.Outbound.Bitbucket;
+namespace pr.net.Models.Bitbucket;
 
 public class BitbucketPullReviewCreatedMetadataDto : PullReviewCreatedMetadata {
 

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace pr.net.Models.Incoming.Bitbucket;
+namespace pr.net.Models.Bitbucket;
 
 public class BitbucketPRDto {
 
