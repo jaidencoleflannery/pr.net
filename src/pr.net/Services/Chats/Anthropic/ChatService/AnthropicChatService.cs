@@ -10,7 +10,10 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration configuration, IInstructionsService instructionsService, IChatApiClient client) : IChatService { 
 
-    public async Task<List<ChatResponse>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
+    public async Task<Dictionary<string, ChatResponse>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
+        if(diffSections.Count < 1)
+            throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
+
         ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
         if(provider != ChatProvider.Anthropic)
             throw new InvalidOperationException("Provider configuration does not match injected service.");
@@ -35,18 +38,18 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
         foreach(var instruction in instructions)
             instructionsBuilder.AppendLine(instruction);
  
-        var requestDtos = new List<AnthropicRequestDto>();
-            if(diffSections == null)
-                throw new InvalidOperationException($"{nameof(diffSections)} was null.");
-            List<AnthropicMessageDto> messages = diffSections
-                .Select(diff => new AnthropicMessageDto() { Role = "user", Content = diff.Value })
-                .ToList();
-            requestDtos = messages
-                .Select(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, OutputConfig = new AnthropicOutputConfig() })
-                .ToList();
+        var requestsPerPath = diffSections.ToDictionary(
+            diff => diff.Key,
+            diff => new AnthropicRequestDto {
+                Model = model,
+                MaxTokens = maxTokens,
+                Messages = [new AnthropicMessageDto { Role = "User", Content = diff.Value }],
+                OutputConfig = new AnthropicOutputConfig()
+            });
 
-        List<ChatResponse> reviews = await client.RequestReviewsAsync(requestDtos, url);
-        return reviews;
+        var reviews = await client.RequestReviewsAsync(requestsPerPath.Values.ToList(), url);
+
+        return requestsPerPath.Keys.Zip(reviews, (path, review) => (path, review)).ToDictionary(x => x.path, x => x.review);
     } 
 
 }

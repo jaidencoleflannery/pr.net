@@ -12,8 +12,8 @@ public class Orchestrator(IRepositoryRequestService repoService, IChatService ch
         // get each file and it's associated diff
         Dictionary<string, string> diffFiles = await repoService.GetPullReviewFiles(prEvent);
 
-        // get reviews for each file
-        List<ChatResponse> reviews = await chatService.GetChatReviewsAsync(diffFiles);
+        // get each file's associated review
+        Dictionary<string, ChatResponse> reviews = await chatService.GetChatReviewsAsync(diffFiles);
 
         // post reviews to pr
         await repoService.PostChatReviews();

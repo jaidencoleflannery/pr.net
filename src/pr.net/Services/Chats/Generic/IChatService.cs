@@ -4,6 +4,6 @@ namespace pr.net.Services.Chat;
 
 public interface IChatService {
     
-    Task<List<ChatResponse>> GetChatReviewsAsync(Dictionary<string, string> diffSections);
+    Task<Dictionary<string, ChatResponse>> GetChatReviewsAsync(Dictionary<string, string> diffSections);
 
 }

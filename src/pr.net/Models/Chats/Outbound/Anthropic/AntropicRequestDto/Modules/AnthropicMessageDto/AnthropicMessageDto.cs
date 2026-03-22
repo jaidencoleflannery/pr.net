@@ -10,4 +10,7 @@ public class AnthropicMessageDto {
     [JsonPropertyName("content")]
     public string Content { get; set; } = string.Empty;
 
+    [JsonIgnore]
+    public string Path { get; set; } = string.Empty;
+
 }

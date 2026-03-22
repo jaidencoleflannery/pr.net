@@ -28,8 +28,8 @@ public class BitbucketRequestService(ILogger logger, ITokenService tokenService,
     }
 
     // posts reviews to specific pull review
-    public async Task PostChatReviews(List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
-       client.PostReviews(reviews, request);
+    public async Task PostChatReviews(Dictionary<String, ChatResponse> reviews, PullReviewCreatedMetadata request) {
+        client.PostReviews(reviews, request);
     }
 
 }
