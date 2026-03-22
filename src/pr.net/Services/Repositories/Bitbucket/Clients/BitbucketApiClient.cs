@@ -1,43 +1,45 @@
-using System.Text;
 using System.Text.Json;
-using pr.net.Models.Incoming;
 using pr.net.Models.Outbound.Bitbucket;
+using pr.net.Services.Repositories.Generic;
+using pr.net.Models.Outbound.Generic;
+using pr.net.Models.Incoming.Generic;
 using pr.net.Services.Tokens;
-using pr.net.Services.Instructions;
 
 using static pr.net.Models.Enums.ChatProviders;
 
 namespace pr.net.Services.Clients.Bitbucket;
 
-public static class BitbucketApiClient {
-    public static async Task<string> GetPullRequestData(HttpClient httpClient, ITokenService authService, BitbucketPullReviewCreatedMetadataDto request) {
-        using(var message = new HttpRequestMessage(HttpMethod.Get, request.Url ?? $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/diff")) {
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
-            var response = await httpClient.SendAsync(message);
+public class BitbucketApiClient : IApiClient {
+    private readonly IHttpClientFactory _factory;
+
+    public BitbucketApiClient(IHttpClientFactory factory) {
+        _factory = factory;
+    }
+    public async Task<string> GetPullRequestData(ITokenService tokenService, PullReviewCreatedMetadata request) {
+        BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
+        using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
+            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+            var response = await _factory.CreateClient().SendAsync(message);
 
             return (response!= null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
-                : throw new Exception($"Failed to get pull review {request.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
+                : throw new Exception($"Failed to get pull review {metadata.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
         }
     } 
 
-    public static async Task<List<string>> PostReviews(HttpClient httpClient, IConfiguration configuration, ITokenService authService, IContextService contextService, string path, Dictionary<string, string> diffSections, List<AnthropicResponseDto> reviews, RequestPullReviewDto request) {
+    public async Task<List<string>> PostReviews(ITokenService tokenService, List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
+        BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
 
-        var rev = reviews;
         // send each diff file review as it's own individual comment
         var responses = new List<string>();
         var exceptions = new List<Exception>(); 
         for(int index = 0; index < reviews.Count; index++) {
-            AnthropicResponseDto review = reviews[index];
-            using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments")) {
-                review.Content[0].Text.Content.Inline.Path = path;
+            ChatResponseText review = reviews[index];
+            using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
+                // figure this out!!!!!! review.Content[0].Text.Content.Inline.Path = diffSections[]; <= need to add that to params
 
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await authService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));     
-                message.Content = new StringContent(JsonSerializer.Serialize(review.Content[index].Text), System.Text.Encoding.UTF8, "application/json");
-
-                Console.WriteLine($"\nCHECKPOINT: {review.Content[index].Text}\n\n");
-
-                Console.WriteLine($"\n\nURL: https://api.bitbucket.org/2.0/repositories/{request.RepoSlug}/pullrequests/{request.Id}/comments\n\n");
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+                message.Content = new StringContent(JsonSerializer.Serialize(review), System.Text.Encoding.UTF8, "application/json");
 
                 /*
                 if(diffSections == null)
@@ -50,11 +52,11 @@ public static class BitbucketApiClient {
                     .ToList();
                 */
                 
-                var response = await httpClient.SendAsync(message); 
+                var response = await _factory.CreateClient().SendAsync(message); 
                 if(response.IsSuccessStatusCode)
                     responses.Add(await response.Content.ReadAsStringAsync());
                 else
-                    exceptions.Add(new Exception($"Post for review failed for pull review: {request.Id}, status: {response.StatusCode}, {await response.Content.ReadAsStringAsync()}"));
+                    exceptions.Add(new Exception($"Post for review failed for pull review: {metadata.Id}, status: {response.StatusCode}, {await response.Content.ReadAsStringAsync()}"));
             }
         }
 
@@ -65,7 +67,7 @@ public static class BitbucketApiClient {
         if(responses.Count > 0)
             return responses;
         else
-            throw new HttpRequestException($"No {nameof(RequestReviews)} calls were successfull, failed to perform review.");
+            throw new HttpRequestException($"No {nameof(PostReviews)} calls were successfull, failed to perform review.");
     }
 
 }

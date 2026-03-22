@@ -4,6 +4,7 @@ using pr.net.Services.Chat;
 using pr.net.Services.Tokens;
 using pr.net.Services.Requests.Bitbucket;
 using pr.net.Endpoints;
+using pr.net.Services.Clients.Bitbucket;
 
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
@@ -26,7 +27,7 @@ public class Program {
         );
 
         // no redirects, we have to handle them due to auth stripping
-        builder.Services.AddSingleton(_ => new HttpClient(new HttpClientHandler() { AllowAutoRedirect = false })); 
+        builder.Services.AddSingleton();
 
         // dynamic services via configuration
 
@@ -53,9 +54,13 @@ public class Program {
         switch(repoProvider) {
             case RepoProvider.Bitbucket:
                 builder.Services.AddSingleton<BitbucketRequestService>();
+                builder.Services.AddHttpClient<BitbucketApiClient>()
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
+                        AllowAutoRedirect = false
+                    });
                 break;
 
-            // chain other repository provider types here
+            // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
         }
 
         switch(authProvider) {

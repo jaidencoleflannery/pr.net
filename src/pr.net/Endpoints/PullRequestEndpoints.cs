@@ -14,14 +14,13 @@ public static class PullRequestEndpoints {
         Console.WriteLine("Endpoint opened at: \"/bitbucket/pullrequest/created\"");
         group.MapPost("/created", (
             [FromServices] ILogger<BitbucketRequestService> logger, 
-            [FromServices] HttpClient httpClient, 
             [FromServices] IConfiguration configuration, 
             [FromServices] ITokenService tokenService, 
             [FromServices] BitbucketRequestService requestEngine, 
             [FromServices] IInstructionsService instructionsService,
             [FromServices] IChatService chatService,
             [FromBody] BitbucketPullReviewCreatedEventDto prEvent 
-            ) => requestEngine.ProcessNewPullRequest(logger, httpClient, configuration, tokenService, instructionsService, chatService, prEvent));
+            ) => requestEngine.ProcessNewPullRequest(logger, configuration, tokenService, instructionsService, chatService, prEvent));
     } 
 
 }
