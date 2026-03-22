@@ -1,9 +1,9 @@
+using pr.net.Models.Incoming.Generic;
+
 namespace pr.net.Services.Chat;
 
 public interface IChatService {
     
-    Task GetReviewsAsync(Dictionary<string, string> diffSections);
-
-
+    Task<List<ChatResponse>> GetChatReviewsAsync(Dictionary<string, string> diffSections);
 
 }

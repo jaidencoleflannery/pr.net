@@ -9,9 +9,9 @@ using static pr.net.Models.Enums.ChatProviders;
 
 namespace pr.net.Services.Clients.Bitbucket;
 
-public class BitbucketApiClient(HttpClient client) : IRepositoryApiClient {
+public class BitbucketApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
 
-    public async Task<string> GetPullRequestData(ITokenService tokenService, PullReviewCreatedMetadata request) {
+    public async Task<string> GetPullRequestData(PullReviewCreatedMetadata request) {
         BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
         using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
@@ -23,10 +23,10 @@ public class BitbucketApiClient(HttpClient client) : IRepositoryApiClient {
         }
     } 
 
-    public async Task<List<string>> PostReviews(ITokenService tokenService, List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
+    public async Task<List<string>> PostReviews(List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
         BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
 
-        // send each diff file review as it's own individual comment
+        // send each diff file review as it's own individual comment, and save each status
         var responses = new List<string>();
         var exceptions = new List<Exception>(); 
         for(int index = 0; index < reviews.Count; index++) {

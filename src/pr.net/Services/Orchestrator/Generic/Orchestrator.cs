@@ -6,14 +6,17 @@ using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Services.Orchestration;
 
-public class Orchestrator(IRepositoryRequestService requestService, IChatService chatService) {
+public class Orchestrator(IRepositoryRequestService repoService, IChatService chatService) {
 
     public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) {
         // get each file and it's associated diff
-        Dictionary<string, string> diffFiles = await requestService.GetPullRequestFiles(prEvent);
+        Dictionary<string, string> diffFiles = await repoService.GetPullReviewFiles(prEvent);
 
         // get reviews for each file
-        chatService.
+        List<ChatResponse> reviews = await chatService.GetChatReviewsAsync(diffFiles);
+
+        // post reviews to pr
+        await repoService.PostChatReviews();
     }
 
 }

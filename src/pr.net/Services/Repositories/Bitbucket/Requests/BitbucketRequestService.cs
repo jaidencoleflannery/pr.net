@@ -4,13 +4,14 @@ using pr.net.Services.Clients.Bitbucket;
 using pr.net.Services.Tokens;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Outbound.Generic;
 
 namespace pr.net.Services.Requests.Bitbucket;
 
 public class BitbucketRequestService(ILogger logger, ITokenService tokenService, IRepositoryApiClient client) : IRepositoryRequestService {
 
     // returns a dictionary of key: file, value: diff
-    public async Task<Dictionary<string, string>> GetPullRequestFiles(PullReviewCreatedEvent prEvent) {
+    public async Task<Dictionary<string, string>> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
         BitbucketPullReviewCreatedEventDto createdEvent = (BitbucketPullReviewCreatedEventDto)prEvent;
         try {
             // get the pull request diff
@@ -24,6 +25,11 @@ public class BitbucketRequestService(ILogger logger, ITokenService tokenService,
             logger.LogError($"\n{DateTime.Now}: {exception}\n[ Error processing pull request with Id: {createdEvent.PullRequest.Id}. Review not posted. ]\n");
             throw new Exception("Failed to pull and parse diff.");
         }
+    }
+
+    // posts reviews to specific pull review
+    public async Task PostChatReviews(List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
+       client.PostReviews(reviews, request);
     }
 
 }
