@@ -4,7 +4,7 @@ using pr.net.Services.Tokens;
 
 namespace pr.net.Services.Repositories.Generic;
 
-public interface IApiClient {
+public interface IRepositoryApiClient {
 
     Task<string> GetPullRequestData(ITokenService tokenService, PullReviewCreatedMetadata request);
 

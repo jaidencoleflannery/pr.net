@@ -4,6 +4,8 @@ using pr.net.Services.Requests.Bitbucket;
 using pr.net.Services.Tokens;
 using pr.net.Services.Chat.Instructions;
 using pr.net.Services.Chat;
+using pr.net.Services.Repositories.Generic;
+using pr.net.Services.Orchestration;
 
 namespace pr.net.Endpoints;
 
@@ -11,16 +13,10 @@ public static class PullRequestEndpoints {
 
     public static void MapBitbucketPullRequestEndpoints(this IEndpointRouteBuilder app) {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
-        Console.WriteLine("Endpoint opened at: \"/bitbucket/pullrequest/created\"");
         group.MapPost("/created", (
-            [FromServices] ILogger<BitbucketRequestService> logger, 
-            [FromServices] IConfiguration configuration, 
-            [FromServices] ITokenService tokenService, 
-            [FromServices] BitbucketRequestService requestEngine, 
-            [FromServices] IInstructionsService instructionsService,
-            [FromServices] IChatService chatService,
-            [FromBody] BitbucketPullReviewCreatedEventDto prEvent 
-            ) => requestEngine.ProcessNewPullRequest(logger, configuration, tokenService, instructionsService, chatService, prEvent));
+            [FromServices] Orchestrator orchestrator,
+            [FromBody] BitbucketPullReviewCreatedEventDto prEvent
+        ) => orchestrator.ProcessNewPullRequest(prEvent));
     } 
 
 }

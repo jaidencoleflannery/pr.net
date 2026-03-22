@@ -1,3 +1,9 @@
 namespace pr.net.Services.Chat;
 
-public abstract class IChatService { }
+public interface IChatService {
+    
+    Task GetReviewsAsync(Dictionary<string, string> diffSections);
+
+
+
+}

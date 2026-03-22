@@ -5,6 +5,8 @@ using pr.net.Services.Tokens;
 using pr.net.Services.Requests.Bitbucket;
 using pr.net.Endpoints;
 using pr.net.Services.Clients.Bitbucket;
+using pr.net.Services.Repositories.Generic; 
+using pr.net.Services.Orchestration;
 
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
@@ -26,10 +28,7 @@ public class Program {
             }
         );
 
-        // no redirects, we have to handle them due to auth stripping
-        builder.Services.AddSingleton();
-
-        // dynamic services via configuration
+        // dynamic services via configuration - grab config values and validate
 
         string? _repoProvider = null; 
         if((_repoProvider = builder.Configuration["Repo:Provider"]) == null)
@@ -51,17 +50,19 @@ public class Program {
             throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
         ChatProvider chatProvider = ValidateChatProvider(_chatProvider);
 
+        // register services from config values
+
         switch(repoProvider) {
-            case RepoProvider.Bitbucket:
-                builder.Services.AddSingleton<BitbucketRequestService>();
+            case RepoProvider.Bitbucket: 
                 builder.Services.AddHttpClient<BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false
-                    });
+                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
+                    }); 
+                builder.Services.AddSingleton<IRepositoryRequestService, BitbucketRequestService>();
                 break;
 
-            // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
-        }
+            // chain other repository provider types here - ensure they all have their own request service and apiclient configured, and no redirects
+        } 
 
         switch(authProvider) {
             case AuthProvider.Environment:
@@ -87,15 +88,18 @@ public class Program {
             // chain other types of chat providers here
         }
 
+        builder.Services.AddSingleton<Orchestrator>();
+
         var app = builder.Build();
  
         // this endpoint gives you payload examples (dev only)
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
-            Console.WriteLine("pr.net is running in Development mode.");
+            Console.WriteLine("\n######## [ pr.net is running in Development mode ] ########\n");
             // app.MapIntakeTestingEndpoints(); // leave disabled unless testing
         }
 
         switch(repoProvider) {
+            // we do per repo provider endpoints since the data we receive varies drastically
             case RepoProvider.Bitbucket:
                 app.MapBitbucketPullRequestEndpoints();
                 break;

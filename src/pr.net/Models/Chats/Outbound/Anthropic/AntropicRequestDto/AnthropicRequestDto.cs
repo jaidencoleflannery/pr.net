@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
+using pr.net.Models.Outbound.Generic;
 
 namespace pr.net.Models.Outbound.Anthropic;
 
-public class AnthropicRequestDto {
+public class AnthropicRequestDto : Request {
 
     [JsonPropertyName("messages")]
     public List<AnthropicMessageDto> Messages { get; set; } = new List<AnthropicMessageDto>();

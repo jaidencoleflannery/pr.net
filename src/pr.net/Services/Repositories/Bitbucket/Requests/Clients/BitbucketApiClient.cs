@@ -9,17 +9,17 @@ using static pr.net.Models.Enums.ChatProviders;
 
 namespace pr.net.Services.Clients.Bitbucket;
 
-public class BitbucketApiClient : IApiClient {
-    private readonly IHttpClientFactory _factory;
+public class BitbucketApiClient : IRepositoryApiClient {
+    private readonly HttpClient _client;
 
-    public BitbucketApiClient(IHttpClientFactory factory) {
-        _factory = factory;
+    public BitbucketApiClient(HttpClient client) {
+        _client = client;
     }
     public async Task<string> GetPullRequestData(ITokenService tokenService, PullReviewCreatedMetadata request) {
         BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
         using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
-            var response = await _factory.CreateClient().SendAsync(message);
+            var response = await _client.SendAsync(message);
 
             return (response!= null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
@@ -52,7 +52,7 @@ public class BitbucketApiClient : IApiClient {
                     .ToList();
                 */
                 
-                var response = await _factory.CreateClient().SendAsync(message); 
+                var response = await _client.SendAsync(message); 
                 if(response.IsSuccessStatusCode)
                     responses.Add(await response.Content.ReadAsStringAsync());
                 else
