@@ -1,9 +1,9 @@
+using System.Text.Json;
 using pr.net.Models.Bitbucket;
-using pr.net.Services.Clients.Bitbucket; 
-using pr.net.Services.Tokens;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Outbound.Generic;
+using pr.net.Models.Incoming.Anthropic;
 
 namespace pr.net.Services.Requests.Bitbucket;
 
@@ -27,8 +27,9 @@ public class BitbucketRequestService(ILogger<BitbucketRequestService> logger, IR
     }
 
     // posts reviews to specific pull review
-    public async Task PostChatReviews(Dictionary<String, ChatResponse> reviews, PullReviewCreatedMetadata request) {
-        //client.PostReviews(reviews, request);
+    public async Task PostChatReviews(Dictionary<String, ChatResponseText> reviews, PullReviewCreatedEvent prEvent) { 
+        BitbucketPullReviewCreatedMetadataDto metadata = new((BitbucketPullReviewCreatedEventDto)prEvent); // grab minimum metadata
+        var result = await client.PostReviews(reviews, metadata);
     }
 
 }

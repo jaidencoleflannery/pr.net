@@ -23,30 +23,25 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService) :
         }
     } 
 
-    public async Task<List<string>> PostReviews(List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
+    public async Task<List<string>> PostReviews(Dictionary<string, ChatResponseText> reviews, PullReviewCreatedMetadata request) {
         BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
 
         // send each diff file review as it's own individual comment, and save each status
         var responses = new List<string>();
         var exceptions = new List<Exception>(); 
-        for(int index = 0; index < reviews.Count; index++) {
-            ChatResponseText review = reviews[index];
+        JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
+        foreach(var (file, review) in reviews) {
+            Console.WriteLine($"{file}: {JsonSerializer.Serialize((object)review, jsonSettings)}");
+        }
+        foreach(var (file, review) in reviews) {
             using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
-                // figure this out!!!!!! review.Content[0].Text.Content.Inline.Path = diffSections[]; <= need to add that to params
-
+                Console.WriteLine($"\n{JsonSerializer.Serialize(review)}\n");
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
-                message.Content = new StringContent(JsonSerializer.Serialize(review), System.Text.Encoding.UTF8, "application/json");
+                Console.WriteLine(await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+                message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json");
 
-                /*
-                if(diffSections == null)
-                    throw new InvalidOperationException($"{nameof(diffSections)} was null.");
-                var messages = diffSections
-                    .Select(diff => new AnthropicMessageDto() { Role = "user", Content = diff.Value })
-                    .ToList();
-                var requestDtos = messages
-                    .Select(message => new AnthropicRequestDto() { Model = model, MaxTokens = maxTokens, Messages = messages, OutputConfig = new AnthropicOutputConfig() })
-                    .ToList();
-                */
+                if(review == null)
+                    throw new InvalidOperationException($"{nameof(review)} was null."); 
                 
                 var response = await client.SendAsync(message); 
                 if(response.IsSuccessStatusCode)

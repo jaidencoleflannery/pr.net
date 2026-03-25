@@ -8,6 +8,6 @@ public interface IRepositoryApiClient {
 
     Task<string> GetPullRequestData(PullReviewCreatedMetadata request);
 
-    Task<List<string>> PostReviews(List<ChatResponseText> reviews, PullReviewCreatedMetadata request);
+    Task<List<string>> PostReviews(Dictionary<string, ChatResponseText> reviews, PullReviewCreatedMetadata request);
 
 }

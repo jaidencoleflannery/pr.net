@@ -7,6 +7,6 @@ namespace pr.net.Services.Chat.Generic;
 
 public interface IChatApiClient {
 
-    Task<List<ChatResponse>> RequestReviewsAsync(List<AnthropicRequestDto> requestDtos, string url);
+    Task<List<ChatResponseText>> RequestReviewsAsync(List<AnthropicRequestDto> requestDtos, string url);
 
 }

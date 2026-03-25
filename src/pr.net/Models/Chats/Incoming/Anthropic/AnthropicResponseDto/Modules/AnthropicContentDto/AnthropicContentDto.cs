@@ -8,5 +8,5 @@ public class AnthropicContentDto {
     public string? Type { get; set; } = "text";
 
     [JsonPropertyName("text")]
-    public AnthropicTextDto Text { get; set; } = new AnthropicTextDto(); 
+    public string Text { get; set; } = string.Empty; 
 }

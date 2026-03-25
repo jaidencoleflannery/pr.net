@@ -100,7 +100,7 @@ public class Program {
  
         // this endpoint gives you payload examples (dev only)
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
-            Console.WriteLine("\n######## [ pr.net is running in Development mode ] ########\n");
+            Console.WriteLine("\n\u28FF\u28D3\u28FF\u2895\u28FF\u28FF\u28FF\u2833 [ pr.net is running in Development mode ] \u28B7\u28FF\u2833\u28FF\u28FF\u28D3\u2895\u28FF\n");
             // app.MapIntakeTestingEndpoints(); // leave disabled unless testing
         }
 

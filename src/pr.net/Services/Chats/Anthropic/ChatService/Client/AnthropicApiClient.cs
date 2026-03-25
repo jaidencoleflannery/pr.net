@@ -11,10 +11,10 @@ namespace pr.net.Services.Chat.Anthropic;
 public class AnthropicApiClient(ITokenService tokenService, HttpClient client) : IChatApiClient {
 
     // RequestReview should be given *individual files* of the cumulative diff, passing the entire diff will reduce the quality of response and should be avoided
-    public async Task<List<ChatResponse>> RequestReviewsAsync(List<AnthropicRequestDto> requestDtos, string url) { 
+    public async Task<List<ChatResponseText>> RequestReviewsAsync(List<AnthropicRequestDto> requestDtos, string url) { 
 
         // iterate over every instance of requestDtos and send them individually 
-        var responses = new List<ChatResponse>();
+        var responses = new List<ChatResponseText>();
         var exceptions = new List<Exception>();
         System.Uri targetUrl = new System.Uri(url);
         foreach(var requestDto in requestDtos) {
@@ -28,12 +28,18 @@ public class AnthropicApiClient(ITokenService tokenService, HttpClient client) :
                 message.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await client.SendAsync(message); 
-                string responseJson = await response.Content.ReadAsStringAsync();
-                ChatResponse dto = JsonSerializer.Deserialize<AnthropicResponseDto>(responseJson)!;
+                string responseString = await response.Content.ReadAsStringAsync();
+                AnthropicResponseDto exampleDto = new();
+                AnthropicResponseDto responseDto = JsonSerializer.Deserialize<AnthropicResponseDto>(responseString)!;
+                AnthropicTextDto textDto = JsonSerializer.Deserialize<AnthropicTextDto>(responseDto.Content[0].Text)!;
+
                 if(response.IsSuccessStatusCode) {
-                    responses.Add(dto);
+                    if(textDto != null)
+                        responses.Add(textDto);
+                    else
+                        Console.WriteLine("Failed to parse chat response.");
                 } else {
-                    Exception exception = new Exception($"Request for review failed: {responseJson}");
+                    Exception exception = new Exception($"Request for review failed: {responseDto}");
                     Console.WriteLine(exception);
                     exceptions.Add(exception);
                 }

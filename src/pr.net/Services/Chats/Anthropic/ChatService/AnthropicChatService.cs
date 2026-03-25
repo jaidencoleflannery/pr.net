@@ -10,7 +10,7 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration configuration, IInstructionsService instructionsService, IChatApiClient client) : IChatService { 
 
-    public async Task<Dictionary<string, ChatResponse>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
+    public async Task<Dictionary<string, ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
         if(diffSections.Count < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
 
@@ -43,7 +43,7 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
             diff => new AnthropicRequestDto {
                 Model = model,
                 MaxTokens = maxTokens,
-                Messages = [new AnthropicMessageDto { Role = "User", Content = diff.Value }],
+                Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
                 OutputConfig = new AnthropicOutputConfig()
             });
 

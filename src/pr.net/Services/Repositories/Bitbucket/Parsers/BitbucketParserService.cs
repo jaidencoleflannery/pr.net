@@ -13,8 +13,8 @@ public static class BitbucketParserService {
         foreach(var line in diff.Split('\n')) {
             if(line.StartsWith("diff --git")) {
                 foreach(var word in line.Split(' ')) {
-                    if(word.StartsWith(" b/")) {
-                        file = word;
+                    if(word.StartsWith("b/")) {
+                        file = word.Substring(2);
                         break;
                     }
                 }
