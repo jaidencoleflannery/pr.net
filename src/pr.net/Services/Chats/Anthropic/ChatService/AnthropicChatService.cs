@@ -47,7 +47,7 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
                 OutputConfig = new AnthropicFilteringOutputConfig()
             });
 
-        List<ChatFilteringResponseText> responses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
+        List<ChatFilteringResponseText> filterResponses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
         foreach(var (path, response) in requestsPerPath.Keys.Zip(responses)) {
             ((AnthropicTextDto)response).Inline.Path = path;
         }
