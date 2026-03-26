@@ -11,16 +11,56 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration configuration, IInstructionsService instructionsService, IChatApiClient client) : IChatService { 
 
+    public async Task<Dictionary<string, string>> FilterDiffsAsync(Dictionary<string, string> diffSections) {
+        if(configuration.GetValue<bool>("Chat:Filtering:Filter") == false)
+            return diffSections;
+
+        if(diffSections.Count < 1)
+            throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
+        
+        ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
+        if(provider != ChatProvider.Anthropic)
+            throw new InvalidOperationException("Provider configuration does not match injected service.");
+
+        string? url = GetUrl(provider.Value)
+            ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
+
+        string? model = null;
+        if(configuration.GetValue<bool>("Chat:Filtering:UseEmbedding")) {
+            // configure provider specific embedding
+        } else if(!configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
+            model = configuration["Chat:Filtering:Model"];    
+        if(model == null)
+            throw new InvalidOperationException("Configuration for Chat:Filtering:Model could not be found or read."); 
+
+        string maxTokensString = configuration["Chat:Filtering:MaxTokens"]
+            ?? throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read.");
+        if(!int.TryParse(maxTokensString, out var maxTokens))
+            throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format.");
+
+        var requestsPerPath = diffSections.ToDictionary(
+            diff => diff.Key,
+            diff => new AnthropicRequestDto {
+                Model = model,
+                MaxTokens = maxTokens,
+                Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
+                OutputConfig = new AnthropicFilteringOutputConfig()
+            });
+
+        List<ChatFilteringResponseText> responses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
+        foreach(var (path, response) in requestsPerPath.Keys.Zip(responses)) {
+            ((AnthropicTextDto)response).Inline.Path = path;
+        }
+        return responses;
+    }
+
     public async Task<List<ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
         if(diffSections.Count < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
 
         ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
         if(provider != ChatProvider.Anthropic)
-            throw new InvalidOperationException("Provider configuration does not match injected service.");
-
-        List<string> instructions = await instructionsService.GetInstructions(configuration["Chat:Provider"] ?? string.Empty);
-            // ?? throw new InvalidOperationException("Could not fetch instructions.");
+            throw new InvalidOperationException("Provider configuration does not match injected service."); 
 
         string? url = GetUrl(provider.Value)
             ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
@@ -30,9 +70,11 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
 
         string maxTokensString = configuration["Chat:MaxTokens"]
             ?? throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read.");
-
         if(!int.TryParse(maxTokensString, out var maxTokens))
             throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
+
+        List<string> instructions = await instructionsService.GetInstructions(configuration["Chat:Provider"] ?? string.Empty);
+            // ?? throw new InvalidOperationException("Could not fetch instructions.");
 
         // instructions is a per line array so we can optionally do weird stuff to it in other places
         StringBuilder instructionsBuilder = new StringBuilder();
