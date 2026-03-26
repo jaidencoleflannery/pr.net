@@ -3,6 +3,7 @@ using pr.net.Services.Chat.Instructions;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Outbound.Anthropic;
 using pr.net.Services.Chat.Generic;
+using pr.net.Models.Incoming.Anthropic;
 
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -10,7 +11,7 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration configuration, IInstructionsService instructionsService, IChatApiClient client) : IChatService { 
 
-    public async Task<Dictionary<string, ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
+    public async Task<List<ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
         if(diffSections.Count < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
 
@@ -47,9 +48,11 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
                 OutputConfig = new AnthropicOutputConfig()
             });
 
-        var reviews = await client.RequestReviewsAsync(requestsPerPath.Values.ToList(), url);
-
-        return requestsPerPath.Keys.Zip(reviews, (path, review) => (path, review)).ToDictionary(x => x.path, x => x.review);
+        List<ChatResponseText> responses = await client.RequestReviewsAsync(requestsPerPath.Values.ToList(), url);
+        foreach(var (path, response) in requestsPerPath.Keys.Zip(responses)) {
+            ((AnthropicTextDto)response).Inline.Path = path;
+        }
+        return responses;
     } 
 
 }

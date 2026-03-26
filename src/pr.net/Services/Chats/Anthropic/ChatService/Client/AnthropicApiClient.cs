@@ -16,7 +16,7 @@ public class AnthropicApiClient(ITokenService tokenService, HttpClient client) :
         // iterate over every instance of requestDtos and send them individually 
         var responses = new List<ChatResponseText>();
         var exceptions = new List<Exception>();
-        System.Uri targetUrl = new System.Uri(url);
+        System.Uri targetUrl = new Uri(url);
         foreach(var requestDto in requestDtos) {
             if(requestDto.Messages.Count < 1)
                 continue;

@@ -1,8 +1,6 @@
 using pr.net.Services.Chat;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Models.Incoming.Generic;
-using pr.net.Models.Outbound.Generic;
-using pr.net.Models.Bitbucket;
 
 namespace pr.net.Services.Orchestration;
 
@@ -13,7 +11,7 @@ public class Orchestrator(IRepositoryRequestService repoService, IChatService ch
         Dictionary<string, string> diffFiles = await repoService.GetPullReviewFiles(prEvent);
 
         // get each file's associated review
-        Dictionary<string, ChatResponseText> reviews = await chatService.GetChatReviewsAsync(diffFiles);
+        List<ChatResponseText> reviews = await chatService.GetChatReviewsAsync(diffFiles);
 
         // post reviews to branch
         await repoService.PostChatReviews(reviews, prEvent);
