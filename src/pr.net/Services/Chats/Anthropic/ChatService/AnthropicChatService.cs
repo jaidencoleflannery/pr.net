@@ -41,14 +41,20 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
                 Model = model!,
                 MaxTokens = maxTokens,
                 Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
-                OutputConfig = new AnthropicFilteringConfigDto()
+                OutputConfig = new AnthropicFilteringOutputConfigDto()
             });
 
-        List<ChatFilteringResponseText> filterResponses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
-        foreach(var (path, response) in requestsPerPath.Keys.Zip(responses)) {
-            ((AnthropicTextDto)response).Inline.Path = path;
-        }
-        return responses;
+        List<ChatResponseText> filterResponses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
+        var keysToRemove = diffSections
+            .Keys.Zip(filterResponses, (key, resp) => (key, resp))
+            .Where(res => bool.Parse(((AnthropicFilteringTextDto)res.resp).Content.Raw))
+            .Select(res => res.key)
+            .ToList();
+
+        foreach(var key in keysToRemove)
+            diffSections.Remove(key);
+
+        return diffSections;
     }
 
     public async Task<List<ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {

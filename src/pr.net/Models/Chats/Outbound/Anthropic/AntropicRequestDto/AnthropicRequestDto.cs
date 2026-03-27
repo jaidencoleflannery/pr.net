@@ -19,6 +19,6 @@ public class AnthropicRequestDto : Request {
     public string? System { get; set; } = null;
  
     [JsonPropertyName("output_config")]
-    public AnthropicOutputConfig? OutputConfig { get; set; } = new AnthropicOutputConfig();
+    public OutputConfig? OutputConfig { get; set; } = new AnthropicOutputConfig();
 
 }
