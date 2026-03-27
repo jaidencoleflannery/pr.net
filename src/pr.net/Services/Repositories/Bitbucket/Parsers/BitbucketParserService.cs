@@ -22,6 +22,10 @@ public static class BitbucketParserService {
             }
             builder.AppendLine(line);
         }
+
+        if(builder.Length > 0)
+            diffSections.Add(file, builder.ToString());
+
         return diffSections;
     }
 
