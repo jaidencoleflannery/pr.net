@@ -43,7 +43,7 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
             diff => new AnthropicRequestDto {
                 Model = model!,
                 MaxTokens = maxTokens,
-                Messages = [new AnthropicMessageDto { Role = "user", Content = $"You are an automated system that decides if a Pull Request Diff needs a review (true == needs review, false == good to pass), or if it's simple enough to let pass. Is this diff worth reviewing? ```{diff.Value}```" }],
+                Messages = [new AnthropicMessageDto { Role = "user", Content = $"Is this diff worth reviewing? ```{diff.Value}```" }],
                 OutputConfig = new AnthropicFilteringOutputConfigDto(),
                 System = instructions
             }); 
@@ -80,13 +80,8 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
         if(!int.TryParse(maxTokensString, out var maxTokens))
             throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
 
-        List<string> instructions = await instructionsService.GetInstructions(isForFiltering: false)
-            ?? throw new InvalidOperationException("Could not fetch instructions.");
-
-        // instructions is a per line array so we can optionally do weird stuff to it in other places
-        StringBuilder instructionsBuilder = new StringBuilder();
-        foreach(var instruction in instructions)
-            instructionsBuilder.AppendLine(instruction);
+        string instructions = string.Join(' ', await instructionsService.GetInstructions(isForFiltering: false))
+            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
  
         var requestsPerPath = diffSections.ToDictionary(
             diff => diff.Key,
@@ -94,7 +89,8 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
                 Model = model,
                 MaxTokens = maxTokens,
                 Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
-                OutputConfig = new AnthropicOutputConfig()
+                OutputConfig = new AnthropicOutputConfig(),
+                System = instructions
             });
 
         List<ChatResponseText> responses = await client.RequestReviewsAsync(requestsPerPath.Values.ToList(), url);
