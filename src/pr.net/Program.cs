@@ -102,7 +102,7 @@ public class Program {
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
             Console.WriteLine("\npr.net is running in Development mode.\n");
             // leave disabled unless testing
-            // app.MapIntakeTestingEndpoints(); 
+            app.MapIntakeTestingEndpoints(); 
         }
 
         switch(repoProvider) {
