@@ -24,7 +24,7 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
 
         string? model = null; 
         if(configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
-            Console.WriteLine("BAD CHECK");
+            Console.WriteLine("Embedding has not been configured.");
             // configure provider specific embedding
         else if(!configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
             model = configuration["Chat:Filtering:Model"]
@@ -33,7 +33,10 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
         string maxTokensString = configuration["Chat:Filtering:MaxTokens"]
             ?? throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read.");
         if(!int.TryParse(maxTokensString, out var maxTokens))
-            throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format.");
+            throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format."); 
+
+        string instructions = string.Join(' ', await instructionsService.GetInstructions(isForFiltering: true))
+            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
 
         var requestsPerPath = diffSections.ToDictionary(
             diff => diff.Key,
@@ -41,8 +44,9 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
                 Model = model!,
                 MaxTokens = maxTokens,
                 Messages = [new AnthropicMessageDto { Role = "user", Content = $"You are an automated system that decides if a Pull Request Diff needs a review (true == needs review, false == good to pass), or if it's simple enough to let pass. Is this diff worth reviewing? ```{diff.Value}```" }],
-                OutputConfig = new AnthropicFilteringOutputConfigDto()
-            });
+                OutputConfig = new AnthropicFilteringOutputConfigDto(),
+                System = instructions
+            }); 
 
         List<ChatResponseText> filterResponses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
         var keysToRemove = diffSections
@@ -76,8 +80,8 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
         if(!int.TryParse(maxTokensString, out var maxTokens))
             throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
 
-        List<string> instructions = await instructionsService.GetInstructions(configuration["Chat:Provider"] ?? string.Empty);
-            // ?? throw new InvalidOperationException("Could not fetch instructions.");
+        List<string> instructions = await instructionsService.GetInstructions(isForFiltering: false)
+            ?? throw new InvalidOperationException("Could not fetch instructions.");
 
         // instructions is a per line array so we can optionally do weird stuff to it in other places
         StringBuilder instructionsBuilder = new StringBuilder();

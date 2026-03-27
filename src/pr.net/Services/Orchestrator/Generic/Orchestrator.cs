@@ -11,12 +11,12 @@ public class Orchestrator(IConfiguration configuration, IRepositoryRequestServic
         Dictionary<string, string> diffFiles = await repoService.GetPullReviewFiles(prEvent);
 
         // if enabled, filter diffs for ones that are worth review
-        Dictionary<string, string> filteredDiffFiles = (configuration.GetValue<bool>("Chat:Filtering:Filter") == true)
+        Dictionary<string, string> filteredDiffFiles = (configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
             ? await chatService.FilterDiffsAsync(diffFiles)
             : diffFiles;
         
         if(filteredDiffFiles.Values.Count <= 0) {
-            Console.WriteLine("\n\u28FF\u28D3\u28FF\u2895\u28FF\u28FF\u28FF\u2833 [ No diffs were worth review. Returning early. ] \u28B7\u28FF\u2833\u28FF\u28FF\u28D3\u2895\u28FF\n");
+            Console.WriteLine("\n\u28FF\u28D3\u28FF\u2895\u28FF\u28FF\u28FF\u2833 [ No diffs were deemed worthy of review. ] \u28B7\u28FF\u2833\u28FF\u28FF\u28D3\u2895\u28FF\n");
             return;
         }
 
