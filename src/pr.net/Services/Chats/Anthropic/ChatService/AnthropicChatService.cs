@@ -11,12 +11,9 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration configuration, IInstructionsService instructionsService, IChatApiClient client) : IChatService { 
 
-    public async Task<Dictionary<string, string>> FilterDiffsAsync(Dictionary<string, string> diffSections) {
-        if(configuration.GetValue<bool>("Chat:Filtering:Filter") == false)
-            return diffSections;
-
+    public async Task<Dictionary<string, string>> FilterDiffsAsync(Dictionary<string, string> diffSections) { 
         if(diffSections.Count < 1)
-            throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
+            throw new InvalidOperationException($"No diffs provided to {nameof(FilterDiffsAsync)}");
         
         ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
         if(provider != ChatProvider.Anthropic)
@@ -25,13 +22,13 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
         string? url = GetUrl(provider.Value)
             ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
 
-        string? model = null;
-        if(configuration.GetValue<bool>("Chat:Filtering:UseEmbedding")) {
+        string? model = null; 
+        if(configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
+            Console.WriteLine("BAD CHECK");
             // configure provider specific embedding
-        } else if(!configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
-            model = configuration["Chat:Filtering:Model"];    
-        if(model == null)
-            throw new InvalidOperationException("Configuration for Chat:Filtering:Model could not be found or read."); 
+        else if(!configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
+            model = configuration["Chat:Filtering:Model"]
+                ?? throw new InvalidOperationException("Configuration for Chat:Filtering:Model could not be found or read.");
 
         string maxTokensString = configuration["Chat:Filtering:MaxTokens"]
             ?? throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read.");
@@ -41,10 +38,10 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
         var requestsPerPath = diffSections.ToDictionary(
             diff => diff.Key,
             diff => new AnthropicRequestDto {
-                Model = model,
+                Model = model!,
                 MaxTokens = maxTokens,
                 Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
-                OutputConfig = new AnthropicFilteringOutputConfig()
+                OutputConfig = new AnthropicFilteringConfigDto()
             });
 
         List<ChatFilteringResponseText> filterResponses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
