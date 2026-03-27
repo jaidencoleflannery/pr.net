@@ -16,7 +16,7 @@ public class Orchestrator(IConfiguration configuration, IRepositoryRequestServic
             : diffFiles;
         
         if(filteredDiffFiles.Values.Count <= 0) {
-            Console.WriteLine("No diffs were worth review. Returning early.");
+            Console.WriteLine("\n\u28FF\u28D3\u28FF\u2895\u28FF\u28FF\u28FF\u2833 [ No diffs were worth review. Returning early. ] \u28B7\u28FF\u2833\u28FF\u28FF\u28D3\u2895\u28FF\n");
             return;
         }
 
