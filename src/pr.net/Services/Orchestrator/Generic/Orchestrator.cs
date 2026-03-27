@@ -16,7 +16,7 @@ public class Orchestrator(IConfiguration configuration, IRepositoryRequestServic
             : diffFiles;
         
         if(filteredDiffFiles.Values.Count <= 0) {
-            Console.WriteLine("\n\u28FF\u28D3\u28FF\u2895\u28FF\u28FF\u28FF\u2833 [ No diffs were deemed worthy of review. ] \u28B7\u28FF\u2833\u28FF\u28FF\u28D3\u2895\u28FF\n");
+            Console.WriteLine("\nNo diffs were deemed worthy of review.\n");
             return;
         }
 

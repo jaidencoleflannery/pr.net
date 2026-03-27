@@ -12,7 +12,7 @@ Do not add an introduction, just directly give the answer. Don't worry about for
  
 ## Comment Format
  
-Prefix every comment with one of: `[ blocker ]:` `[ warning ]:` `[ nit ]:`
+Prefix every comment with one of: `Blocker:` `Warning:` `Nit:`
  
 ```
 [severity]: [problem statement]
