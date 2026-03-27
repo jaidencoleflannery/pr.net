@@ -14,6 +14,11 @@ public class Orchestrator(IConfiguration configuration, IRepositoryRequestServic
         Dictionary<string, string> filteredDiffFiles = (configuration.GetValue<bool>("Chat:Filtering:Filter") == true)
             ? await chatService.FilterDiffsAsync(diffFiles)
             : diffFiles;
+        
+        if(filteredDiffFiles.Values.Count <= 0) {
+            Console.WriteLine("No diffs were worth review. Returning early.");
+            return;
+        }
 
         // get each review object (contains file)
         List<ChatResponseText> reviews = await chatService.GetChatReviewsAsync(filteredDiffFiles);

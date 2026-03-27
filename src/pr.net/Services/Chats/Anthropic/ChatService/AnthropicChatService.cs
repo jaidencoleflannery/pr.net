@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using pr.net.Services.Chat.Instructions;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Outbound.Anthropic;
@@ -40,15 +41,15 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
             diff => new AnthropicRequestDto {
                 Model = model!,
                 MaxTokens = maxTokens,
-                Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
+                Messages = [new AnthropicMessageDto { Role = "user", Content = $"You are an automated system that decides if a Pull Request Diff needs a review (true == needs review, false == good to pass), or if it's simple enough to let pass. Is this diff worth reviewing? ```{diff.Value}```" }],
                 OutputConfig = new AnthropicFilteringOutputConfigDto()
             });
 
         List<ChatResponseText> filterResponses = await client.RequestFilteringAsync(requestsPerPath.Values.ToList(), url);
         var keysToRemove = diffSections
-            .Keys.Zip(filterResponses, (key, resp) => (key, resp))
-            .Where(res => bool.Parse(((AnthropicFilteringTextDto)res.resp).Content.Raw))
-            .Select(res => res.key)
+            .Keys.Zip(filterResponses)
+            .Where(pair => pair.Second is AnthropicFilteringTextDto dto && !dto.Content.Raw)
+            .Select(pair => pair.First)
             .ToList();
 
         foreach(var key in keysToRemove)

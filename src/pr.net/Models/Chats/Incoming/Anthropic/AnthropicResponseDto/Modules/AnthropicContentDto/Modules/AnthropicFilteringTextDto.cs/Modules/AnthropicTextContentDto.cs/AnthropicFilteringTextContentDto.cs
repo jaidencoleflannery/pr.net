@@ -5,6 +5,6 @@ namespace pr.net.Models.Incoming.Anthropic;
 public class AnthropicFilteringTextContentDto {
 
     [JsonPropertyName("raw")]
-    public string Raw { get; set; } = string.Empty;
+    public bool Raw { get; set; } = false;
  
 }

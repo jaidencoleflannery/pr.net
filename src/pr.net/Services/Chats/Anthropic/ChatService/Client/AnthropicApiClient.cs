@@ -64,7 +64,7 @@ public class AnthropicApiClient(ITokenService tokenService, HttpClient client) :
                 message.Headers.Add("x-api-key", token);
                 message.Headers.Add("anthropic-version", "2023-06-01");
                 var json = JsonSerializer.Serialize(requestDto);
-                message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                message.Content = new StringContent(json, Encoding.UTF8, "application/json");                
 
                 var response = await client.SendAsync(message); 
                 AnthropicResponseDto responseDto = JsonSerializer.Deserialize<AnthropicResponseDto>(await response.Content.ReadAsStringAsync())!;
