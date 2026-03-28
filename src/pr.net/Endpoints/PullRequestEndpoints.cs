@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
-using pr.net.Models.Bitbucket;
 using pr.net.Services.Orchestration;
+using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Endpoints;
 
 public static class PullRequestEndpoints {
 
-    public static void MapBitbucketPullRequestEndpoints(this IEndpointRouteBuilder app) {
+    public static void MapPullRequestEndpoints(this IEndpointRouteBuilder app) {
         var group = app.MapGroup("/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", (
             [FromServices] Orchestrator orchestrator,
-            [FromBody] BitbucketPullReviewCreatedEventDto prEvent
+            [FromBody] PullReviewCreatedEvent prEvent
         ) => orchestrator.ProcessNewPullRequest(prEvent));
     } 
 

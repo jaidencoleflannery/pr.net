@@ -103,18 +103,12 @@ public class Program {
             Console.WriteLine("\npr.net is running in Development mode.\n");
             // leave disabled unless testing
             // app.MapIntakeTestingEndpoints(); 
-        }
+        } 
 
-        switch(repoProvider) {
-            // we do per repo provider endpoints since the data we receive varies drastically
-            case RepoProvider.Bitbucket:
-                app.MapBitbucketPullRequestEndpoints();
-                break;
+        app.MapPullRequestEndpoints();
 
-            // chain other endpoint types here
-        }
-        
         app.MapGet("/", () => $"Server is running in {env} mode."); 
+
         app.Run();
     }
 }

@@ -10,20 +10,27 @@ namespace pr.net.Services.Clients.Bitbucket;
 
 public class BitbucketApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
 
-    public async Task<string> GetPullRequestData(PullReviewCreatedMetadata request) {
-        BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
-        using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
-            var response = await client.SendAsync(message);
+    public async Task<string> GetPullRequestData(PullReviewCreatedEvent request) {
+        if(request is not BitbucketPullReviewCreatedEventDto bitbucketRequest) {
+           throw new InvalidOperationException("Wrong class passed, the injected ApiClient service is Bitbucket - is the wrong service injected?");
+        } else {
+            BitbucketPullReviewCreatedMetadataDto metadata = new(bitbucketRequest);
+            using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+                var response = await client.SendAsync(message);
 
-            return (response!= null && response.IsSuccessStatusCode)
-                ? await response.Content.ReadAsStringAsync()
-                : throw new Exception($"Failed to get pull review {metadata.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
+                return (response!= null && response.IsSuccessStatusCode)
+                    ? await response.Content.ReadAsStringAsync()
+                    : throw new Exception($"Failed to get pull review {metadata.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
+            }
         }
     } 
 
-    public async Task<List<string>> PostReviews(List<ChatResponseText> reviews, PullReviewCreatedMetadata request) {
-        BitbucketPullReviewCreatedMetadataDto metadata = (BitbucketPullReviewCreatedMetadataDto)request;
+    public async Task<List<string>> PostReviews(List<ChatResponseText> reviews, PullReviewCreatedEvent request) {
+        if(request is not BitbucketPullReviewCreatedEventDto bitbucketRequest) {
+            throw new InvalidOperationException("Wrong class passed, the injected ApiClient service is Bitbucket - is the wrong service injected?");
+        } else {
+        BitbucketPullReviewCreatedMetadataDto metadata = new(bitbucketRequest); // grab minimum metadata
 
         // send each diff file review as it's own individual comment, and save each status
         var responses = new List<string>();
