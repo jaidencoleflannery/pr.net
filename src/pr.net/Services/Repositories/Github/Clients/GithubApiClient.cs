@@ -1,20 +1,20 @@
 using System.Text.Json;
-using pr.net.Models.Bitbucket;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Models.Outbound.Generic;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Services.Tokens;
 using pr.net.Models.Incoming.Anthropic;
+using pr.net.Models.Github;
 
-namespace pr.net.Services.Clients.Bitbucket;
+namespace pr.net.Services.Clients.Github;
 
-public class BitbucketApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
+public class GithubApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestData(PullReviewCreatedEvent request) {
-        if(request is not BitbucketPullReviewCreatedEventDto bitbucketRequest) {
-           throw new InvalidOperationException("Wrong class passed, the injected ApiClient service is Bitbucket - is the wrong service injected?");
+        if(request is not GithubPullReviewCreatedEventDto githubRequest) {
+           throw new InvalidOperationException($"Wrong class passed, the injected ApiClient service is {nameof(GithubApiClient)} - is the wrong service injected?");
         } else {
-            BitbucketPullReviewCreatedMetadataDto metadata = new(bitbucketRequest);
+            GithubPullReviewCreatedMetadataDto metadata = new(bitbucketRequest);
             using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
                 var response = await client.SendAsync(message);

@@ -12,7 +12,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService) :
 
     public async Task<string> GetPullRequestData(PullReviewCreatedEvent request) {
         if(request is not BitbucketPullReviewCreatedEventDto bitbucketRequest) {
-           throw new InvalidOperationException("Wrong class passed, the injected ApiClient service is Bitbucket - is the wrong service injected?");
+           throw new InvalidOperationException($"Wrong class passed, the injected ApiClient service is {nameof(BitbucketApiClient)} - is the wrong service injected?");
         } else {
             BitbucketPullReviewCreatedMetadataDto metadata = new(bitbucketRequest);
             using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
@@ -36,6 +36,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService) :
             var responses = new List<string>();
             var exceptions = new List<Exception>(); 
             JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
+            // FIX THIS DEPENDENCY v
             foreach(AnthropicTextDto review in reviews) {
                 using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
                     message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
