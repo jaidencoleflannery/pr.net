@@ -2,7 +2,7 @@ using Serilog;
 using pr.net.Services.Chat.Instructions;
 using pr.net.Services.Chat;
 using pr.net.Services.Tokens;
-using pr.net.Services.Requests.Bitbucket;
+using pr.net.Services.Requests;
 using pr.net.Services.Clients.Bitbucket;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
@@ -59,8 +59,7 @@ public class Program {
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
                         AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
-                    }); 
-                builder.Services.AddSingleton<IRepositoryRequestService, BitbucketRequestService>();
+                    });  
                 break;
 
             // chain other repository provider types here - ensure they all have their own request service and apiclient configured
@@ -94,7 +93,9 @@ public class Program {
             // chain other types of chat providers here
         }
 
+        // generic services
         builder.Services.AddSingleton<Orchestrator>();
+        builder.Services.AddSingleton<IRepositoryRequestService, RequestService>();
 
         var app = builder.Build();
  

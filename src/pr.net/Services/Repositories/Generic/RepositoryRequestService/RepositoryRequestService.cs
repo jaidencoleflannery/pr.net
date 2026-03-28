@@ -1,9 +1,10 @@
 using pr.net.Services.Repositories.Generic;
 using pr.net.Models.Incoming.Generic;
+using pr.net.Services.Parsing;
 
 namespace pr.net.Services.Requests;
 
-public class RequestService(ILogger<RequestService> logger, IRepositoryApiClient client) : IRepositoryRequestService {
+public class RepositoryRequestService(ILogger<RepositoryRequestService> logger, IRepositoryApiClient client) : IRepositoryRequestService {
 
     // returns a dictionary of key: file, value: diff
     public async Task<Dictionary<string, string>> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
@@ -12,7 +13,7 @@ public class RequestService(ILogger<RequestService> logger, IRepositoryApiClient
             string diff = await client.GetPullRequestData(prEvent);
 
             // split diff per file, diffSections should be key: file, value: diff
-            Dictionary<string, string> diffSections = BitbucketParserService.ParseDiff(diff); 
+            Dictionary<string, string> diffSections = ParserService.ParseDiff(diff); 
             return diffSections;
         } catch (Exception exception) {
             logger.LogError($"\n{DateTime.Now}: {exception}\n[ Error processing pull request. Review not posted. ]\n");
@@ -22,7 +23,7 @@ public class RequestService(ILogger<RequestService> logger, IRepositoryApiClient
 
     // posts reviews to specific pull review
     public async Task PostChatReviews(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {  
-        var result = await client.PostReviews(reviews, metadata);
+        var result = await client.PostReviews(reviews, prEvent);
     }
 
 }

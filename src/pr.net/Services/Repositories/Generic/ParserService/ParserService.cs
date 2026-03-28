@@ -1,9 +1,8 @@
 using System.Text;
-using pr.net.Models;
 
-namespace pr.net.Services;
+namespace pr.net.Services.Parsing;
 
-public static class BitbucketParserService {
+public static class ParserService {
 
     // split diff per file
     public static Dictionary<string, string> ParseDiff(string diff) {
