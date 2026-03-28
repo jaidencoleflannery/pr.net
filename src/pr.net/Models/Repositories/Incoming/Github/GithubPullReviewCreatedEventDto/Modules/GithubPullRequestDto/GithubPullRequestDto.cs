@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Models.Github;
 
@@ -42,7 +41,7 @@ public class GithubPullRequestDto {
     public string HtmlUrl { get; set; } = string.Empty;
 
     [JsonPropertyName("labels")]
-    public GithubLabelsDto Labels { get; set; } = new GithubLabelsDto();
+    public List<GithubLabelsDto> Labels { get; set; } = [];
 
     [JsonPropertyName("requested_reviewers")]
     public GithubRequestedReviewersDto RequestedReviewers { get; set; } = new GithubRequestedReviewersDto();
