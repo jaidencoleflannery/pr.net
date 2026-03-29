@@ -4,6 +4,7 @@ using pr.net.Services.Chat;
 using pr.net.Services.Tokens;
 using pr.net.Services.Requests;
 using pr.net.Services.Clients.Bitbucket;
+using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Chat.Anthropic;
@@ -62,12 +63,22 @@ public class Program {
                     });  
                 break;
 
+            case RepoProvider.Github: 
+                builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
+                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
+                    });  
+                break;
             // chain other repository provider types here - ensure they all have their own request service and apiclient configured
         } 
 
         switch(authProvider) {
             case AuthProvider.Environment: 
                 builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
+                break;
+            
+            case AuthProvider.Github:
+                builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
                 break;
 
             // chain other types of token storage access here

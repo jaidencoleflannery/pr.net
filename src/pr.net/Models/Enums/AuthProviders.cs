@@ -21,6 +21,7 @@ public static class AuthProviders {
 
     public enum AuthProvider {
         Environment, 
+        Github,
         None
     }
 

@@ -2,7 +2,7 @@ namespace pr.net.Services.Tokens;
 
 public enum Token { 
     PR_NET_REPO_TOKEN, 
-    PR_NET_CHAT_TOKEN 
+    PR_NET_CHAT_TOKEN
 }
 
 public static class Tokens { 

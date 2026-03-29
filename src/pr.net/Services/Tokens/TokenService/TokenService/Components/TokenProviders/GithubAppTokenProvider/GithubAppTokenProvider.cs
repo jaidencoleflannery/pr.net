@@ -1,11 +1,17 @@
 using pr.net.Models.Tokens;
-using System.Text.Json;
 
 namespace pr.net.Services.Tokens;
 
-public class GithubAppTokenProvider(HttpClient _client) : ITokenProvider { 
+public class GithubAppTokenProvider(HttpClient _client) : EnvTokenProvider, ITokenProvider { 
 
-    public async ValueTask<string> FetchAsync(string target) {
+    // catch query if its for the token
+    public async override ValueTask<string> FetchAsync(Token target) { 
+        if(target == Token.PR_NET_REPO_TOKEN)
+            return await FetchJwtAsync();
+        return await base.FetchAsync(target); 
+    }
+
+    public async ValueTask<string> FetchJwtAsync() {
         string appIdString = Environment.GetEnvironmentVariable("Repo:Github:AppId")
             ?? throw new InvalidOperationException("Could not find Repo:Github:AppId in configuration file.");
 
