@@ -12,7 +12,7 @@ public class CachedToken : ICachedToken {
             _tokenTimer?.Dispose();
             if(!value) {
                 _tokenExpired = value;
-                _tokenTimer = new Timer(_ => _tokenExpired = true, null, TimeSpan.FromMinutes(30), Timeout.InfiniteTimeSpan);
+                _tokenTimer = new Timer(_ => _tokenExpired = true, null, TimeSpan.FromMinutes(10), Timeout.InfiniteTimeSpan);
             }
         }
     }

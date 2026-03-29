@@ -66,8 +66,8 @@ public class Program {
         } 
 
         switch(authProvider) {
-            case AuthProvider.Environment:
-                builder.Services.AddSingleton<ITokenService, EnvTokenService>();
+            case AuthProvider.Environment: 
+                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
 
             // chain other types of token storage access here
@@ -95,7 +95,8 @@ public class Program {
 
         // generic services
         builder.Services.AddSingleton<Orchestrator>();
-        builder.Services.AddSingleton<IRepositoryRequestService, RequestService>();
+        builder.Services.AddSingleton<IRepositoryRequestService, RepositoryRequestService>();
+        builder.Services.AddSingleton<ITokenService, TokenService>();
 
         var app = builder.Build();
  

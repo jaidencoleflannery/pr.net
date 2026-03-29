@@ -14,30 +14,27 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         if(request is not GithubPullReviewCreatedEventDto githubRequest) {
            throw new InvalidOperationException($"Wrong class passed, the injected ApiClient service is {nameof(GithubApiClient)} - is the wrong service injected?");
         } else {
-            GithubPullReviewCreatedMetadataDto metadata = new(bitbucketRequest);
-            using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
+            using(var message = new HttpRequestMessage(HttpMethod.Get, githubRequest.PullRequest?.DiffUrl ?? $"https://github.com/{githubRequest.Repository?.FullName}/pull/{githubRequest.Number}.diff")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
                 var response = await client.SendAsync(message);
 
                 return (response!= null && response.IsSuccessStatusCode)
                     ? await response.Content.ReadAsStringAsync()
-                    : throw new Exception($"Failed to get pull review {metadata.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
+                    : throw new Exception($"Failed to get pull review {githubRequest.Number}'s data, status: {response?.StatusCode} - {response?.Content}");
             }
         }
     } 
 
     public async Task<List<string>> PostReviews(List<ChatResponseText> reviews, PullReviewCreatedEvent request) {
-        if(request is not BitbucketPullReviewCreatedEventDto bitbucketRequest) {
-            throw new InvalidOperationException("Wrong class passed, the injected ApiClient service is Bitbucket - is the wrong service injected?");
+        if(request is not GithubPullReviewCreatedEventDto githubRequest) {
+            throw new InvalidOperationException($"Wrong class passed, the injected ApiClient service is {nameof(GithubApiClient)} - is the wrong service injected?");
         } else {
-            BitbucketPullReviewCreatedMetadataDto metadata = new(bitbucketRequest); // grab minimum metadata
-
             // send each diff file review as it's own individual comment, and save each status
             var responses = new List<string>();
             var exceptions = new List<Exception>(); 
             JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
             foreach(AnthropicTextDto review in reviews) {
-                using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
+                using (var message = new HttpRequestMessage(HttpMethod.Post, $"POST /repos/{githubRequest.Repository?.Owner}/{githubRequest.Repository?.Name}/pulls/{githubRequest.PullRequest.Id}/comments")) {
                     message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
                     message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json");
 
