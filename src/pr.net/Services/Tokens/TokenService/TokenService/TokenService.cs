@@ -2,13 +2,10 @@ using System.Collections.Concurrent;
 
 namespace pr.net.Services.Tokens;
 
-public class EnvTokenService : ITokenService {
+public class TokenService(ITokenProvider _provider) : ITokenService {
 
     private ConcurrentDictionary<Token, ICachedToken> _tokens = new ConcurrentDictionary<Token, ICachedToken>();
     private static readonly SemaphoreSlim _repoLock = new SemaphoreSlim(1, 1);
-    private EnvTokenProvider _provider = new EnvTokenProvider();
-
-    public EnvTokenService() { }
 
     // ensure token exists and is not expired
     public async ValueTask<string> GetTokenAsync(Token type) {  

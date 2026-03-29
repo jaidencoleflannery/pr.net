@@ -7,12 +7,12 @@ public class GithubPullReviewCreatedMetadataDto : PullReviewCreatedMetadata {
     public GithubPullReviewCreatedMetadataDto() { }
 
     public GithubPullReviewCreatedMetadataDto(GithubPullReviewCreatedEventDto request) {
-        this.Id = request.Hook.Id;
-        this.Url = request.PullRequest?.Links?.Diff?.Href ?? string.Empty;
+        this.Number = request.Number;
+        this.DiffUrl = request.PullRequest?.DiffUrl ?? string.Empty;
     }
  
-    public int Id { get; set; }
-    public string RepoSlug { get; set; } = string.Empty;
-    public string? Url { get; set; } = string.Empty; 
+    public int Number { get; set; } = -1;
+
+    public string DiffUrl { get; set; } = string.Empty;
 
 }

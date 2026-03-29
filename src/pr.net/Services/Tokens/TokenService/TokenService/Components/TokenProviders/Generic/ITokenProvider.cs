@@ -6,6 +6,6 @@ public interface ITokenProvider {
     /// <returns>The access token as a string.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the token is not configured.</exception>
     /// <remarks>Ensure the environment variable PR_NET_{type}_TOKEN is set before calling.</remarks> 
-    ValueTask<string> FetchAsync(string target);
+    ValueTask<string> FetchAsync(Token target);
 
 }

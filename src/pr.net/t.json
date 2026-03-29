@@ -1,3 +1,52 @@
 {
-    "value": "This is a test file that is being used for integration intake testing. 0.2"
+  "action": "",
+  "number": -1,
+  "pull_request": {
+    "url": "",
+    "id": -1,
+    "diff_url": "",
+    "locked": false,
+    "title": "",
+    "user": {
+      "login": "",
+      "id": -1
+    },
+    "body": "",
+    "created_at": "",
+    "updated_at": "",
+    "closed_at": "",
+    "merged_at": "",
+    "html_url": "",
+    "labels": [{
+      "id": -1,
+      "name": "" 
+    }],
+    "requested_reviewers": [{
+          "login": "",
+          "id": -1
+        }],
+    "draft": false,
+    "commits_url": "",
+    "comments_url": "",
+    "review_comments_url": "", 
+    "head": {
+      "ref": "",
+      "sha": "" 
+    },
+    "base": {
+      "ref": "",
+      "sha": ""
+    }, 
+    "merged": false,
+    "comments": -1,
+    "commits": -1,
+    "additions": -1,
+    "deletions": -1,
+    "changed_files": -1
+  },
+  "repository": {
+    "full_name": "",
+    "clone_url": "",
+    "default_branch": ""
+  }
 }
