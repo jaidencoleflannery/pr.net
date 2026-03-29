@@ -14,7 +14,7 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         if(request is not GithubPullReviewCreatedEventDto githubRequest) {
            throw new InvalidOperationException($"Wrong class passed, the injected ApiClient service is {nameof(GithubApiClient)} - is the wrong service injected?");
         } else {
-            using(var message = new HttpRequestMessage(HttpMethod.Get, githubRequest.PullRequest?.DiffUrl ?? $"https://github.com/{githubRequest.Repository?.FullName}/pull/{githubRequest.Number}.diff")) {
+            using(var message = new HttpRequestMessage(HttpMethod.Get, githubRequest.PullRequest?.DiffUrl ?? $"https://github.com/{githubRequest.Repository?.Name}/pull/{githubRequest.Number}.diff")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
                 var response = await client.SendAsync(message);
 

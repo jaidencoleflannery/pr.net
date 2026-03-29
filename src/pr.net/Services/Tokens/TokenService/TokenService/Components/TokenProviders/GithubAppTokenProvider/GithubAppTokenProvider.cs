@@ -1,28 +1,30 @@
-using System.Security.Cryptography;
+using pr.net.Models.Tokens;
+using System.Text.Json;
+
 namespace pr.net.Services.Tokens;
 
 public class GithubAppTokenProvider(HttpClient _client) : ITokenProvider { 
 
-    public ValueTask<string> FetchAsync(string target) {
-        using (var message = new HttpRequestMessage(HttpMethod.Post, $"")) {
+    public async ValueTask<string> FetchAsync(string target) {
+        string appIdString = Environment.GetEnvironmentVariable("Repo:Github:AppId")
+            ?? throw new InvalidOperationException("Could not find Repo:Github:AppId in configuration file.");
 
-            RSA rsa = RSA.Create();
+        Jwt jwt = new();
+        jwt.Payload.Iss = appIdString;
+        // github has a buffer timeset for tokens
+        jwt.Payload.Iat = DateTimeOffset.UtcNow.AddSeconds(-60).ToUnixTimeSeconds();
+        jwt.Payload.Exp = DateTimeOffset.UtcNow.AddSeconds(10).ToUnixTimeSeconds();
 
-            var 
-
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
-            message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json");
-
-            if(review == null)
-                throw new InvalidOperationException($"{nameof(review)} was null."); 
+        using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/app/installations/{appIdString}/access_tokens")) {
+            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt.Encode());
             
-            var response = await client.SendAsync(message); 
-            var content = response.Content.ReadAsStringAsync();
+            var response = await _client.SendAsync(message); 
+            var content = await response.Content.ReadAsStringAsync();
             if(response.IsSuccessStatusCode)
-                responses.Add(await response.Content.ReadAsStringAsync());
+                return content; 
             else
-                exceptions.Add(new Exception($"Post for review failed for pull review: {metadata.Id}, status: {response.StatusCode}, {await response.Content.ReadAsStringAsync()}"));
-        }
+                throw new InvalidOperationException($"Github response: {response.StatusCode} - {content}");
+        } 
     }
 
 }
