@@ -11,7 +11,7 @@ public class GithubPullReviewCreatedMetadataDto : PullReviewCreatedMetadata {
         this.DiffUrl = request.PullRequest?.DiffUrl ?? string.Empty;
     }
  
-    public int Number { get; set; } = -1;
+    public long Number { get; set; } = -1;
 
     public string DiffUrl { get; set; } = string.Empty;
 

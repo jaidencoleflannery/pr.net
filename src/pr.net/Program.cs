@@ -115,10 +115,18 @@ public class Program {
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
             Console.WriteLine("\npr.net is running in Development mode.\n");
             // leave disabled unless testing
-            // app.MapIntakeTestingEndpoints(); 
-        } 
+            app.MapIntakeTestingEndpoints(); 
+        }  
 
-        app.MapPullRequestEndpoints();
+        switch(repoProvider) {
+            case RepoProvider.Bitbucket: 
+                app.MapBitbucketPullRequestEndpoints();
+                break;
+            
+            case RepoProvider.Github:
+                app.MapGithubPullRequestEndpoints();
+                break;
+        }
 
         app.MapGet("/", () => $"Server is running in {env} mode."); 
 

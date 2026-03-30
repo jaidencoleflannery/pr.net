@@ -13,13 +13,16 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         if(request is not GithubPullReviewCreatedEventDto githubRequest)
            throw new InvalidOperationException($"Wrong class passed, the injected ApiClient service is {nameof(GithubApiClient)} - is the wrong service injected?");
 
-        using(var message = new HttpRequestMessage(HttpMethod.Get, githubRequest.PullRequest?.DiffUrl ?? $"https://github.com/{githubRequest.Repository?.Name}/pull/{githubRequest.Number}.diff")) {
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+        using(var message = new HttpRequestMessage(HttpMethod.Get, githubRequest.PullRequest?.DiffUrl ?? $"https://github.com/{githubRequest.Installation?.Id}/pull/{githubRequest.Number}.diff")) {
+            string token = await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN); 
+            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var response = await client.SendAsync(message);
+
+            Console.WriteLine($"!!! {await response.Content.ReadAsStringAsync()}");
 
             return response.IsSuccessStatusCode
                 ? await response.Content.ReadAsStringAsync()
-                : throw new Exception($"Failed to get pull review {githubRequest.Number}'s data, status: {response?.StatusCode} - {response?.Content}");
+                : throw new Exception($"Failed to get pull review {githubRequest.Number}'s data, status: {response?.StatusCode} - {await response?.Content?.ReadAsStringAsync()}");
         }
     } 
 
