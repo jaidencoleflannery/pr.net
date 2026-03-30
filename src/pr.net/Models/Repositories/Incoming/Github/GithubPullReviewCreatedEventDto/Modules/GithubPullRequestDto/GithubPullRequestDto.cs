@@ -8,7 +8,7 @@ public class GithubPullRequestDto {
     public string Url { get; set; } = string.Empty; 
 
     [JsonPropertyName("id")]
-    public int Id { get; set; } = -1;
+    public long Id { get; set; } = -1;
 
     [JsonPropertyName("diff_url")]
     public string DiffUrl { get; set; } = string.Empty;
@@ -44,7 +44,7 @@ public class GithubPullRequestDto {
     public List<GithubLabelsDto> Labels { get; set; } = [];
 
     [JsonPropertyName("requested_reviewers")]
-    public GithubRequestedReviewersDto RequestedReviewers { get; set; } = new GithubRequestedReviewersDto();
+    public List<GithubRequestedReviewersDto> RequestedReviewers { get; set; } = new List<GithubRequestedReviewersDto>();
 
     [JsonPropertyName("draft")]
     public bool Draft { get; set; } = false;
@@ -68,7 +68,7 @@ public class GithubPullRequestDto {
     public bool Merged { get; set; } = false;
 
     [JsonPropertyName("comments")]
-    public string Comments { get; set; } = string.Empty;
+    public int Comments { get; set; } = -1;
 
     [JsonPropertyName("commits")]
     public int Commits { get; set; } = -1;

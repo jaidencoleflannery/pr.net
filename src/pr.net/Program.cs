@@ -1,6 +1,7 @@
 using Serilog;
-using pr.net.Services.Chat.Instructions;
+
 using pr.net.Services.Chat;
+using pr.net.Services.Chat.Instructions;
 using pr.net.Services.Tokens;
 using pr.net.Services.Requests;
 using pr.net.Services.Clients.Bitbucket;
@@ -9,7 +10,12 @@ using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Orchestration;
 using pr.net.Services.Chat.Anthropic;
 using pr.net.Services.Chat.Generic;
+using pr.net.Services.Context;
+
 using pr.net.Endpoints;
+
+using pr.net.Models.Bitbucket;
+using pr.net.Models.Github;
 
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
@@ -107,7 +113,7 @@ public class Program {
         // generic services
         builder.Services.AddSingleton<Orchestrator>();
         builder.Services.AddSingleton<IRepositoryRequestService, RepositoryRequestService>();
-        builder.Services.AddSingleton<ITokenService, TokenService>();
+        builder.Services.AddSingleton<ITokenService, TokenService>();  
 
         var app = builder.Build();
  
@@ -115,10 +121,22 @@ public class Program {
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
             Console.WriteLine("\npr.net is running in Development mode.\n");
             // leave disabled unless testing
-            // app.MapIntakeTestingEndpoints(); 
-        } 
+            app.MapIntakeTestingEndpoints(); 
+        }  
 
-        app.MapPullRequestEndpoints();
+        switch(repoProvider) {
+            case RepoProvider.Bitbucket: 
+                app.MapBitbucketPullRequestEndpoints();
+                builder.Services.AddScoped<IAmbientContext<BitbucketPullReviewCreatedEventDto>, AmbientContext<BitbucketPullReviewCreatedEventDto>>();
+                break;
+            
+            case RepoProvider.Github:
+                app.MapGithubPullRequestEndpoints();
+                builder.Services.AddScoped<IAmbientContext<GithubPullReviewCreatedEventDto>, AmbientContext<GithubPullReviewCreatedEventDto>>();
+                break;
+
+            // chain other types of repo providers and payload model contexts here
+        }
 
         app.MapGet("/", () => $"Server is running in {env} mode."); 
 

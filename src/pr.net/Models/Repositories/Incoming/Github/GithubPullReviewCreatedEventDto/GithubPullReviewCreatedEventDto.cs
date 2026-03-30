@@ -9,12 +9,15 @@ public class GithubPullReviewCreatedEventDto : PullReviewCreatedEvent {
     public string Action { get; set; } = string.Empty;
 
     [JsonPropertyName("number")]
-    public int Number { get; set; } = -1;
+    public long Number { get; set; } = -1;
 
     [JsonPropertyName("pull_request")]
-    public GithubPullRequestDto PullRequest { get; set; } = new GithubPullRequestDto();
+    public GithubPullRequestDto PullRequest { get; set; } = new();
 
     [JsonPropertyName("repository")]
-    public GithubRepositoryDto Repository { get; set; } = new GithubRepositoryDto();
+    public GithubRepositoryDto Repository { get; set; } = new();
+
+    [JsonPropertyName("installation")]
+    public GithubInstallationDto Installation { get; set; } = new();
 
 }
