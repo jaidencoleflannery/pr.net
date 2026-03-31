@@ -5,8 +5,8 @@ namespace pr.net.Services.Repositories.Generic;
 
 public interface IRepositoryApiClient {
 
-    Task<string> GetPullRequestData();
+    Task<string> GetPullRequestDataAsync();
 
-    Task<List<string>> PostReviews(List<ChatResponseText> reviews);
+    Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews);
 
 }

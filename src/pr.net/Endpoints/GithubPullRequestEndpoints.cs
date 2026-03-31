@@ -16,7 +16,7 @@ public static class GithubPullRequestEndpoints {
             [FromServices] GithubAmbientContextService ambientContext,
             [FromBody] GithubPullReviewCreatedEventDto prEvent
             ) => {
-                ambientContext.CreatedEvent = prEvent;
+                ambientContext.CreatedEvents.TryAdd(prEvent.PullRequest.Id, prEvent);
                 return orchestrator.ProcessNewPullRequest();
             }
         );

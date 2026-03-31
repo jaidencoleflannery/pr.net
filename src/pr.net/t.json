@@ -1,52 +1,20 @@
 {
-  "action": "test",
-  "number": -1,
-  "pull_request": {
-    "url": "",
-    "id": -1,
-    "diff_url": "",
-    "locked": false,
-    "title": "",
-    "user": {
-      "login": "",
-      "id": -1
-    },
-    "body": "",
-    "created_at": "",
-    "updated_at": "",
-    "closed_at": "",
-    "merged_at": "",
-    "html_url": "",
-    "labels": [{
-      "id": -1,
-      "name": "" 
-    }],
-    "requested_reviewers": [{
-          "login": "",
-          "id": -1
-        }],
-    "draft": false,
-    "commits_url": "",
-    "comments_url": "",
-    "review_comments_url": "", 
-    "head": {
-      "ref": "",
-      "sha": "" 
-    },
-    "base": {
-      "ref": "",
-      "sha": ""
-    }, 
-    "merged": false,
-    "comments": -1,
-    "commits": -1,
-    "additions": -1,
-    "deletions": -1,
-    "changed_files": -1
+  "token": "ghs_16C7e42F292c6912E7710c838347Ae178B4a",
+  "expires_at": "2016-07-11T22:14:10Z",
+  "permissions": {
+    "issues": "write",
+    "contents": "read"
   },
-  "repository": {
-    "full_name": "",
-    "clone_url": "",
-    "default_branch": ""
-  }
+  "repositories": [
+    {
+      "id": 1296269,
+      "name": "Hello-World",
+      "owner": {
+        "login": "octocat",
+      },
+      "description": "This your first repo!",
+      "url": "https://api.github.com/repos/octocat/Hello-World",
+      "assignees_url": "https://api.github.com/repos/octocat/Hello-World/assignees{/user}",
+    }
+  ]
 }

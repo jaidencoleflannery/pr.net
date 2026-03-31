@@ -12,7 +12,7 @@ namespace pr.net.Services.Clients.Github;
 
 public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmbientContextService<GithubPullReviewCreatedEventDto> _contextService) : IRepositoryApiClient {
 
-    public async Task<string> GetPullRequestData() {
+    public async Task<string> GetPullRequestDataAsync() {
         GithubPullReviewCreatedEventDto request = _contextService.CreatedEvent;
         if(request is null)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(GithubApiClient)}.");
@@ -28,7 +28,7 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmb
         }
     } 
 
-    public async Task<List<string>> PostReviews(List<ChatResponseText> reviews) {
+    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews) {
         GithubPullReviewCreatedEventDto request = _contextService.CreatedEvent;
         if(request is null)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(GithubApiClient)}."); 
@@ -62,6 +62,6 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmb
         if(responses.Count > 0)
             return responses;
         else
-            throw new HttpRequestException($"No {nameof(PostReviews)} calls were successfull, failed to perform review.");
+            throw new HttpRequestException($"No {nameof(PostReviewsAsync)} calls were successfull, failed to perform review.");
     }
 }

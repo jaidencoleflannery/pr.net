@@ -16,8 +16,8 @@ public static class BitbucketPullRequestEndpoints {
             [FromServices] BitbucketAmbientContextService ambientContext,
             [FromBody] BitbucketPullReviewCreatedEventDto prEvent
             ) => {
-                ambientContext.CreatedEvent = prEvent;
-                return orchestrator.ProcessNewPullRequest(prEvent);
+                ambientContext.CreatedEvents.TryAdd(prEvent.PullRequest.Id, prEvent);
+                return orchestrator.ProcessNewPullRequest();
             }
         );
     } 

@@ -23,12 +23,13 @@ public class AnthropicChatService(IConfiguration configuration, IInstructionsSer
             ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
 
         string? model = null; 
-        if(configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
+        if(configuration.GetValue<bool>("Chat:Filtering:UseEmbedding")) {
             Console.WriteLine("Embedding has not been configured.");
-            // configure provider specific embedding
-        else if(!configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
+            // configure provider specific embedding here
+        } else if(!configuration.GetValue<bool>("Chat:Filtering:UseEmbedding")) {
             model = configuration["Chat:Filtering:Model"]
                 ?? throw new InvalidOperationException("Configuration for Chat:Filtering:Model could not be found or read.");
+        }
 
         string maxTokensString = configuration["Chat:Filtering:MaxTokens"]
             ?? throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read.");

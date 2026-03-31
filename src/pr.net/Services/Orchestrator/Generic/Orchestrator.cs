@@ -8,10 +8,10 @@ namespace pr.net.Services.Orchestration;
 public class Orchestrator(IConfiguration _configuration, IRepositoryRequestService _repositoryService, IChatService _chatService) {
 
     public async Task ProcessNewPullRequest() { 
-        // get each file's associated diff
+        // get each file's associated diff.
         Dictionary<string, string> diffFiles = await _repositoryService.GetPullReviewFiles();
 
-        // if enabled, filter diffs for ones that are worth review
+        // if enabled, filter diffs for ones that are worth review.
         Dictionary<string, string> filteredDiffFiles = (_configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
             ? await _chatService.FilterDiffsAsync(diffFiles)
             : diffFiles;
