@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+
 using pr.net.Services.Orchestration;
+using pr.net.Services.Context;
+
 using pr.net.Models.Github;
 
 namespace pr.net.Endpoints;
@@ -10,8 +13,13 @@ public static class GithubPullRequestEndpoints {
         var group = app.MapGroup("/github/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", (
             [FromServices] Orchestrator orchestrator,
+            [FromServices] GithubAmbientContextService ambientContext,
             [FromBody] GithubPullReviewCreatedEventDto prEvent
-        ) => orchestrator.ProcessNewPullRequest(prEvent));
+            ) => {
+                ambientContext.CreatedEvent = prEvent;
+                return orchestrator.ProcessNewPullRequest();
+            }
+        );
     } 
 
 }

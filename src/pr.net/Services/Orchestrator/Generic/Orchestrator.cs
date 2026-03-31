@@ -1,18 +1,19 @@
 using pr.net.Services.Chat;
 using pr.net.Services.Repositories.Generic;
+using pr.net.Services.Context;
 using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Services.Orchestration;
 
-public class Orchestrator(IConfiguration configuration, IRepositoryRequestService repoService, IChatService chatService) {
+public class Orchestrator(IConfiguration _configuration, IRepositoryRequestService _repositoryService, IChatService _chatService) {
 
-    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) { 
+    public async Task ProcessNewPullRequest() { 
         // get each file's associated diff
-        Dictionary<string, string> diffFiles = await repoService.GetPullReviewFiles(prEvent);
+        Dictionary<string, string> diffFiles = await _repositoryService.GetPullReviewFiles();
 
         // if enabled, filter diffs for ones that are worth review
-        Dictionary<string, string> filteredDiffFiles = (configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
-            ? await chatService.FilterDiffsAsync(diffFiles)
+        Dictionary<string, string> filteredDiffFiles = (_configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
+            ? await _chatService.FilterDiffsAsync(diffFiles)
             : diffFiles;
         
         if(filteredDiffFiles.Values.Count <= 0) {
@@ -21,10 +22,10 @@ public class Orchestrator(IConfiguration configuration, IRepositoryRequestServic
         }
 
         // get each review object (contains file)
-        List<ChatResponseText> reviews = await chatService.GetChatReviewsAsync(filteredDiffFiles);
+        List<ChatResponseText> reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles);
 
         // post reviews to branch
-        await repoService.PostChatReviews(reviews, prEvent);
+        await _repositoryService.PostChatReviews(reviews);
     }
 
 }
