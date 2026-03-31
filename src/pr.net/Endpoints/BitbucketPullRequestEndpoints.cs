@@ -16,8 +16,7 @@ public static class BitbucketPullRequestEndpoints {
             [FromBody] BitbucketPullReviewCreatedEventDto prEvent
         ) => {
             return orchestrator.ProcessNewPullRequest(prEvent);
-        }
-        );
+        });
     } 
 
 }

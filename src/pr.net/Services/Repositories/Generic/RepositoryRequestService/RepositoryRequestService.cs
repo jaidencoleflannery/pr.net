@@ -7,10 +7,10 @@ namespace pr.net.Services.Requests;
 public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger, IRepositoryApiClient _client) : IRepositoryRequestService {
 
     // returns a dictionary of key: file, value: diff
-    public async Task<Dictionary<string, string>> GetPullReviewFiles() {
+    public async Task<Dictionary<string, string>> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
         try {
             // get the pull request diff
-            string diff = await _client.GetPullRequestDataAsync();
+            string diff = await _client.GetPullRequestDataAsync(prEvent);
 
             // split diff per file, diffSections should be key: file, value: diff
             Dictionary<string, string> diffSections = ParserService.ParseDiff(diff); 
@@ -22,8 +22,8 @@ public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger,
     }
 
     // posts reviews to specific pull review
-    public async Task PostChatReviews(List<ChatResponseText> reviews) {  
-        var result = await _client.PostReviewsAsync(reviews);
+    public async Task PostChatReviews(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {  
+        var result = await _client.PostReviewsAsync(reviews, prEvent);
     }
 
 }

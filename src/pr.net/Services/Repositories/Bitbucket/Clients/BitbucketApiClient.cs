@@ -12,9 +12,8 @@ namespace pr.net.Services.Clients.Bitbucket;
 
 public class BitbucketApiClient(HttpClient client, ITokenService tokenService, IAmbientContextService<BitbucketPullReviewCreatedEventDto> _contextService) : IRepositoryApiClient {
 
-    public async Task<string> GetPullRequestDataAsync() {
-        BitbucketPullReviewCreatedEventDto request = _contextService.CreatedEvent;
-        if(request is null)
+    public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
+        if(prEvent is not BitbucketPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(BitbucketApiClient)}.");
 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request);
@@ -28,9 +27,8 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService, I
         }
     } 
 
-    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews) {
-        BitbucketPullReviewCreatedEventDto request = _contextService.CreatedEvent;
-        if(request is null)
+    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {
+        if(prEvent is not BitbucketPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(BitbucketApiClient)}.");
 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request); // grab minimum metadata.

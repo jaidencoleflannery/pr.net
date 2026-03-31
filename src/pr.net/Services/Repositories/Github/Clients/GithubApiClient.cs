@@ -12,9 +12,8 @@ namespace pr.net.Services.Clients.Github;
 
 public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmbientContextService<GithubPullReviewCreatedEventDto> _contextService) : IRepositoryApiClient {
 
-    public async Task<string> GetPullRequestDataAsync() {
-        GithubPullReviewCreatedEventDto request = _contextService.CreatedEvent;
-        if(request is null)
+    public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
+        if(prEvent is not GithubPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(GithubApiClient)}.");
 
         using(var message = new HttpRequestMessage(HttpMethod.Get, request.PullRequest?.DiffUrl ?? $"https://github.com/{request.Installation?.Id}/pull/{request.Number}.diff")) {
@@ -28,9 +27,8 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmb
         }
     } 
 
-    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews) {
-        GithubPullReviewCreatedEventDto request = _contextService.CreatedEvent;
-        if(request is null)
+    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {
+        if(prEvent is not GithubPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(GithubApiClient)}."); 
 
         // send each diff file review as it's own individual comment, and save each status
