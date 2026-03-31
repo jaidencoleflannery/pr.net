@@ -13,13 +13,10 @@ public static class GithubPullRequestEndpoints {
         var group = app.MapGroup("/github/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", (
             [FromServices] Orchestrator orchestrator,
-            [FromServices] GithubAmbientContextService ambientContext,
             [FromBody] GithubPullReviewCreatedEventDto prEvent
-            ) => {
-                ambientContext.CreatedEvents.TryAdd(prEvent.PullRequest.Id, prEvent);
-                return orchestrator.ProcessNewPullRequest();
-            }
-        );
+        ) => {
+            return orchestrator.ProcessNewPullRequest(prEvent);
+        });
     } 
 
 }

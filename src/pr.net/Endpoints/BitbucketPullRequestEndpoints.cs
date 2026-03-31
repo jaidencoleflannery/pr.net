@@ -13,12 +13,10 @@ public static class BitbucketPullRequestEndpoints {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", (
             [FromServices] Orchestrator orchestrator,
-            [FromServices] BitbucketAmbientContextService ambientContext,
             [FromBody] BitbucketPullReviewCreatedEventDto prEvent
-            ) => {
-                ambientContext.CreatedEvents.TryAdd(prEvent.PullRequest.Id, prEvent);
-                return orchestrator.ProcessNewPullRequest();
-            }
+        ) => {
+            return orchestrator.ProcessNewPullRequest(prEvent);
+        }
         );
     } 
 
