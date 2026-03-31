@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+
 using pr.net.Services.Orchestration;
+using pr.net.Services.Context;
+
 using pr.net.Models.Bitbucket;
 
 namespace pr.net.Endpoints;
@@ -10,8 +13,13 @@ public static class BitbucketPullRequestEndpoints {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", (
             [FromServices] Orchestrator orchestrator,
+            [FromServices] BitbucketAmbientContextService ambientContext,
             [FromBody] BitbucketPullReviewCreatedEventDto prEvent
-        ) => orchestrator.ProcessNewPullRequest(prEvent));
+            ) => {
+                ambientContext.CreatedEvent = prEvent;
+                return orchestrator.ProcessNewPullRequest(prEvent);
+            }
+        );
     } 
 
 }

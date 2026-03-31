@@ -127,12 +127,12 @@ public class Program {
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
                 app.MapBitbucketPullRequestEndpoints();
-                builder.Services.AddScoped<IAmbientContext<BitbucketPullReviewCreatedEventDto>, AmbientContext<BitbucketPullReviewCreatedEventDto>>();
+                builder.Services.AddScoped<IAmbientContextService<BitbucketPullReviewCreatedEventDto>, BitbucketAmbientContextService>();
                 break;
             
             case RepoProvider.Github:
                 app.MapGithubPullRequestEndpoints();
-                builder.Services.AddScoped<IAmbientContext<GithubPullReviewCreatedEventDto>, AmbientContext<GithubPullReviewCreatedEventDto>>();
+                builder.Services.AddScoped<IAmbientContextService<GithubPullReviewCreatedEventDto>, GithubAmbientContextService>();
                 break;
 
             // chain other types of repo providers and payload model contexts here
