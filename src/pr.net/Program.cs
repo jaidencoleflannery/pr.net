@@ -10,12 +10,8 @@ using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Orchestration;
 using pr.net.Services.Chat.Anthropic;
 using pr.net.Services.Chat.Generic;
-using pr.net.Services.Context;
 
 using pr.net.Endpoints;
-
-using pr.net.Models.Bitbucket;
-using pr.net.Models.Github;
 
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
@@ -37,7 +33,7 @@ public class Program {
             }
         );
 
-        // dynamic services via configuration - grab config values and validate
+        // dynamic services via configuration - grab config values and validate.
 
         string? _repoProvider = null; 
         if((_repoProvider = builder.Configuration["Repo:Provider"]) == null)
@@ -59,23 +55,23 @@ public class Program {
             throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
         ChatProvider chatProvider = ValidateChatProvider(_chatProvider);
 
-        // register services from config values
+        // register services from config values.
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
+                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping.
                     });  
                 break;
 
             case RepoProvider.Github: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
+                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping.
                     });  
                 break;
-            // chain other repository provider types here - ensure they all have their own request service and apiclient configured
+            // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
         } 
 
         switch(authProvider) {
@@ -87,7 +83,7 @@ public class Program {
                 builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
                 break;
 
-            // chain other types of token storage access here
+            // chain other types of token storage access here.
         } 
  
         switch(instructionsProvider) {
@@ -95,50 +91,44 @@ public class Program {
                 builder.Services.AddSingleton<IInstructionsService, LocalInstructionsService>();
                 break;
 
-            // chain other types of instruction sources here
+            // chain other types of instruction sources here.
         } 
 
         switch(chatProvider) {
             case ChatProvider.Anthropic:
                 builder.Services.AddHttpClient<IChatApiClient, AnthropicApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping
+                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping.
                     }); 
                 builder.Services.AddSingleton<IChatService, AnthropicChatService>();
                 break;
 
-            // chain other types of chat providers here
+            // chain other types of chat providers here.
         }
 
-        // generic services
+        // generic services.
         builder.Services.AddSingleton<Orchestrator>();
         builder.Services.AddSingleton<IRepositoryRequestService, RepositoryRequestService>();
-        builder.Services.AddSingleton<ITokenService, TokenService>();  
+        builder.Services.AddSingleton<ITokenService, TokenService>();
 
         var app = builder.Build();
+        app.MapGet("/", () => $"Server is running in {env} mode."); 
  
-        // this endpoint gives you payload examples (dev only)
-        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") {
-            Console.WriteLine("\npr.net is running in Development mode.\n");
-            // leave disabled unless testing
+        // this endpoint gives you payload examples (dev only).
+        if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             app.MapIntakeTestingEndpoints(); 
-        }  
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket:  
-                builder.Services.AddSingleton<IAmbientContextService<BitbucketPullReviewCreatedEventDto>, BitbucketAmbientContextService>();
                 app.MapBitbucketPullRequestEndpoints();
                 break;
             
             case RepoProvider.Github:
-                builder.Services.AddSingleton<IAmbientContextService<GithubPullReviewCreatedEventDto>, GithubAmbientContextService>();
                 app.MapGithubPullRequestEndpoints(); 
                 break;
 
-            // chain other types of repo providers and payload model contexts here
-        }
-
-        app.MapGet("/", () => $"Server is running in {env} mode."); 
+            // chain other types of repo provider endpoints here.
+        } 
 
         app.Run();
     }
