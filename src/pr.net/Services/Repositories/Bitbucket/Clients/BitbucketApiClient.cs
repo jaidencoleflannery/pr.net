@@ -1,6 +1,5 @@
 using System.Text.Json;
 
-using pr.net.Services.Context;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Tokens;
 
@@ -10,7 +9,7 @@ using pr.net.Models.Incoming.Anthropic;
 
 namespace pr.net.Services.Clients.Bitbucket;
 
-public class BitbucketApiClient(HttpClient client, ITokenService tokenService, IAmbientContextService<BitbucketPullReviewCreatedEventDto> _contextService) : IRepositoryApiClient {
+public class BitbucketApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request)

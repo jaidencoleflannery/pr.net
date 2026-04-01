@@ -2,7 +2,6 @@ using System.Text.Json;
 
 using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Tokens;
-using pr.net.Services.Context;
 
 using pr.net.Models.Incoming.Anthropic;
 using pr.net.Models.Incoming.Generic;
@@ -10,11 +9,11 @@ using pr.net.Models.Github;
 
 namespace pr.net.Services.Clients.Github;
 
-public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmbientContextService<GithubPullReviewCreatedEventDto> _contextService) : IRepositoryApiClient {
+public class GithubApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
         if(prEvent is not GithubPullReviewCreatedEventDto request)
-           throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(GithubApiClient)}.");
+           throw new InvalidOperationException($"Event type did not match injected service type {nameof(GetPullRequestDataAsync)}.");
 
         using(var message = new HttpRequestMessage(HttpMethod.Get, request.PullRequest?.DiffUrl ?? $"https://github.com/{request.Installation?.Id}/pull/{request.Number}.diff")) {
             string token = await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN); 
@@ -29,7 +28,7 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService, IAmb
 
     public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {
         if(prEvent is not GithubPullReviewCreatedEventDto request)
-           throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(GithubApiClient)}."); 
+           throw new InvalidOperationException($"Event type did not match injected service type {nameof(PostReviewsAsync)}.");
 
         // send each diff file review as it's own individual comment, and save each status
         var responses = new List<string>();
