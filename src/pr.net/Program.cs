@@ -1,5 +1,8 @@
 using Serilog;
 
+using Anthropic;
+using Anthropic.Models.Messages;
+
 using pr.net.Services.Chat;
 using pr.net.Services.Chat.Instructions;
 using pr.net.Services.Tokens;
@@ -55,22 +58,29 @@ public class Program {
             throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
         ChatProvider chatProvider = ValidateChatProvider(_chatProvider);
 
+        string? _chatTimeoutString = null;
+        if((_chatTimeoutString = builder.Configuration["Chat:Timeout"]) == null)
+            throw new InvalidOperationException("Chat:Timeout has not been set in configuration. Set this value before trying again.");
+        if(!long.TryParse(_chatTimeoutString, out long _chatTimeout))
+            throw new InvalidOperationException("Chat:Timeout is invalid, it must be an integer (long). Set this value before trying again.");
+
+        string? _chatToken = null;
+        if((_chatToken = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")) == null)
+            throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found, or is invalid."); 
+
         // register services from config values.
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping.
-                    });  
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
                 break;
 
             case RepoProvider.Github: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping.
-                    });  
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
                 break;
+
             // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
         } 
 
@@ -96,10 +106,11 @@ public class Program {
 
         switch(chatProvider) {
             case ChatProvider.Anthropic:
-                builder.Services.AddHttpClient<IChatApiClient, AnthropicApiClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
-                        AllowAutoRedirect = false // no redirects, we have to handle them due to auth stripping.
-                    }); 
+                builder.Services.AddSingleton<IAnthropicClient>(_ =>
+                    new AnthropicClient {
+                        ApiKey = _chatToken,
+                        Timeout = TimeSpan.FromSeconds(_chatTimeout),
+                    });
                 builder.Services.AddSingleton<IChatService, AnthropicChatService>();
                 break;
 

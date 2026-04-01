@@ -22,7 +22,7 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         using(var message = new HttpRequestMessage(HttpMethod.Get, url)) {
             string token = await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN); 
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            var response = await client.SendAsync(message);
+            HttpResponseMessage response = await client.SendAsync(message);
 
             return response.IsSuccessStatusCode
                 ? await response.Content.ReadAsStringAsync()

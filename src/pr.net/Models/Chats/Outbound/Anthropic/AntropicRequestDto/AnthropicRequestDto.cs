@@ -1,24 +1,24 @@
 using System.Text.Json.Serialization;
+
+using Anthropic.Core;
+using Anthropic.Models.Messages;
+
 using pr.net.Models.Outbound.Generic;
 
 namespace pr.net.Models.Outbound.Anthropic;
 
-public class AnthropicRequestDto : Request {
+public class AnthropicRequestDto : ChatRequest {
 
     [JsonPropertyName("messages")]
-    public List<AnthropicMessageDto> Messages { get; set; } = new List<AnthropicMessageDto>();
+    public List<MessageParam>  Messages { get; set; } = new List<MessageParam>();
 
     [JsonPropertyName("model")]
-    public string Model { get; set; } = string.Empty;
+    public ApiEnum<string, Model> Model { get; set; } = string.Empty;
 
     [JsonPropertyName("max_tokens")]
-    public int MaxTokens { get; set; } 
+    public long MaxTokens { get; set; } 
 
-    [JsonPropertyName("system")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? System { get; set; } = null;
- 
     [JsonPropertyName("output_config")]  
-    public OutputConfig OutputConfig { get; set; } = new AnthropicOutputConfig();
+    public AnthropicOutputConfig OutputConfig { get; set; } = new AnthropicOutputConfig();
 
 }
