@@ -15,7 +15,11 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         if(prEvent is not GithubPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"Event type did not match injected service type {nameof(GetPullRequestDataAsync)}.");
 
-        using(var message = new HttpRequestMessage(HttpMethod.Get, request.PullRequest?.DiffUrl ?? $"https://github.com/{request.Installation?.Id}/pull/{request.Number}.diff")) {
+        string url = (string.IsNullOrWhiteSpace(request.PullRequest?.DiffUrl)
+            ? $"https://github.com/{request.Installation?.Id}/pull/{request.Number}.diff" 
+            : request.PullRequest?.DiffUrl)!;
+
+        using(var message = new HttpRequestMessage(HttpMethod.Get, url)) {
             string token = await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN); 
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var response = await client.SendAsync(message);
