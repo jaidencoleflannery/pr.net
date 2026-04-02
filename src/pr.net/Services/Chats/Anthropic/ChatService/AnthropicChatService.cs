@@ -79,7 +79,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             Message message;
             try {
                 message = await _client.Messages.Create(request);
-                Console.WriteLine(message);
+                if(message.worthReview == false) // need to get AnthropicSchema (FilterRequestSchema) out of this, maybe make it a real class?
             } catch(AnthropicApiException exception) {
                 Console.WriteLine($"Anthropic call failed: {exception.Message}");
                 exceptions.Add(exception);
