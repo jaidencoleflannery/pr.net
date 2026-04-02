@@ -6,13 +6,13 @@ namespace pr.net.Services.Requests;
 
 public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger, IRepositoryApiClient _client) : IRepositoryRequestService {
 
-    // returns a dictionary of key: file, value: diff
+    // returns a dictionary of key: file, value: diff.
     public async Task<Dictionary<string, string>> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
         try {
-            // get the pull request diff
+            // get the pull request diff.
             string diff = await _client.GetPullRequestDataAsync(prEvent);
 
-            // split diff per file, diffSections should be key: file, value: diff
+            // split diff per file, diffSections should be key: file, value: diff.
             Dictionary<string, string> diffSections = ParserService.ParseDiff(diff); 
             return diffSections;
         } catch (Exception exception) {

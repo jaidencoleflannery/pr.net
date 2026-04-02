@@ -1,13 +1,16 @@
 using System.Text;
 
+using Microsoft.Extensions.AI;
+
 using Anthropic;
+
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 
 using pr.net.Services.Tokens;
 using pr.net.Services.Chat.Instructions;
-using pr.net.Services.Chat.Generic;
 
+using pr.net.Models.Generic;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Outbound.Anthropic;
 using pr.net.Models.Incoming.Anthropic;
@@ -18,16 +21,13 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(IConfiguration _configuration, IInstructionsService _instructionsService, IAnthropicClient _client, ITokenService _tokenService) : IChatService { 
 
-    public async Task<Dictionary<string, string>> FilterDiffsAsync(Dictionary<string, string> diffSections) { 
+    public async Task<List<DiffSection>> FilterDiffsAsync(List<DiffSection> diffSections) { 
         if(diffSections.Count < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(FilterDiffsAsync)}.");
         
         ChatProvider? provider = ValidateChatProvider(_configuration["Chat:Provider"]);
         if(provider != ChatProvider.Anthropic)
-            throw new InvalidOperationException("Provider configuration does not match injected service.");
-
-        string? url = GetUrl(provider.Value)
-            ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}.");
+            throw new InvalidOperationException("Provider configuration does not match injected Anthropic service.");
 
         if(_configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
             Console.WriteLine("Embedding has not been configured."); // configure provider specific embedding service here.
@@ -37,67 +37,79 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             throw new InvalidOperationException("Configuration for Chat:Filtering:Model could not be found or read.");
 
         if(!int.TryParse(_configuration["Chat:Filtering:MaxTokens"], out int maxTokens))
-            throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format."); 
+            throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format.");  
 
         string instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: true))
-            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
+            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");  
 
         // requestsperpath's key == file name.
-        var requestsPerPath = diffSections.ToDictionary(
-            diff => diff.Key,
+        Dictionary<DiffSection, MessageCreateParams> requestsPerPath = diffSections.ToDictionary(
+            diff => diff,
             diff => new MessageCreateParams {
                 MaxTokens = maxTokens,
                 Messages = [
                     new() {
                         Role = Role.User,
-                        Content = $"Is this diff worth reviewing?\n```{diff.Value}```"
+                        Content = $"Is this diff worth reviewing?\n```{diff.Contents}```"
                     },
                 ],
                 Model = model,
                 OutputConfig = new OutputConfig {
-                    Format = new JsonOutputFormat { Schema = AnthropicSchema.FilterRequestSchema }
-                }
+                    Format = new JsonOutputFormat { Schema = AnthropicSchema.FilterRequestSchema }, 
+                },
+                Temperature = 0.0,
             }); 
 
-        List<ChatResponseText> filterResponses = await this.RequestFilteringAsync([..requestsPerPath.Values], url);
-        var keysToRemove = diffSections
-            .Keys.Zip(filterResponses)
-            .Where(pair => pair.Second is AnthropicFilteringTextDto dto && !dto.Content.Raw)
-            .Select(pair => pair.First)
-            .ToList();
-
-        foreach(var key in keysToRemove)
-            diffSections.Remove(key);
-
-        return diffSections;
+        return await this.RequestFilteringAsync(requestsPerPath);
     }
 
-    public async Task<List<ChatResponseText>> RequestFilteringAsync(List<MessageCreateParams> parameters, string url) {
+    private async Task<List<DiffSection>> RequestFilteringAsync(Dictionary<DiffSection, MessageCreateParams> requestsPerPath) {
+        if(!TimeSpan.TryParse(_configuration["Chat:Filtering:Timeout"], out TimeSpan timeout))
+            throw new InvalidOperationException("Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format."); 
+
         // iterate over every instance of requestDtos and send them individually.
-        var responses = new List<ChatResponseText>();
+        var responses = new List<DiffSection>();
         var exceptions = new List<Exception>();
-        System.Uri targetUrl = new Uri(url);
-        foreach(MessageCreateParams parameter in parameters) {
+        foreach((DiffSection section, MessageCreateParams request) in requestsPerPath) {
+            if(request.Messages.Count < 1) {
+                requestsPerPath.Remove(section);
+                continue;
+            }
+
+            Message message;
+            try {
+                message = await _client.Messages.Create(request);
+                Console.WriteLine(message);
+            } catch(AnthropicApiException exception) {
+                Console.WriteLine($"Anthropic call failed: {exception.Message}");
+                exceptions.Add(exception);
+            }    
+        }
+
+        if(responses.Count > 0)
+            return responses;
+        else
+            throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
+    }
+
+    private async Task<Dictionary<String, ChatMessage>> RequestReviewsAsync(Dictionary<string, MessageCreateParams> ) { 
+        // iterate over every instance of requestDtos and send them individually.
+        var responses = new List<ChatMessage>();
+        var exceptions = new List<Exception>();
+
+        foreach(MessageCreateParams parameter in parameters.Values) {
             if(parameter.Messages.Count < 1)
                 continue;
 
             Message message;
             try {
                 message = await _client.Messages.Create(parameter);
-                responses.Add(message.Content[0].Value); 
+
+                Console.WriteLine(message);
             } catch(AnthropicApiException exception) {
                 Console.WriteLine($"Anthropic call failed: {exception.Message}");
                 exceptions.Add(exception);
-            }  
-
-                    else
-                        Console.WriteLine("Failed to parse chat response for filtering.");
-                } else {
-                    Exception exception = new Exception($"Request for filtering failed: {responseDto}");
-                    Console.WriteLine(exception);
-                    exceptions.Add(exception);
-                }
-            }
+            }    
         }
 
         if(responses.Count > 0)
@@ -106,82 +118,52 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
     }
 
-    public async Task<List<ChatResponseText>> RequestReviewsAsync(List<AnthropicRequestDto> requestDtos, string url) { 
-        // iterate over every instance of requestDtos and send them individually  
-        var responses = new List<ChatResponseText>();
-        var exceptions = new List<Exception>();
-
-        foreach(var requestDto in requestDtos) {
-            if(requestDto.Messages.Count < 1)
-                continue;
-
-            using (var message = new HttpRequestMessage(HttpMethod.Post, targetUrl)) { 
-                message.Headers.Add("x-api-key", token);
-                message.Headers.Add("anthropic-version", "2023-06-01");
-                var json = JsonSerializer.Serialize(requestDto);
-                message.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var response = await client.SendAsync(message); 
-                string responseString = await response.Content.ReadAsStringAsync();
-                AnthropicResponseDto responseDto = JsonSerializer.Deserialize<AnthropicResponseDto>(responseString)!;
-                AnthropicTextDto textDto = JsonSerializer.Deserialize<AnthropicTextDto>(responseDto.Content[0].Text)!;
-
-                if(response.IsSuccessStatusCode) {
-                    if(textDto != null)
-                        responses.Add(textDto);
-                    else
-                        Console.WriteLine("Failed to parse chat response.");
-                } else {
-                    Exception exception = new Exception($"Request for review failed: {responseDto}");
-                    Console.WriteLine(exception);
-                    exceptions.Add(exception);
-                }
-            }
-        }
-
-        if(responses.Count > 0)
-            return responses;
-        else
-            throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
-    }
-
-    public async Task<List<ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
+    public async Task<Dictionary<string, (string, ChatMessage)>> GetChatReviewsAsync(Dictionary<string, string> diffSections) {
         if(diffSections.Count < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
 
-        ChatProvider? provider = ValidateChatProvider(configuration["Chat:Provider"]);
+        ChatProvider? provider = ValidateChatProvider(_configuration["Chat:Provider"]);
         if(provider != ChatProvider.Anthropic)
             throw new InvalidOperationException("Provider configuration does not match injected service."); 
-
-        string? url = GetUrl(provider.Value)
-            ?? throw new InvalidOperationException($"Unexpected error encountered attempting to find string for provider {provider}");
-
-        string model = configuration["Chat:Model"] 
+ 
+        string model = _configuration["Chat:Model"] 
             ?? throw new InvalidOperationException("Configuration for Chat:Model could not be found or read."); 
 
-        string maxTokensString = configuration["Chat:MaxTokens"]
+        string maxTokensString = _configuration["Chat:MaxTokens"]
             ?? throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read.");
         if(!int.TryParse(maxTokensString, out var maxTokens))
             throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
 
-        string instructions = string.Join(' ', await instructionsService.GetInstructions(isForFiltering: false))
+        string instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false))
             ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
  
-        var requestsPerPath = diffSections.ToDictionary(
+        Dictionary<string, MessageCreateParams> requestsPerPath = diffSections.ToDictionary(
             diff => diff.Key,
-            diff => new AnthropicRequestDto {
-                Model = model,
+            diff => new MessageCreateParams {
                 MaxTokens = maxTokens,
-                Messages = [new AnthropicMessageDto { Role = "user", Content = diff.Value }],
-                OutputConfig = new AnthropicOutputConfig(),
-                System = instructions
+                Messages = [
+                    new() {
+                        Role = Role.User,
+                        Content = $"Review this diff:\n```{diff.Value}```"
+                    },
+                ],
+                Model = model,
+                OutputConfig = new OutputConfig {
+                    Format = new JsonOutputFormat { Schema = AnthropicSchema.FilterRequestSchema }, 
+                },
+                Temperature = 0.0,
             });
 
-        List<ChatResponseText> responses = await client.RequestReviewsAsync(requestsPerPath.Values.ToList(), url);
+        Dictionary<string, ChatMessage> responses = await this.RequestReviewsAsync(requestsPerPath.Values.ToList());
+
+        Dictionary<string, ChatMessage> reviewPerPath = responses.ToDictionary(
+
+        )
+
         foreach(var (path, response) in requestsPerPath.Keys.Zip(responses)) {
             ((AnthropicTextDto)response).Inline.Path = path;
         }
         return responses;
-    } 
-
+    }  
+ 
 }

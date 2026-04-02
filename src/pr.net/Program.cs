@@ -11,8 +11,6 @@ using pr.net.Services.Clients.Bitbucket;
 using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
-using pr.net.Services.Chat.Anthropic;
-using pr.net.Services.Chat.Generic;
 
 using pr.net.Endpoints;
 
@@ -20,6 +18,8 @@ using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
 using static pr.net.Models.Enums.ChatProviders;
+
+namespace pr.net;
 
 public class Program {
     public static void Main(string[] args) {
@@ -56,17 +56,7 @@ public class Program {
         string? _chatProvider = null;
         if((_chatProvider = builder.Configuration["Chat:Provider"]) == null)
             throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
-        ChatProvider chatProvider = ValidateChatProvider(_chatProvider);
-
-        string? _chatTimeoutString = null;
-        if((_chatTimeoutString = builder.Configuration["Chat:Timeout"]) == null)
-            throw new InvalidOperationException("Chat:Timeout has not been set in configuration. Set this value before trying again.");
-        if(!long.TryParse(_chatTimeoutString, out long _chatTimeout))
-            throw new InvalidOperationException("Chat:Timeout is invalid, it must be an integer (long). Set this value before trying again.");
-
-        string? _chatToken = null;
-        if((_chatToken = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN")) == null)
-            throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found, or is invalid."); 
+        ChatProvider chatProvider = ValidateChatProvider(_chatProvider);  
 
         // register services from config values.
 
@@ -74,27 +64,18 @@ public class Program {
             case RepoProvider.Bitbucket: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
+                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
 
             case RepoProvider.Github: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
-                break;
-
-            // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
-        } 
-
-        switch(authProvider) {
-            case AuthProvider.Environment: 
-                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
-                break;
-            
-            case AuthProvider.Github:
                 builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
                 break;
 
+            // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
             // chain other types of token storage access here.
-        } 
+        }
  
         switch(instructionsProvider) {
             case InstructionsProvider.Environment:
@@ -106,16 +87,21 @@ public class Program {
 
         switch(chatProvider) {
             case ChatProvider.Anthropic:
-                builder.Services.AddSingleton<IAnthropicClient>(_ =>
-                    new AnthropicClient {
-                        ApiKey = _chatToken,
-                        Timeout = TimeSpan.FromSeconds(_chatTimeout),
-                    });
+                builder.Services.AddSingleton<IAnthropicClient>(new AnthropicClient() {
+                    ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
+                        ?? throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found or read, or is in an invalid format.")
+                });
                 builder.Services.AddSingleton<IChatService, AnthropicChatService>();
                 break;
 
             // chain other types of chat providers here.
         }
+
+        string? _chatTimeoutString = null;
+        if((_chatTimeoutString = builder.Configuration["Chat:Timeout"]) == null)
+            throw new InvalidOperationException("Chat:Timeout has not been set in configuration. Set this value before trying again.");
+        if(!long.TryParse(_chatTimeoutString, out long _chatTimeout))
+            throw new InvalidOperationException("Chat:Timeout is invalid, it must be an integer (long). Set this value before trying again.");
 
         // generic services.
         builder.Services.AddSingleton<Orchestrator>();
