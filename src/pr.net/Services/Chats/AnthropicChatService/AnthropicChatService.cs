@@ -20,10 +20,10 @@ using static pr.net.Models.Enums.ChatProviders;
 
 namespace pr.net.Services.Chat;
 
-public class AnthropicChatService(IConfiguration _configuration, IInstructionsService _instructionsService, IAnthropicClient _client, ITokenService _tokenService) : IChatService { 
+public class AnthropicChatService(IConfiguration _configuration, IInstructionsService _instructionsService, IAnthropicClient _client) : IChatService { 
 
-    public async Task<IEnumerable<DiffSection>> FilterDiffsAsync(IList<DiffSection> diffSections) { 
-        if(diffSections.Count < 1)
+    public async Task<IEnumerable<DiffSection>> FilterDiffsAsync(IEnumerable<DiffSection> diffSections) { 
+        if(diffSections.Count() < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(FilterDiffsAsync)}.");
         
         ChatProvider? provider = ValidateChatProvider(_configuration["Chat:Provider"]);
@@ -74,8 +74,8 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
         return await this.RequestFilteringAsync(requestsPerPath);
     }
 
-    private async Task<List<DiffSection>> RequestFilteringAsync(List<(DiffSection, MessageCreateParams)> requestsPerPath) {
-        if(requestsPerPath.Count < 1)
+    private async Task<IEnumerable<DiffSection>> RequestFilteringAsync(IEnumerable<(DiffSection, MessageCreateParams)> requestsPerPath) {
+        if(requestsPerPath.Count() < 1)
             throw new InvalidOperationException($"No diffs or paths provided to {nameof(RequestFilteringAsync)}");
 
         if(!TimeSpan.TryParse(_configuration["Chat:Filtering:Timeout"], out TimeSpan timeout))
@@ -85,6 +85,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
         List<DiffSection> filteredDiffSections = [];
         List<Exception> exceptions = [];
         foreach((DiffSection section, MessageCreateParams request) in requestsPerPath) { 
+            // note that the apikey is injected from the environment at init by the anthropic sdk.
             Message message;
             try {
                 message = await _client.Messages.Create(request);
@@ -106,8 +107,8 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
     } 
 
-    public async Task<List<(DiffSection, ChatResponse)>> GetChatReviewsAsync(List<DiffSection> diffSections) {
-        if(diffSections.Count < 1)
+    public async Task<IEnumerable<(DiffSection, ChatResponse)>> GetChatReviewsAsync(IEnumerable<DiffSection> diffSections) {
+        if(diffSections.Count() < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
 
         ChatProvider? provider = ValidateChatProvider(_configuration["Chat:Provider"]);
@@ -165,6 +166,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             if(parameter.Messages.Count < 1)
                 continue;
 
+            // note that the apikey is injected from the environment at init by the anthropic sdk.
             Message message;
             try {
                 message = await _client.Messages.Create(parameter); 

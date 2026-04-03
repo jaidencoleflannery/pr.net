@@ -15,16 +15,18 @@ public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger,
             string diff = await _client.GetPullRequestDataAsync(prEvent);
 
             // split diff per file, diffSections should be key: file, value: diff.
-            IEnumerable<DiffSection> diffSections = ParserService.ParseDiff(diff); 
-            return diffSections;
+            if(ParserService.ParseDiff(diff, out List<DiffSection> diffSections))
+                return diffSections;
+            else
+                throw new InvalidOperationException($"Failure parsing diffs from format in {nameof(GetPullReviewFiles)}.");
         } catch (Exception exception) {
             _logger.LogError($"\n{DateTime.Now}: {exception}\n[ Error processing pull request. Review not posted. ]\n");
-            throw new Exception("Failed to pull and parse diff.");
+            throw;
         }
     }
 
     // posts reviews to specific pull review
-    public async Task PostChatReviews(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {  
+    public async Task PostChatReviews(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent) {  
         var result = await _client.PostReviewsAsync(reviews, prEvent);
     }
 

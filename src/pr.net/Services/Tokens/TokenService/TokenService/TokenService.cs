@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 
 namespace pr.net.Services.Tokens;
 
+// a token factory that tracks token expiration.
 public class TokenService(ITokenProvider _provider) : ITokenService {
 
     private ConcurrentDictionary<Token, ICachedToken> _tokens = new ConcurrentDictionary<Token, ICachedToken>();

@@ -7,8 +7,8 @@ namespace pr.net.Services.Parsing;
 public static class ParserService {
 
     // split diff per file.
-    public static List<DiffSection> ParseDiff(string diff) {
-        List<DiffSection> diffSections = [];
+    public static bool ParseDiff(string diff, out List<DiffSection> diffSections) {
+        diffSections = [];
         string file = string.Empty;
         var builder = new StringBuilder(); 
         foreach(var line in diff.Split('\n')) {
@@ -27,7 +27,10 @@ public static class ParserService {
         if(builder.Length > 0)
             diffSections.Add(new DiffSection(file, builder.ToString()));
 
-        return diffSections;
+        if(diffSections.Count <= 0)
+            return false;
+        else
+            return true;
     }
 
 }

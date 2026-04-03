@@ -3,7 +3,7 @@ using System.Text.Json;
 using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Tokens;
 
-using pr.net.Models.Incoming.Anthropic;
+using pr.net.Models.Generic;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Github;
 
@@ -30,7 +30,7 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         }
     } 
 
-    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {
+    public async Task<List<string>> PostReviewsAsync(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent) {
         if(prEvent is not GithubPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"Event type did not match injected service type {nameof(PostReviewsAsync)}.");
 
@@ -39,13 +39,15 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         var exceptions = new List<Exception>(); 
         JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
         // THIS NEEDS TO BE GENERIC!
-        foreach(AnthropicTextDto review in reviews) {
-            using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/repos/{request.Repository?.Owner}/{request.Repository?.Name}/pulls/{request.PullRequest.Id}/comments")) {
+        foreach(var (path, review) in reviews) {
+            using(var message = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/repos/{request.Repository?.Owner}/{request.Repository?.Name}/pulls/{request.PullRequest.Id}/comments")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
-                message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json");
 
-                if(review == null)
-                    throw new InvalidOperationException($"{nameof(review)} was null."); 
+                if(review == null) {
+                    exceptions.Add(new InvalidOperationException($"{nameof(review)} was null.")); 
+                    continue;
+                }
+                message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
                 
                 var response = await client.SendAsync(message); 
                 var content = response.Content.ReadAsStringAsync();

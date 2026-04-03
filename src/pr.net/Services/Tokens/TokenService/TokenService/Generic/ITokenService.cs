@@ -1,5 +1,7 @@
 namespace pr.net.Services.Tokens;
 
+/// <summary>An access token factory that handles token expiration.</summary>
+/// <remarks>If a token does not expire, skew towards injecting it directly into the singleton instead of using this service to avoid performance implications.</remarks> 
 public interface ITokenService {
 
     /// <summary>Retrieves the specified type of access token.</summary>

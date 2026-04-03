@@ -7,6 +7,6 @@ public interface IRepositoryRequestService {
     
     Task<IEnumerable<DiffSection>> GetPullReviewFiles(PullReviewCreatedEvent prEvent);
 
-    Task PostChatReviews(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent);
+    Task PostChatReviews(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent);
 
 }
