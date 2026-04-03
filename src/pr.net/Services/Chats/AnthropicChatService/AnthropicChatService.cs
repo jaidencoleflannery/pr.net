@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.Extensions.AI;
 
 using Anthropic;
 
@@ -13,6 +12,7 @@ using pr.net.Services.Chat.Instructions;
 using pr.net.Models.Generic;
 using pr.net.Models.Anthropic;
 using pr.net.Models.Incoming.Anthropic;
+using pr.net.Models.Incoming.Generic;
 
 using static System.Text.Json.JsonSerializer;
 
@@ -106,7 +106,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
     } 
 
-    public async Task<List<(DiffSection, AnthropicResponse)>> GetChatReviewsAsync(List<DiffSection> diffSections) {
+    public async Task<List<(DiffSection, ChatResponse)>> GetChatReviewsAsync(List<DiffSection> diffSections) {
         if(diffSections.Count < 1)
             throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
 
@@ -156,9 +156,9 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
     }
 
 
-    private async Task<List<(DiffSection, AnthropicResponse)>> RequestReviewsAsync(List<(DiffSection, MessageCreateParams)> requestsPerPath) { 
+    private async Task<List<(DiffSection, ChatResponse)>> RequestReviewsAsync(List<(DiffSection, MessageCreateParams)> requestsPerPath) { 
         // iterate over every instance of requestDtos and send them individually.
-        var reviewPerPath = new List<(DiffSection, AnthropicResponse)>();
+        var reviewPerPath = new List<(DiffSection, ChatResponse)>();
         var exceptions = new List<Exception>();
 
         foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) {
@@ -179,7 +179,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             } catch(AnthropicApiException exception) {
                 Console.WriteLine($"Anthropic call failed: {exception.Message}");
                 exceptions.Add(exception);
-            }    
+            }
         }
 
         return (reviewPerPath.Count > 0)

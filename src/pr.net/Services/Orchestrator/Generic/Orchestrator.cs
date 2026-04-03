@@ -1,5 +1,3 @@
-using Microsoft.Extensions.AI;
-
 using pr.net.Services.Chat;
 using pr.net.Services.Repositories.Generic;
 

@@ -27,5 +27,5 @@ public class AnthropicResponse : ChatResponse {
     public string? StopSequence { get; set; } = null;
 
     [JsonPropertyName("usage")]
-    public AnthropicUsageDto Usage { get; set; } = new AnthropicUsageDto();
+    public AnthropicUsage Usage { get; set; } = new AnthropicUsage();
 }

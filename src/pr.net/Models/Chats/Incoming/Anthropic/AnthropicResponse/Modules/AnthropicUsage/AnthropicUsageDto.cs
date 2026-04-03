@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Incoming.Anthropic;
 
-public class AnthropicUsageDto {
+public class AnthropicUsage {
 
     [JsonPropertyName("input_tokens")]
     public int InputTokens { get; set; } = -1;
@@ -14,7 +14,7 @@ public class AnthropicUsageDto {
     public int CacheReadInputTokens { get; set; } = -1;
 
     [JsonPropertyName("cache_creation")]
-    public AnthropicCacheCreationDto CacheCreation { get; set; } = new AnthropicCacheCreationDto();
+    public AnthropicCacheCreation CacheCreation { get; set; } = new();
 
     [JsonPropertyName("output_tokens")]
     public int OutputTokens { get; set; } = -1; 

@@ -7,6 +7,6 @@ public interface IChatService {
 
     Task<IEnumerable<DiffSection>> FilterDiffsAsync(IList<DiffSection> diffSections);
     
-    Task<List<(DiffSection, AnthropicResponse)>> GetChatReviewsAsync(List<DiffSection> diffSections); 
+    Task<List<(DiffSection, ChatResponse)>> GetChatReviewsAsync(List<DiffSection> diffSections); 
 
 }
