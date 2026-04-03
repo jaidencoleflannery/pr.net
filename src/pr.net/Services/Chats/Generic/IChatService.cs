@@ -1,11 +1,12 @@
-using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Generic;
+using pr.net.Models.Incoming.Anthropic;
 
 namespace pr.net.Services.Chat;
 
 public interface IChatService {
 
-    Task<Dictionary<string, string>> FilterDiffsAsync(Dictionary<string, string> diffSections);
+    Task<IEnumerable<DiffSection>> FilterDiffsAsync(IList<DiffSection> diffSections);
     
-    Task<List<ChatResponseText>> GetChatReviewsAsync(Dictionary<string, string> filteredDiffSections); 
+    Task<List<(DiffSection, AnthropicResponse)>> GetChatReviewsAsync(List<DiffSection> diffSections); 
 
 }

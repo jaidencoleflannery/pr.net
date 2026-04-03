@@ -3,7 +3,7 @@ using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Models.Incoming.Anthropic;
 
-public class AnthropicResponseDto : ChatResponse {
+public class AnthropicResponse : ChatResponse {
 
     [JsonPropertyName("model")]
     public string Model { get; set; } = string.Empty; 
@@ -18,7 +18,7 @@ public class AnthropicResponseDto : ChatResponse {
     public string Role { get; set; } = string.Empty; 
 
     [JsonPropertyName("content")]
-    public List<AnthropicContentDto> Content { get; set; } = new List<AnthropicContentDto>();
+    public List<AnthropicContent> Content { get; set; } = []; 
 
     [JsonPropertyName("stop_reason")]
     public string StopReason { get; set; } = string.Empty;
