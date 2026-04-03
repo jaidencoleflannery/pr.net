@@ -5,11 +5,11 @@ using pr.net.Services.Tokens;
 
 using pr.net.Models.Bitbucket;
 using pr.net.Models.Incoming.Generic;
-using pr.net.Models.Incoming.Anthropic;
+using pr.net.Models.Generic;
 
 namespace pr.net.Services.Clients.Bitbucket;
 
-public class BitbucketApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
+public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request)
@@ -17,7 +17,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService) :
 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request);
         using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
             var response = await client.SendAsync(message);
 
             return (response!= null && response.IsSuccessStatusCode)
@@ -26,7 +26,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService) :
         }
     } 
 
-    public async Task<List<string>> PostReviewsAsync(List<ChatResponseText> reviews, PullReviewCreatedEvent prEvent) {
+    public async Task<List<string>> PostReviewsAsync(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(BitbucketApiClient)}.");
 
@@ -37,9 +37,9 @@ public class BitbucketApiClient(HttpClient client, ITokenService tokenService) :
         var exceptions = new List<Exception>(); 
         JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
         // FIX THIS DEPENDENCY v
-        foreach(AnthropicTextDto review in reviews) {
+        foreach(var(diff, review) in reviews) {
             using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
                 message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json");
 
                 if(review == null)
