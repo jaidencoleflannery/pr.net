@@ -1,5 +1,4 @@
-using System.Text;
-
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 
 using Anthropic;
@@ -12,8 +11,10 @@ using pr.net.Services.Chat.Instructions;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming.Generic;
-using pr.net.Models.Outbound.Anthropic;
+using pr.net.Models.Anthropic;
 using pr.net.Models.Incoming.Anthropic;
+
+using static System.Text.Json.JsonSerializer;
 
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -40,9 +41,16 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format.");  
 
         string instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: true))
-            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");  
+            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
 
-        // requestsperpath's key == file name.
+        // create schema structure with property type and required fields.
+        AnthropicSchema<AnthropicFilteringProperties> rawSchema = new();
+
+        // push schema into anthropic's required type for the format field.
+        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(rawSchema))
+            ?? throw new InvalidOperationException("Failure to serialize Anthropic Filtering schema.");;
+
+        // requestsperpath's key == (path, contents), value == request.
         Dictionary<DiffSection, MessageCreateParams> requestsPerPath = diffSections.ToDictionary(
             diff => diff,
             diff => new MessageCreateParams {
@@ -55,7 +63,9 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
                 ],
                 Model = model,
                 OutputConfig = new OutputConfig {
-                    Format = new JsonOutputFormat { Schema = AnthropicSchema.FilterRequestSchema }, 
+                    Format = new JsonOutputFormat {
+                        Schema = schema, 
+                    }
                 },
                 Temperature = 0.0,
             }); 
@@ -68,8 +78,8 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             throw new InvalidOperationException("Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format."); 
 
         // iterate over every instance of requestDtos and send them individually.
-        var responses = new List<DiffSection>();
-        var exceptions = new List<Exception>();
+        List<DiffSection> filteredDiffSections = new();
+        List<Exception> exceptions = new();
         foreach((DiffSection section, MessageCreateParams request) in requestsPerPath) {
             if(request.Messages.Count < 1) {
                 requestsPerPath.Remove(section);
@@ -79,15 +89,20 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             Message message;
             try {
                 message = await _client.Messages.Create(request);
-                if(message.worthReview == false) // need to get AnthropicSchema (FilterRequestSchema) out of this, maybe make it a real class?
+                if(message.Content[0].TryPickText(out TextBlock? textBlock)) {
+                    // due to our output config, the response will be a single text block containing a json string with our boolean value.
+                    Dictionary<string, JsonElement> result = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(textBlock!.Text)!;
+                    if(result?["isWorthReview"].GetBoolean() == true)
+                        filteredDiffSections.Add(section);
+                }
             } catch(AnthropicApiException exception) {
                 Console.WriteLine($"Anthropic call failed: {exception.Message}");
                 exceptions.Add(exception);
             }    
         }
 
-        if(responses.Count > 0)
-            return responses;
+        if(filteredDiffSections.Count > 0)
+            return filteredDiffSections;
         else
             throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
     }
