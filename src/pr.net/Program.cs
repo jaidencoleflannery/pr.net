@@ -1,28 +1,6 @@
-using Serilog;
 
-using Anthropic;
-using Anthropic.Models.Messages;
 
-using pr.net.Services.Chat;
-using pr.net.Services.Chat.Instructions;
-using pr.net.Services.Tokens;
-using pr.net.Services.Requests;
-using pr.net.Services.Clients.Bitbucket;
-using pr.net.Services.Clients.Github;
-using pr.net.Services.Repositories.Generic; 
-using pr.net.Services.Orchestration;
-
-using pr.net.Endpoints;
-
-using static pr.net.Models.Enums.RepoProviders;
-using static pr.net.Models.Enums.AuthProviders;
-using static pr.net.Models.Enums.InstructionsProviders;
-using static pr.net.Models.Enums.ChatProviders;
-
-namespace pr.net;
-
-public class Program {
-    public static void Main(string[] args) {
+public class Program {    public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
         string? env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
         builder.Host.UseSerilog(
@@ -36,12 +14,16 @@ public class Program {
             }
         );
 
+        CALL FUNCTION_RUN FACT CHECK RUN BACK... RUN
+
         // dynamic services via configuration - grab config values and validate.
 
         string? _repoProvider = null; 
         if((_repoProvider = builder.Configuration["Repo:Provider"]) == null)
             throw new InvalidOperationException("Repo:Provider type has not been set in configuration. Set this value before trying again.");
         RepoProvider repoProvider = ValidateRepoProvider(_repoProvider);
+
+        <!-- REMOVE -->
 
         string? _authProvider = null;
         if((_authProvider = builder.Configuration["Auth:Provider"]) == null)
@@ -51,12 +33,7 @@ public class Program {
         string? _instructionsProvider = null;
         if((_instructionsProvider = builder.Configuration["Chat:Instructions:Provider"]) == null)
             throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
-        InstructionsProvider instructionsProvider = ValidateInstructionsProvider(_instructionsProvider);
-
-        string? _chatProvider = null;
-        if((_chatProvider = builder.Configuration["Chat:Provider"]) == null)
-            throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
-        ChatProvider chatProvider = ValidateChatProvider(_chatProvider);  
+        InstructionsProvider instructionsProvider = ValidateInstructionsPr
 
         // register services from config values.
 
