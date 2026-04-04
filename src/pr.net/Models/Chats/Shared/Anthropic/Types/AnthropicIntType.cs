@@ -2,9 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Anthropic;
 
-public class AnthropicStringType {
+public class AnthropicIntType {
     
     [JsonPropertyName("type")]
-    public string Type { get; } = "string";
+    public string Type { get; } = "int";
 
 }

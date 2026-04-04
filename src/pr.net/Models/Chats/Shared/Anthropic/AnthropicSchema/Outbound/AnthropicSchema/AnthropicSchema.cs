@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Anthropic;
 
-public class AnthropicSchema<TAnthropicProperties> where TAnthropicProperties : IAnthropicProperties, new() {
+public class AnthropicSchema<TAnthropicProperties> : IAnthropicReviewSchema, IAnthropicFilterSchema where TAnthropicProperties : IAnthropicProperties, new() {
 
     public AnthropicSchema() {
         this.Required = [..Properties.GetRequiredFields()];

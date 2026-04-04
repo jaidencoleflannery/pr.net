@@ -2,11 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 
 using Anthropic;
-
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 
-using pr.net.Services.Tokens;
 using pr.net.Services.Chat.Instructions;
 
 using pr.net.Models.Generic;
@@ -20,7 +18,13 @@ using static pr.net.Models.Enums.ChatProviders;
 
 namespace pr.net.Services.Chat;
 
-public class AnthropicChatService(IConfiguration _configuration, IInstructionsService _instructionsService, IAnthropicClient _client) : IChatService { 
+public class AnthropicChatService(
+    IConfiguration _configuration, 
+    IInstructionsService _instructionsService, 
+    IAnthropicClient _client, 
+    IAnthropicFilterSchema _filterSchema, 
+    IAnthropicReviewSchema _reviewSchema
+) : IChatService { 
 
     public async Task<IEnumerable<DiffSection>> FilterDiffsAsync(IEnumerable<DiffSection> diffSections) { 
         if(diffSections.Count() < 1)
@@ -44,7 +48,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
 
         // push schema into anthropic's required type for the format field.
-        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(new AnthropicSchema<AnthropicFilteringProperties>()))
+        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema))
             ?? throw new InvalidOperationException("Failure to serialize Anthropic Filtering schema.");
 
         // requestsperpath's key == (path, contents), value == request. 
@@ -130,7 +134,7 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
             ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
 
         // push schema into anthropic's required type for the format field.
-        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(new AnthropicSchema<AnthropicReviewProperties>()))
+        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_reviewSchema))
             ?? throw new InvalidOperationException("Failure to serialize Anthropic Review schema.");
 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];

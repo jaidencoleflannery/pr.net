@@ -13,6 +13,8 @@ using pr.net.Services.Orchestration;
 
 using pr.net.Endpoints;
 
+using pr.net.Models.Anthropic;
+
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.AuthProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
@@ -87,6 +89,12 @@ public class Program {
 
         switch(chatProvider) {
             case ChatProvider.Anthropic:
+                switch(repoProvider) {
+                    case RepoProvider.Github:
+                        builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicGithubReviewProperties>>();
+                        builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicGithubFilteringProperties>>();
+                        break;
+                }
                 builder.Services.AddSingleton<IAnthropicClient>(new AnthropicClient() {
                     ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
                         ?? throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found or read, or is in an invalid format.")
