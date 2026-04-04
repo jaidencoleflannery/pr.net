@@ -183,10 +183,10 @@ public class AnthropicChatService(
                 foreach(var content in message.Content) {
                     if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
                         Console.WriteLine(textBlock!.Text);
-                        AnthropicReviewResponse? text = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<AnthropicReviewResponse>();
-                        if(text == null || text.Reviews == null)
+                        List<AnthropicReview>? reviews = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<AnthropicReview>>();
+                        if(reviews == null)
                             throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
-                        foreach(var review in text.Reviews) {
+                        foreach(var review in reviews) {
                             AnthropicResponse response = new();
                             response.Content.Add(
                                 new AnthropicContent() {
