@@ -9,7 +9,7 @@ using pr.net.Models.Github;
 
 namespace pr.net.Services.Clients.Github;
 
-public class GithubApiClient(HttpClient client, ITokenService tokenService) : IRepositoryApiClient {
+public class GithubApiClient(HttpClient _client, ITokenService _tokenService, IConfiguration _configuration) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
         if(prEvent is not GithubPullReviewCreatedEventDto request)
@@ -20,9 +20,9 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
             : request.PullRequest?.DiffUrl)!;
 
         using(var message = new HttpRequestMessage(HttpMethod.Get, url)) {
-            string token = await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN); 
+            string token = await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent: prEvent); 
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await client.SendAsync(message);
+            HttpResponseMessage response = await _client.SendAsync(message);
 
             return response.IsSuccessStatusCode
                 ? await response.Content.ReadAsStringAsync()
@@ -34,22 +34,47 @@ public class GithubApiClient(HttpClient client, ITokenService tokenService) : IR
         if(prEvent is not GithubPullReviewCreatedEventDto request)
            throw new InvalidOperationException($"Event type did not match injected service type {nameof(PostReviewsAsync)}.");
 
+        string appName = _configuration["Repo:Github:AppName"] 
+            ?? throw new InvalidOperationException("Configuration value Repo:Github:AppName could not be read or is invalid, make sure to set this value before rebooting.");
+
         // send each diff file review as it's own individual comment, and save each status
         var responses = new List<string>();
         var exceptions = new List<Exception>(); 
         JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
-        // THIS NEEDS TO BE GENERIC!
-        foreach(var (path, review) in reviews) {
-            using(var message = new HttpRequestMessage(HttpMethod.Post, $"https://github.com/repos/{request.Repository?.Owner}/{request.Repository?.Name}/pulls/{request.PullRequest.Id}/comments")) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN));
+        foreach(var (diff, review) in reviews) {
+            using(var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/repos/{request.Repository?.Owner.Login}/{request.Repository?.Name}/pulls/{request.Number}/comments")) {
+
+                /*
+                    owner: 'OWNER',
+                    repo: 'REPO',
+                    pull_number: 'PULL_NUMBER',
+                    body: 'Great stuff!',
+                    commit_id: '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+                    path: 'file1.txt',
+                    start_line: 1,
+                    start_side: 'RIGHT',
+                    line: 2,
+                    side: 'RIGHT',
+                    headers: {
+                        'X-GitHub-Api-Version': '2026-03-10'
+                    }
+                */
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
+                message.Headers.Add("User-Agent", appName);
 
                 if(review == null) {
                     exceptions.Add(new InvalidOperationException($"{nameof(review)} was null.")); 
                     continue;
                 }
-                message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
+                GithubComment comment = new() {
+                    Body = ((dynamic)review).Content[0].Text,
+                    CommitId = request.Number,
+                    Path = diff.Path,
+                    Line = 0 // needs to be fixed
+                };
+                message.Content = new StringContent(JsonSerializer.Serialize(comment, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
                 
-                var response = await client.SendAsync(message); 
+                var response = await _client.SendAsync(message); 
                 var content = response.Content.ReadAsStringAsync();
                 if(response.IsSuccessStatusCode)
                     responses.Add(await response.Content.ReadAsStringAsync());

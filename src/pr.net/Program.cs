@@ -1,7 +1,6 @@
 using Serilog;
 
 using Anthropic;
-using Anthropic.Models.Messages;
 
 using pr.net.Services.Chat;
 using pr.net.Services.Chat.Instructions;
@@ -62,15 +61,16 @@ public class Program {
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
-                builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
                 builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
+                builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   
                 break;
 
             case RepoProvider.Github: 
+                builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
-                builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
+                Console.WriteLine("GithubAppTokenProvider injected."); 
                 break;
 
             // chain other repository provider types here - ensure they all have their own request service and apiclient configured.

@@ -1,3 +1,5 @@
+using pr.net.Models.Incoming.Generic;
+
 namespace pr.net.Services.Tokens;
 
 public interface ITokenProvider {
@@ -6,6 +8,6 @@ public interface ITokenProvider {
     /// <returns>The access token as a string.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the token is not configured.</exception>
     /// <remarks>Ensure the environment variable PR_NET_{type}_TOKEN is set before calling.</remarks> 
-    ValueTask<string> FetchAsync(Token target);
+    ValueTask<string> FetchAsync(Token target, PullReviewCreatedEvent? prEvent = null);
 
 }

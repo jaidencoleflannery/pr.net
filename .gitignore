@@ -169,3 +169,6 @@ docs/_build/
 # StyleCop
 StyleCopReport.xml
 stylecop.json.cache
+
+#Claude
+.claude

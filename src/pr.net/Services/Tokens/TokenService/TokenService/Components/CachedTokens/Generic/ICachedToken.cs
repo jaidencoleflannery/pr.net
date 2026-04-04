@@ -1,3 +1,5 @@
+using pr.net.Models.Incoming.Generic;
+
 namespace pr.net.Services.Tokens;
 
 public interface ICachedToken {
@@ -8,7 +10,7 @@ public interface ICachedToken {
     /// <remarks>Ensure the environment variable PR_NET_{type}_TOKEN is set before calling.</remarks> 
     ValueTask<string> GetValueAsync();
 
-    ValueTask<ICachedToken> RefreshAsync();
+    ValueTask<ICachedToken> RefreshAsync(PullReviewCreatedEvent prEvent);
 
     bool Expired { get; }
 

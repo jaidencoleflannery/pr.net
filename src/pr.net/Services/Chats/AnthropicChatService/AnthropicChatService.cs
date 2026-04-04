@@ -91,8 +91,9 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
                 message = await _client.Messages.Create(request);
                 if(message.Content[0].TryPickText(out TextBlock? textBlock)) {
                     // due to our output config, the response will be a single text block containing a json string with our boolean value.
-                    Dictionary<string, JsonElement> result = Deserialize<Dictionary<string, JsonElement>>(textBlock!.Text)!;
-                    if(result?["isWorthReview"].GetBoolean() == true)
+                    var result = Deserialize<AnthropicisWorthReview>(textBlock?.Text!) ??
+                        throw new InvalidOperationException("Could not parse filtering response.");
+                    if(result.IsWorthReview == true)
                         filteredDiffSections.Add(section);
                 }
             } catch(AnthropicApiException exception) {
@@ -103,8 +104,10 @@ public class AnthropicChatService(IConfiguration _configuration, IInstructionsSe
 
         if(filteredDiffSections.Count > 0)
             return filteredDiffSections;
+        else if(exceptions.Count > 0)
+            throw new HttpRequestException($"No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review.");
         else
-            throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
+            throw new HttpRequestException($"No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call.");
     } 
 
     public async Task<IEnumerable<(DiffSection, ChatResponse)>> GetChatReviewsAsync(IEnumerable<DiffSection> diffSections) {

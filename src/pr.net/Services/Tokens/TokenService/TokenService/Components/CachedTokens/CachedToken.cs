@@ -1,3 +1,5 @@
+using pr.net.Models.Incoming.Generic;
+
 namespace pr.net.Services.Tokens;
 
 public class CachedToken : ICachedToken {  
@@ -19,23 +21,23 @@ public class CachedToken : ICachedToken {
 
     private CachedToken() { }
 
-    public static async ValueTask<ICachedToken> Initialize(ITokenProvider provider, Token type) {
+    public static async ValueTask<ICachedToken> Initialize(ITokenProvider provider, Token type, PullReviewCreatedEvent prEvent) {
         CachedToken instance = new CachedToken();
         instance._provider = provider;
         instance._type = type;
         if(instance._provider == null)
             throw new InvalidOperationException($"Failed to set provider or type for {type} cached token.");
-        return await instance.RefreshAsync();
+        return await instance.RefreshAsync(prEvent);
     } 
 
     public async ValueTask<string> GetValueAsync() =>
         await ValueTask.FromResult(_token!);
 
-    public async ValueTask<ICachedToken> RefreshAsync() {
+    public async ValueTask<ICachedToken> RefreshAsync(PullReviewCreatedEvent prEvent) {
         if(_provider == null)
             throw new InvalidOperationException("Cached token has no provider or type set."); 
 
-        _token = await _provider!.FetchAsync(_type);
+        _token = await _provider!.FetchAsync(_type, prEvent);
         if(_token == null) {
             throw new InvalidOperationException("Provider failed to fetch token, value null."); 
         } else {

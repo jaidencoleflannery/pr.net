@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Github;
 using pr.net.Models.Tokens;
@@ -8,21 +6,17 @@ namespace pr.net.Services.Tokens;
 
 public class GithubAppTokenProvider(HttpClient _client, IConfiguration _config) : ITokenProvider { 
 
-    // catch query if it's for the token so we can use github's logic.
-    public async ValueTask<string> FetchAsync(Token target, PullReviewCreatedEvent? prEvent = null) { 
-        if(target == Token.PR_NET_REPO_TOKEN)
-            return (prEvent is not null)
-                ? (await FetchJwtAsync(prEvent)).Token
-                : throw new InvalidOperationException($"PullReviewCreatedEvent was null, but is required for Github JWT fetching, error encountered in {nameof(FetchAsync)}");
-        else
-            return await FetchAsync(target); 
-    }
+    public async ValueTask<string> FetchAsync(Token target, PullReviewCreatedEvent? prEvent) =>
+        (target == Token.PR_NET_REPO_TOKEN)
+        ? (await this.FetchJwtAsync(prEvent!)).Token
+            ?? throw new InvalidOperationException($"{target} environment variable not found.")
+        : await FetchAsync(target);
 
-    public ValueTask<string> FetchAsync(Token target) =>
+    private ValueTask<string> FetchAsync(Token target) =>
         ValueTask.FromResult(System.Environment.GetEnvironmentVariable(Tokens.GetString(target!).ToUpper())
             ?? throw new InvalidOperationException($"{target} environment variable not found.")); 
 
-    public async ValueTask<GithubAccessTokenResponseDto> FetchJwtAsync(PullReviewCreatedEvent prEvent) {
+    private async ValueTask<GithubAccessTokenResponseDto> FetchJwtAsync(PullReviewCreatedEvent prEvent) {
         string appId = _config["Repo:Github:AppId"]
             ?? throw new InvalidOperationException("Could not find Repo:Github:AppId in configuration file.");
 
