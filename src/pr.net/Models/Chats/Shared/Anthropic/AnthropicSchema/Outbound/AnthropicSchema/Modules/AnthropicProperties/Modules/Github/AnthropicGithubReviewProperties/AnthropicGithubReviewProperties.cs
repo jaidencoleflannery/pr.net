@@ -4,12 +4,9 @@ namespace pr.net.Models.Anthropic;
 
 public class AnthropicGithubReviewProperties : IAnthropicProperties {
 
-    [JsonPropertyName("body")]
-    public List<AnthropicStringType> Body { get; set; } = [];
+    [JsonPropertyName("reviews")]
+    public AnthropicGithubReviews Reviews { get; set; } = new(); 
 
-    [JsonPropertyName("line")]
-    public int Line { get; set; } = 2;
-
-    public IEnumerable<string> GetRequiredFields() => ["body", "line"];
+    public List<string> GetRequiredFields() => ["reviews"];
 
 }

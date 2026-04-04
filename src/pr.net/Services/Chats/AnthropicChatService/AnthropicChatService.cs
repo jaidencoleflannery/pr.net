@@ -22,7 +22,7 @@ public class AnthropicChatService(
     IConfiguration _configuration, 
     IInstructionsService _instructionsService, 
     IAnthropicClient _client, 
-    IAnthropicFilterSchema _filterSchema, 
+    IAnthropicFilteringSchema _filterSchema, 
     IAnthropicReviewSchema _reviewSchema
 ) : IChatService { 
 
@@ -48,7 +48,8 @@ public class AnthropicChatService(
             ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
 
         // push schema into anthropic's required type for the format field.
-        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema))
+        string schemaString = Serialize(_filterSchema, _filterSchema.GetType());
+        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(schemaString)
             ?? throw new InvalidOperationException("Failure to serialize Anthropic Filtering schema.");
 
         // requestsperpath's key == (path, contents), value == request. 
@@ -134,8 +135,10 @@ public class AnthropicChatService(
             ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
 
         // push schema into anthropic's required type for the format field.
-        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_reviewSchema))
-            ?? throw new InvalidOperationException("Failure to serialize Anthropic Review schema.");
+        string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
+        Console.WriteLine(schemaString);
+        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(schemaString)
+            ?? throw new InvalidOperationException("Failure to serialize Anthropic Review schema."); 
 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
         foreach(DiffSection diff in diffSections) {
@@ -177,13 +180,22 @@ public class AnthropicChatService(
             Message message;
             try {
                 message = await _client.Messages.Create(parameter); 
-                if(message.Content[0].TryPickText(out TextBlock? textBlock)) {
-                    AnthropicResponse response = new();
-                    response.Content.Add(
-                        new AnthropicContent() {
-                            Text = JsonNode.Parse(textBlock!.Text)!["review"]!.GetValue<string>()
-                        });
-                    reviewPerPath.Add((section, response));
+                foreach(var content in message.Content) {
+                    if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
+                        Console.WriteLine(textBlock!.Text);
+                        AnthropicReviewResponse? text = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<AnthropicReviewResponse>();
+                        if(text == null || text.Reviews == null)
+                            throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
+                        foreach(var review in text.Reviews) {
+                            AnthropicResponse response = new();
+                            response.Content.Add(
+                                new AnthropicContent() {
+                                    Text = review.Body,
+                                    Line = review.Line
+                                });
+                            reviewPerPath.Add((section, response));
+                        }
+                    }
                 }
             } catch(AnthropicApiException exception) {
                 Console.WriteLine($"Anthropic call failed: {exception.Message}");

@@ -92,7 +92,7 @@ public class Program {
                 switch(repoProvider) {
                     case RepoProvider.Github:
                         builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicGithubReviewProperties>>();
-                        builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicGithubFilteringProperties>>();
+                        builder.Services.AddSingleton<IAnthropicFilteringSchema, AnthropicSchema<AnthropicGithubFilteringProperties>>();
                         break;
                 }
                 builder.Services.AddSingleton<IAnthropicClient>(new AnthropicClient() {

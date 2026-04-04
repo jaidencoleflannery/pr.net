@@ -9,4 +9,7 @@ public class AnthropicContent {
 
     [JsonPropertyName("text")]
     public string Text { get; set; } = string.Empty; // Anthropic's response will be a string in the structure of our output config, nested modules should imitate it.
+
+    [JsonPropertyName("line")]
+    public int Line { get; set; } = -1; // Anthropic's response will be a string in the structure of our output config, nested modules should imitate it.
 }

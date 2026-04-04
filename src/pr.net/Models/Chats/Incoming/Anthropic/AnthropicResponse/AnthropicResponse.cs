@@ -18,7 +18,7 @@ public class AnthropicResponse : ChatResponse {
     public string Role { get; set; } = string.Empty; 
 
     [JsonPropertyName("content")]
-    public List<AnthropicContent> Content { get; set; } = []; 
+    public List<AnthropicContent> Content { get; set; } = new(); 
 
     [JsonPropertyName("stop_reason")]
     public string StopReason { get; set; } = string.Empty;
