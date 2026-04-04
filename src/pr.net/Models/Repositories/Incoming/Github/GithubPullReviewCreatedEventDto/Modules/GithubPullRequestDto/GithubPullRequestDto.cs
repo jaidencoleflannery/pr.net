@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+using pr.net.Models.Incoming.Generic;
+
 namespace pr.net.Models.Github;
 
 public class GithubPullRequestDto {

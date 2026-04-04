@@ -8,21 +8,19 @@ public class GithubComment {
     public string Body { get; set; } = string.Empty;
 
     [JsonPropertyName("commit_id")]
-    public long? CommitId { get; set; } = null;
+    public string CommitId { get; set; } = string.Empty;
 
     [JsonPropertyName("path")]
     public string Path { get; set; } = string.Empty;
 
     [JsonPropertyName("start_line")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? StartLine { get; set; } = null;
+    public int? StartLine { get; set; } = 1;
 
     [JsonPropertyName("start_side")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? StartSide { get; set; } = null;
+    public string StartSide { get; set; } = "RIGHT";
 
     [JsonPropertyName("line")]
-    public int Line { get; set; } = -1;
+    public int Line { get; set; } = 2;
 
     [JsonPropertyName("side")]
     public string Side { get; set; } = "RIGHT";

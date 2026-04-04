@@ -42,23 +42,7 @@ public class GithubApiClient(HttpClient _client, ITokenService _tokenService, IC
         var exceptions = new List<Exception>(); 
         JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
         foreach(var (diff, review) in reviews) {
-            using(var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/repos/{request.Repository?.Owner.Login}/{request.Repository?.Name}/pulls/{request.Number}/comments")) {
-
-                /*
-                    owner: 'OWNER',
-                    repo: 'REPO',
-                    pull_number: 'PULL_NUMBER',
-                    body: 'Great stuff!',
-                    commit_id: '6dcb09b5b57875f334f61aebed695e2e4193db5e',
-                    path: 'file1.txt',
-                    start_line: 1,
-                    start_side: 'RIGHT',
-                    line: 2,
-                    side: 'RIGHT',
-                    headers: {
-                        'X-GitHub-Api-Version': '2026-03-10'
-                    }
-                */
+            using(var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.github.com/repos/{request.Repository?.Owner.Login}/{request.Repository?.Name}/pulls/{request.Number}/comments")) { 
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
                 message.Headers.Add("User-Agent", appName);
 
@@ -68,9 +52,9 @@ public class GithubApiClient(HttpClient _client, ITokenService _tokenService, IC
                 }
                 GithubComment comment = new() {
                     Body = ((dynamic)review).Content[0].Text,
-                    CommitId = request.Number,
+                    CommitId = ((GithubPullReviewCreatedEventDto)prEvent).PullRequest.Head.Sha,
                     Path = diff.Path,
-                    Line = 0 // needs to be fixed
+                    Line = 2 // needs to be fixed
                 };
                 message.Content = new StringContent(JsonSerializer.Serialize(comment, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
                 
