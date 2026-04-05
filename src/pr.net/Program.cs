@@ -11,6 +11,10 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 
+using pr.net.Configurations.Chat;
+using pr.net.Configurations.Repo;
+using pr.net.Configurations.Auth;
+
 using pr.net.Endpoints;
 
 using pr.net.Models.Anthropic;
@@ -37,29 +41,29 @@ public class Program {
             }
         );
 
-        // dynamic services via configuration - grab config values and validate.
+        // dynamic services via configuration - grab config values and validate within configuration class.
 
-        string? _repoProvider = null; 
-        if((_repoProvider = builder.Configuration["Repo:Provider"]) == null)
-            throw new InvalidOperationException("Repo:Provider type has not been set in configuration. Set this value before trying again.");
-        RepoProvider repoProvider = ValidateRepoProvider(_repoProvider);
+        builder.Services.AddOptions<ChatConfiguration>()
+            .Bind(builder.Configuration.GetSection("Chat"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-        string? _authProvider = null;
-        if((_authProvider = builder.Configuration["Auth:Provider"]) == null)
-            throw new InvalidOperationException("Auth:Provider type has not been set in configuration. Set this value before trying again.");
-        AuthProvider authProvider = ValidateAuthProvider(_authProvider);
+        builder.Services.AddOptions<RepoConfiguration>()
+            .Bind(builder.Configuration.GetSection("Repo"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-        string? _instructionsProvider = null;
-        if((_instructionsProvider = builder.Configuration["Chat:Instructions:Provider"]) == null)
-            throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
-        InstructionsProvider instructionsProvider = ValidateInstructionsProvider(_instructionsProvider);
+        builder.Services.AddOptions<AuthConfiguration>()
+            .Bind(builder.Configuration.GetSection("Auth"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-        string? _chatProvider = null;
-        if((_chatProvider = builder.Configuration["Chat:Provider"]) == null)
-            throw new InvalidOperationException("Chat:Instructions type has not been set in configuration. Set this value before trying again.");
-        ChatProvider chatProvider = ValidateChatProvider(_chatProvider);  
+        // one time fetch for injection maps.
+        RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
+        InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
+        ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
 
-        // register services from config values.
+        // register services from config values - unfortunately cannot use the builder options due to lazy loading.
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
@@ -71,8 +75,7 @@ public class Program {
             case RepoProvider.Github: 
                 builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
-                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });  
-                Console.WriteLine("GithubAppTokenProvider injected."); 
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });
                 break;
 
             // chain other repository provider types here - ensure they all have their own request service and apiclient configured.
@@ -105,15 +108,9 @@ public class Program {
             // chain other types of chat providers here.
         }
 
-        string? _chatTimeoutString = null;
-        if((_chatTimeoutString = builder.Configuration["Chat:Timeout"]) == null)
-            throw new InvalidOperationException("Chat:Timeout has not been set in configuration. Set this value before trying again.");
-        if(!long.TryParse(_chatTimeoutString, out long _chatTimeout))
-            throw new InvalidOperationException("Chat:Timeout is invalid, it must be an integer (long). Set this value before trying again.");
-
         // generic services.
-        builder.Services.AddSingleton<Orchestrator>();
-        builder.Services.AddSingleton<IRepositoryRequestService, RepositoryRequestService>();
+        builder.Services.AddScoped<Orchestrator>();
+        builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddSingleton<ITokenService, TokenService>();
 
         var app = builder.Build();
