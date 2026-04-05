@@ -102,7 +102,7 @@ public class Program {
                     ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
                         ?? throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found or read, or is in an invalid format.")
                 });
-                builder.Services.AddSingleton<IChatService, AnthropicChatService>();
+                builder.Services.AddScoped<IChatService, AnthropicChatService>();
                 break;
 
             // chain other types of chat providers here.

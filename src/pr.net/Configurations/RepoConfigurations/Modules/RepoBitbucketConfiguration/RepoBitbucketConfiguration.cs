@@ -14,7 +14,7 @@ public class RepoBitbucketConfiguration : IRepoProviderConfiguration {
 
     [Required]
     [ConfigurationKeyName("RepoSlug")]
-    public int? RepoSlug { get => field; init; }
+    public string? RepoSlug { get => field; init; }
 
     [Required]
     [ConfigurationKeyName("PostCommentsUri")]

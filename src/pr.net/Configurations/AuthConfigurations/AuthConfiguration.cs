@@ -5,7 +5,7 @@ namespace pr.net.Configurations.Auth;
 public class AuthConfiguration {
  
     [Required]
-    [ConfigurationKeyName("Auth")] 
-    public AuthProviderConfiguration? Auth { get => field; init; }
+    [ConfigurationKeyName("Provider")] 
+    public string? Provider { get => field; init; }
     
 }
