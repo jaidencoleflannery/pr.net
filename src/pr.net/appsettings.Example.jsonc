@@ -1,3 +1,8 @@
+/*
+  > This file is a JSON Format example of the expected appsettings.json structure, with included field definitions and recommendations.
+  > The user running this system is expected to convert the included JSON Format into a valid JSON file.
+*/
+
 {
   "type": "object",
   "properties": {

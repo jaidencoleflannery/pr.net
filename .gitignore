@@ -116,6 +116,7 @@ appsettings*
 secrets.json
 local.settings.json
 !appsettings.Example.jsonc
+!appsettings.Default.json
 .env
 .env.*
 # Any file named exactly “secrets.*” or ending “.secret” or “.pw”
