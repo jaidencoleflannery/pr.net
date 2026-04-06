@@ -34,6 +34,7 @@ public static class ChatProviders {
         Anthropic,
         OpenAi,
         Google,
+        Amazon,
         None
     }
 

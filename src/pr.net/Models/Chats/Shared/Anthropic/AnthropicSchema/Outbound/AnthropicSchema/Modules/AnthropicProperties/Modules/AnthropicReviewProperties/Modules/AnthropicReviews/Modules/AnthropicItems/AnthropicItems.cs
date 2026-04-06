@@ -2,17 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Anthropic;
 
-public class AnthropicGithubItem : IAnthropicProperties {
+public class AnthropicItems : IAnthropicProperties {
 
-    public AnthropicGithubItem() {
-        this.Required = [..new AnthropicGithubItemProperties().GetRequiredFields()];
+    public AnthropicItems() {
+        this.Required = [..new AnthropicItemProperties().GetRequiredFields()];
     }
 
     [JsonPropertyName("type")]
     public string Type { get; set; } = "object";
 
     [JsonPropertyName("properties")]
-    public AnthropicGithubItemProperties Properties { get; set; } = new(); 
+    public AnthropicItemProperties Properties { get; set; } = new(); 
 
     [JsonPropertyName("required")]
     public List<string> Required { get; set; } = new();

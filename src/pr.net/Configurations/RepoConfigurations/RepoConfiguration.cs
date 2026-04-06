@@ -19,9 +19,9 @@ public class RepoConfiguration {
     };
 
     [ConfigurationKeyName("Bitbucket")]
-    public RepoBitbucketConfiguration? Bitbucket { get => field; init; }
+    private RepoBitbucketConfiguration? Bitbucket { get => field; init; }
 
     [ConfigurationKeyName("Github")]
-    public RepoGithubConfiguration? Github { get => field; init; }
+    private RepoGithubConfiguration? Github { get => field; init; }
 
 }
