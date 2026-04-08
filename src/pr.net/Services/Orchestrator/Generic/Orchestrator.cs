@@ -12,7 +12,7 @@ public class Orchestrator(IConfiguration _configuration, IRepositoryRequestServi
     public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) {  
 
         // get each file's associated diff.
-        IEnumerable<DiffSection> diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
+        IEnumerable<DiffSection>? diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
         if(diffFiles == null)
             return;
 
