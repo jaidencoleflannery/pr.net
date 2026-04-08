@@ -154,7 +154,17 @@
         }
       },
       "required": ["Provider", "Model", "MaxTokens", "Instructions", "Filtering"]
+    },
+    "Host": {
+      "type": "object",
+      "properties": {
+        "Provider": {
+          "type": "string"
+        }
+      },
+      "required": ["Provider"]
     }
   },
-  "required": ["Logging", "Serilog", "Repo", "Auth", "Chat"]
+  "required": ["Logging", "Serilog", "Repo", "Auth", "Chat", "Host"]
+
 }

@@ -5,10 +5,12 @@ using static pr.net.Models.Enums.ChatProviders;
 namespace pr.net.Configurations.Chat;
 
 public class ChatConfiguration {
+
+    public ChatProvider? Provider { get; set; } = null;
  
     [Required]
     [ConfigurationKeyName("Provider")] 
-    public string? Provider { get => field; init { ValidateChatProvider(value); field = value; } }
+    public string? ProviderString { get => field; init { Provider = ValidateChatProvider(value); field = value; } }
 
     [Required]
     [ConfigurationKeyName("Model")]

@@ -58,6 +58,11 @@ public class Program {
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        builder.Services.AddOptions<HostConfiguration>()
+            .Bind(builder.Configuration.GetSection("Host"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         // one time fetch for injection maps.
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
