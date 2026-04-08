@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.Extensions.Options;
 
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -17,7 +16,7 @@ public class ChatConfiguration {
 
     [Required]
     [ConfigurationKeyName("MaxTokens")]
-    public int? MaxTokens { get => field; init; }
+    public long? MaxTokens { get => field; init; }
 
     [Required]
     [ConfigurationKeyName("Url")]

@@ -14,7 +14,7 @@ public static class GithubPullRequestEndpoints {
             [FromServices] Orchestrator orchestrator,
             [FromBody] GithubPullReviewCreatedEventDto prEvent
         ) => {
-            // augment this line if you'd like to add functionality for further events.
+            // augment this line if you'd like to add functionality for other events.
             if(prEvent.Action is not ("opened" or "reopened"))
                 return;
 

@@ -10,7 +10,7 @@ public class ChatFilteringConfiguration {
 
     [Required]
     [ConfigurationKeyName("Timeout")]
-    public int? Timeout { get => field; init; }
+    public TimeSpan? Timeout { get => field; init; }
 
     [Required]
     [ConfigurationKeyName("UseEmbedding")]

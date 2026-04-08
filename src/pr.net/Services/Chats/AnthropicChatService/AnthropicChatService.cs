@@ -1,11 +1,15 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+using Microsoft.Extensions.Options;
+
 using Anthropic;
 using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 
 using pr.net.Services.Chat.Instructions;
+
+using pr.net.Configurations.Chat;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Anthropic;
@@ -19,38 +23,54 @@ using static pr.net.Models.Enums.ChatProviders;
 namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(
-    IConfiguration _configuration, 
+    IOptions<ChatConfiguration> _configuration, 
     IInstructionsService _instructionsService, 
     IAnthropicClient _client, 
     IAnthropicFilteringSchema _filterSchema, 
-    IAnthropicReviewSchema _reviewSchema
+    IAnthropicReviewSchema _reviewSchema,
+    ILogger<AnthropicChatService> _logger
 ) : IChatService { 
 
-    public async Task<IEnumerable<DiffSection>> FilterDiffsAsync(IEnumerable<DiffSection> diffSections) { 
-        if(diffSections.Count() < 1)
-            throw new InvalidOperationException($"No diffs provided to {nameof(FilterDiffsAsync)}.");
+    public async Task<IEnumerable<DiffSection>?> FilterDiffsAsync(IEnumerable<DiffSection> diffSections) { 
+        if(diffSections.Count() < 1) {
+            _logger.LogError($"\n{DateTime.Now}: [ Error processing pull request. No diff sections were given in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        }
         
-        ChatProvider? provider = ValidateChatProvider(_configuration["Chat:Provider"]);
-        if(provider != ChatProvider.Anthropic)
-            throw new InvalidOperationException("Provider configuration does not match injected Anthropic service.");
+        ChatProvider? provider = ValidateChatProvider(_configuration.Value.Provider);
+        if(provider == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Error fetching AI provider in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        }
 
-        if(_configuration.GetValue<bool>("Chat:Filtering:UseEmbedding"))
-            Console.WriteLine("Embedding has not been configured."); // configure provider specific embedding service here.
+        bool? useEmbedding = _configuration.Value.Filtering?.UseEmbedding;
+        if(useEmbedding != null && useEmbedding == true)
+            _logger.LogError($"\n{DateTime.Now}: [ Embedding has not been configured. ]\n"); // configure provider specific embedding service here.
 
-        string? model = _configuration["Chat:Filtering:Model"];
-        if(string.IsNullOrWhiteSpace(model))
-            throw new InvalidOperationException("Configuration for Chat:Filtering:Model could not be found or read.");
+        string? model = _configuration.Value.Filtering?.Model;
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:Model could not be found or read in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        }
 
-        if(!int.TryParse(_configuration["Chat:Filtering:MaxTokens"], out int maxTokens))
-            throw new InvalidOperationException("Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format.");  
+        long maxTokens = _configuration.Value.Filtering?.MaxTokens ?? 0;
+        if(maxTokens <= 0 || maxTokens > 8192) {
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        }
 
-        string instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: true))
-            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
+        string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: true));
+        if(instructions == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        }
 
         // push schema into anthropic's required type for the format field.
-        string schemaString = Serialize(_filterSchema, _filterSchema.GetType());
-        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(schemaString)
-            ?? throw new InvalidOperationException("Failure to serialize Anthropic Filtering schema.");
+        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema, _filterSchema.GetType())); 
+        if(schema == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Schema could not be deserialized in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        }
 
         // requestsperpath's key == (path, contents), value == request. 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
@@ -79,12 +99,17 @@ public class AnthropicChatService(
         return await this.RequestFilteringAsync(requestsPerPath);
     }
 
-    private async Task<IEnumerable<DiffSection>> RequestFilteringAsync(IEnumerable<(DiffSection, MessageCreateParams)> requestsPerPath) {
-        if(requestsPerPath.Count() < 1)
-            throw new InvalidOperationException($"No diffs or paths provided to {nameof(RequestFilteringAsync)}");
+    private async Task<IEnumerable<DiffSection>?> RequestFilteringAsync(IEnumerable<(DiffSection, MessageCreateParams)> requestsPerPath) {
+        if(requestsPerPath.Count() < 1) {
+            _logger.LogError($"\n{DateTime.Now}: [ No diffs or paths provided to {nameof(RequestFilteringAsync)}. ]\n");
+            return null;
+        } 
 
-        if(!TimeSpan.TryParse(_configuration["Chat:Filtering:Timeout"], out TimeSpan timeout))
-            throw new InvalidOperationException("Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format."); 
+        TimeSpan? timeout = _configuration.Value.Filtering?.Timeout;
+        if(timeout == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format in {nameof(RequestFilteringAsync)}. ]\n");
+            return null;
+        } 
 
         // iterate over every instance of requestDtos and send them individually.
         List<DiffSection> filteredDiffSections = [];
@@ -102,42 +127,63 @@ public class AnthropicChatService(
                         filteredDiffSections.Add(section);
                 }
             } catch(AnthropicApiException exception) {
-                Console.WriteLine($"Anthropic call failed: {exception.Message}");
+                _logger.LogError($"\n{DateTime.Now}: [ Anthropic call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
                 exceptions.Add(exception);
-            }    
+            }
         }
 
-        if(filteredDiffSections.Count > 0)
+        if(filteredDiffSections.Count > 0) {
             return filteredDiffSections;
-        else if(exceptions.Count > 0)
-            throw new HttpRequestException($"No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review.");
-        else
-            throw new HttpRequestException($"No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call.");
+        } else if(exceptions.Count > 0) {
+            _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review. ]\n");
+            return null;
+        } else {
+            _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call. ]\n");
+            return null;
+        }
     } 
 
-    public async Task<IEnumerable<(DiffSection, ChatResponse)>> GetChatReviewsAsync(IEnumerable<DiffSection> diffSections) {
-        if(diffSections.Count() < 1)
-            throw new InvalidOperationException($"No diffs provided to {nameof(GetChatReviewsAsync)}");
+    public async Task<IEnumerable<(DiffSection, ChatResponse)>?> GetChatReviewsAsync(IEnumerable<DiffSection> diffSections) {
+        if(diffSections.Count() < 1) {
+            _logger.LogError($"\n{DateTime.Now}: [ No diffs provided to {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        } 
 
-        ChatProvider? provider = ValidateChatProvider(_configuration["Chat:Provider"]);
-        if(provider != ChatProvider.Anthropic)
-            throw new InvalidOperationException("Provider configuration does not match injected service."); 
+        ChatProvider? provider = ValidateChatProvider(_configuration.Value.Provider);
+        if(provider == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Error fetching AI provider in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        }
+        if(provider != ChatProvider.Anthropic) {
+            _logger.LogError($"\n{DateTime.Now}: [ Provider configuration does not match injected service in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        }
  
-        string model = _configuration["Chat:Model"] 
-            ?? throw new InvalidOperationException("Configuration for Chat:Model could not be found or read."); 
+        string? model = _configuration.Value.Model;
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Model could not be found or read in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        }
 
-        string maxTokensString = _configuration["Chat:MaxTokens"]
-            ?? throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read.");
-        if(!int.TryParse(maxTokensString, out var maxTokens))
-            throw new InvalidOperationException("Configuration for Chat:MaxTokens could not be found or read, or is in an invalid format.");
+        long maxTokens = _configuration.Value.MaxTokens ?? 0;
+        if(maxTokens is <= 0 or > 8192) {
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:MaxTokens could not be found or read in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        }
 
-        string instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false))
-            ?? throw new InvalidOperationException("Could not fetch filtering instructions.");
+        string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
+        if(string.IsNullOrWhiteSpace(instructions)) {
+            _logger.LogError($"\n{DateTime.Now}: [ Could not fetch filtering instructions in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        }
 
         // push schema into anthropic's required type for the format field.
         string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
-        Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(schemaString)
-            ?? throw new InvalidOperationException("Failure to serialize Anthropic Review schema."); 
+        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
+        if(schema == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Failure to serialize Anthropic Review schema in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        }
 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
         foreach(DiffSection diff in diffSections) {
@@ -152,7 +198,7 @@ public class AnthropicChatService(
                                 Content = $"Review this diff:\n```{diff.Contents}```"
                             },
                         ],
-                        Model = model,
+                        Model = model!,
                         OutputConfig = new OutputConfig {
                             Format = new JsonOutputFormat { 
                                 Schema = schema 
@@ -166,7 +212,7 @@ public class AnthropicChatService(
     }
 
 
-    private async Task<List<(DiffSection, ChatResponse)>> RequestReviewsAsync(List<(DiffSection, MessageCreateParams)> requestsPerPath) { 
+    private async Task<List<(DiffSection, ChatResponse)>?> RequestReviewsAsync(List<(DiffSection, MessageCreateParams)> requestsPerPath) { 
         // iterate over every instance of requestDtos and send them individually.
         var reviewPerPath = new List<(DiffSection, ChatResponse)>();
         var exceptions = new List<Exception>();
@@ -181,7 +227,6 @@ public class AnthropicChatService(
                 message = await _client.Messages.Create(parameter); 
                 foreach(var content in message.Content) {
                     if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
-                        Console.WriteLine(textBlock!.Text);
                         List<AnthropicReview>? reviews = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<AnthropicReview>>();
                         if(reviews == null)
                             throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
@@ -197,14 +242,14 @@ public class AnthropicChatService(
                     }
                 }
             } catch(AnthropicApiException exception) {
-                Console.WriteLine($"Anthropic call failed: {exception.Message}");
+                _logger.LogError($"\n{DateTime.Now}: [ Anthropic call failed: {exception.Message} in {nameof(RequestReviewsAsync)}. ]\n");
                 exceptions.Add(exception);
             }
         }
 
         return (reviewPerPath.Count > 0)
             ? reviewPerPath
-            : throw new HttpRequestException($"No {nameof(RequestReviewsAsync)} calls were successfull, failed to perform review.");
+            : null;
     }
  
 }
