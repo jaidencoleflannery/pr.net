@@ -136,7 +136,6 @@ public class AnthropicChatService(
 
         // push schema into anthropic's required type for the format field.
         string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
-        Console.WriteLine(schemaString);
         Dictionary<string, JsonElement> schema = Deserialize<Dictionary<string, JsonElement>>(schemaString)
             ?? throw new InvalidOperationException("Failure to serialize Anthropic Review schema."); 
 

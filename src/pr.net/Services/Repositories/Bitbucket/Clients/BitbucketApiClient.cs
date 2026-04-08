@@ -18,7 +18,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request);
         using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
-            var response = await client.SendAsync(message);
+            HttpResponseMessage response = await client.SendAsync(message);
 
             return (response!= null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
@@ -33,18 +33,24 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request); // grab minimum metadata.
 
         // send each diff file review as it's own individual comment, and save each status.
-        var responses = new List<string>();
-        var exceptions = new List<Exception>(); 
+        List<string> responses = new List<string>();
+        List<Exception> exceptions = new List<Exception>(); 
         JsonSerializerOptions jsonSettings = new JsonSerializerOptions { IncludeFields = true };
-        // FIX THIS DEPENDENCY v
         foreach(var(diff, review) in reviews) {
-            using (var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
+            using(var message = new HttpRequestMessage(HttpMethod.Post, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/comments")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
-                message.Content = new StringContent(JsonSerializer.Serialize((object)review, jsonSettings), System.Text.Encoding.UTF8, "application/json");
 
-                if(review == null)
-                    throw new InvalidOperationException($"{nameof(review)} was null."); 
-                
+                BitbucketComment comment = new() {
+                    Content = new BitbucketContent() {
+                        Raw = ((dynamic)review).Content[0].Text,
+                    },
+                    Inline = new BitbucketInline() {
+                        Path = diff.Path,
+                        To = ((dynamic)review).Content[0].Line
+                    }
+                };
+                message.Content = new StringContent(JsonSerializer.Serialize(comment, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
+
                 var response = await client.SendAsync(message); 
                 var content = response.Content.ReadAsStringAsync();
                 if(response.IsSuccessStatusCode)

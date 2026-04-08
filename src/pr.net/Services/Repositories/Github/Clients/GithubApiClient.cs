@@ -54,7 +54,7 @@ public class GithubApiClient(HttpClient _client, ITokenService _tokenService, IC
                     Body = ((dynamic)review).Content[0].Text,
                     CommitId = ((GithubPullReviewCreatedEventDto)prEvent).PullRequest.Head.Sha,
                     Path = diff.Path,
-                    Line = 2 // needs to be fixed
+                    Line = ((dynamic)review).Content[0].Line // needs to be fixed
                 };
                 message.Content = new StringContent(JsonSerializer.Serialize(comment, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
                 

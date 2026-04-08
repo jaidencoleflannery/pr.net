@@ -94,7 +94,7 @@ public class Program {
             case ChatProvider.Anthropic: 
 
                 builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicReviewProperties>>();
-                builder.Services.AddSingleton<IAnthropicFilteringSchema, AnthropicSchema<AnthropicGithubFilteringProperties>>();
+                builder.Services.AddSingleton<IAnthropicFilteringSchema, AnthropicSchema<AnthropicFilteringProperties>>();
                 // the anthropic sdk handles httpclient, leave as a singleton here.
                 builder.Services.AddSingleton<IAnthropicClient>(new AnthropicClient() {
                     ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
@@ -103,13 +103,14 @@ public class Program {
 
                 builder.Services.AddScoped<IChatService, AnthropicChatService>();
                 break;
-
+            /*
             case ChatProvider.Amazon:
                 builder.Services.AddSingleton<IAmazonReviewSchema, AmazonSchema<AmazonReviewProperties>>();
                 builder.Services.AddSingleton<IAmazonFilteringSchema, AmazonSchema<AmazonFilteringProperties>>();
                 // amazon client here ?
                 builder.Services.AddScoped<IChatService, AmazonChatService>();
                 break;
+            */
 
             // chain other types of chat providers here.
         }

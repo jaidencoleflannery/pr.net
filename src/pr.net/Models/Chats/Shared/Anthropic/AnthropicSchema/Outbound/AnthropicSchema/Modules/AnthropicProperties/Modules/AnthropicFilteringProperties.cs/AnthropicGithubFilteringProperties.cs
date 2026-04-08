@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Anthropic;
 
-public class AnthropicGithubFilteringProperties : IAnthropicProperties {
+public class AnthropicFilteringProperties : IAnthropicProperties {
  
     [JsonPropertyName("isWorthReview")]
     public AnthropicBooleanType IsWorthReview { get; set; } = new();
