@@ -5,7 +5,7 @@ namespace pr.net.Services.Repositories.Generic;
 
 public interface IRepositoryRequestService {
     
-    Task<IEnumerable<DiffSection>> GetPullReviewFiles(PullReviewCreatedEvent prEvent);
+    Task<IEnumerable<DiffSection>?> GetPullReviewFiles(PullReviewCreatedEvent prEvent);
 
     Task PostChatReviews(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent);
 

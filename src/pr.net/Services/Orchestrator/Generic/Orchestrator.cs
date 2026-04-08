@@ -8,7 +8,9 @@ namespace pr.net.Services.Orchestration;
 
 public class Orchestrator(IConfiguration _configuration, IRepositoryRequestService _repositoryService, IChatService _chatService) {
 
-    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) { 
+    // each function is expected to handle logging and return null - don't handle errors at this scope.
+    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) {  
+
         // get each file's associated diff.
         IEnumerable<DiffSection> diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
         if(diffFiles == null)
@@ -22,7 +24,9 @@ public class Orchestrator(IConfiguration _configuration, IRepositoryRequestServi
             return;
 
         // get each review object (object contains file).
-        IEnumerable<(DiffSection, ChatResponse)> reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles);
+        IEnumerable<(DiffSection, ChatResponse)>? reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles);
+        if(reviews == null)
+            return;
 
         // post reviews to branch
         await _repositoryService.PostChatReviews(reviews, prEvent);
