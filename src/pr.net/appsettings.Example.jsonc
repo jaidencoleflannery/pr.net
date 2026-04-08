@@ -159,7 +159,7 @@
       "type": "object",
       "properties": {
         "Provider": {
-          "type": "string"
+          "type": "string" // [ definition: the provider running the server. ], [ recommendation: "local" for development. ]
         }
       },
       "required": ["Provider"]
