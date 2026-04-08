@@ -9,7 +9,7 @@ namespace pr.net.Services.Orchestration;
 public class Orchestrator(IConfiguration _configuration, IRepositoryRequestService _repositoryService, IChatService _chatService) {
 
     public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) { 
-        // get each file's associated diff.
+        // get the pull request's diff (seperated per file).
         IEnumerable<DiffSection> diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
 
         // if enabled, filter diffs for ones that are worth review.

@@ -10,11 +10,16 @@ public static class BitbucketPullRequestEndpoints {
 
     public static void MapBitbucketPullRequestEndpoints(this IEndpointRouteBuilder app) {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
-        group.MapPost("/created", (
+        group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
-            [FromBody] BitbucketPullReviewCreatedEventDto prEvent
+            [FromBody] BitbucketPullReviewCreatedEventDto prEvent,
+            HttpRequest request
         ) => {
-            return orchestrator.ProcessNewPullRequest(prEvent);
+            // augment this line if you'd like to add functionality for other events.
+            if(request.Headers["X-Event-Key"].ToString() is not "pullrequest:created")
+                return;
+
+            await orchestrator.ProcessNewPullRequest(prEvent);
         });
     } 
 

@@ -10,11 +10,15 @@ public static class GithubPullRequestEndpoints {
 
     public static void MapGithubPullRequestEndpoints(this IEndpointRouteBuilder app) {
         var group = app.MapGroup("/github/pullrequest").WithTags("PullRequests");
-        group.MapPost("/created", (
+        group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
             [FromBody] GithubPullReviewCreatedEventDto prEvent
         ) => {
-            return orchestrator.ProcessNewPullRequest(prEvent);
+            // augment this line if you'd like to add functionality for further events.
+            if(prEvent.Action is not ("opened" or "reopened"))
+                return;
+
+            await orchestrator.ProcessNewPullRequest(prEvent);
         });
     } 
 
