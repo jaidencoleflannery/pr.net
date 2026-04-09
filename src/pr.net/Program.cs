@@ -40,7 +40,7 @@ public class Program {
                     .WriteTo.Console();
                     if(env == "Development")
                         config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Day);
-                    if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system. ! should be dynamic via config */ } 
+                    if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system. */ } 
             }
         );
 
