@@ -1,0 +1,7 @@
+{
+  "framework": "net10.0",
+  "function-runtime": "dotnet10",
+  "function-handler": "pr.net",
+  "function-memory-size": 3008,
+  "function-timeout": 60
+}

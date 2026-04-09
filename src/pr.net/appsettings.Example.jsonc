@@ -160,6 +160,15 @@
       "properties": {
         "Provider": {
           "type": "string" // [ definition: the provider running the server. ], [ recommendation: "local" for development. ]
+        },
+        "Amazon": { // [ definition: amazon specific configuration settings. ]
+          "type": "object",
+          "properties": {
+            "SecretsManagerPath": {
+              "type": "string" // [ definition: path to stored secrets (secrets are assumed to be stored in JSON format). ]
+            }
+          },
+          "required": ["SecretsManagerPath"]
         }
       },
       "required": ["Provider"]

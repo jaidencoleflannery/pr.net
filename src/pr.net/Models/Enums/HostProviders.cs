@@ -21,7 +21,7 @@ public static class HostProviders {
 
     public enum HostProvider {
         Amazon, 
-        Local,
+        Environment,
         None
     }
 
