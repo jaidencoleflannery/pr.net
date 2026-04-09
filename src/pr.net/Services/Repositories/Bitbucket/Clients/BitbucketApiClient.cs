@@ -13,7 +13,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request)
-           throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(BitbucketApiClient)}.");
+           throw new InvalidOperationException($"The type of event does not match the injected service in {nameof(BitbucketApiClient)}.");
 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request);
         using(var message = new HttpRequestMessage(HttpMethod.Get, metadata.Url ?? $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/pullrequests/{metadata.Id}/diff")) {

@@ -2,6 +2,8 @@ using Serilog;
 
 using Anthropic;
 
+using Amazon.SecretsManager;
+
 using pr.net.Services.Chat;
 using pr.net.Services.Chat.Instructions;
 using pr.net.Services.Tokens;
@@ -11,6 +13,7 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 
+using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
 using pr.net.Configurations.Repo;
 using pr.net.Configurations.Auth;
@@ -19,8 +22,8 @@ using pr.net.Endpoints;
 
 using pr.net.Models.Anthropic;
 
+using static pr.net.Models.Enums.HostProviders;
 using static pr.net.Models.Enums.RepoProviders;
-using static pr.net.Models.Enums.AuthProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -58,15 +61,32 @@ public class Program {
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        builder.Services.AddOptions<HostConfiguration>()
+            .Bind(builder.Configuration.GetSection("Host"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         // one time fetch for injection maps.
+        HostProvider hostProvider = ValidateHostProvider(builder.Configuration["Host:Provider"]);
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
 
         // register services from config values - unfortunately cannot use the builder options due to lazy loading.
 
+        switch(hostProvider) {
+            case HostProvider.Amazon:
+                builder.Services.AddHttpClient<IAmazonSecretsManager, AmazonSecretsManagerClient>()
+                        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });    
+                builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
+                break;
+
+            case HostProvider.Environment:
+                break;
+        }
+
         switch(repoProvider) {
-            case RepoProvider.Bitbucket: 
+            case RepoProvider.Bitbucket:
                 builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   

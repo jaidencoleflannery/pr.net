@@ -31,14 +31,15 @@ public class AnthropicChatService(
     ILogger<AnthropicChatService> _logger
 ) : IChatService { 
 
+    private ChatProvider? _provider = _configuration.Value.Provider;
+
     public async Task<IEnumerable<DiffSection>?> FilterDiffsAsync(IEnumerable<DiffSection> diffSections) { 
         if(diffSections.Count() < 1) {
             _logger.LogError($"\n{DateTime.Now}: [ Error processing pull request. No diff sections were given in {nameof(FilterDiffsAsync)}. ]\n");
             return null;
         }
-        
-        ChatProvider? provider = ValidateChatProvider(_configuration.Value.Provider);
-        if(provider == null) {
+         
+        if(_provider == null) {
             _logger.LogError($"\n{DateTime.Now}: [ Error fetching AI provider in {nameof(FilterDiffsAsync)}. ]\n");
             return null;
         }
@@ -147,14 +148,9 @@ public class AnthropicChatService(
         if(diffSections.Count() < 1) {
             _logger.LogError($"\n{DateTime.Now}: [ No diffs provided to {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
-        } 
-
-        ChatProvider? provider = ValidateChatProvider(_configuration.Value.Provider);
-        if(provider == null) {
-            _logger.LogError($"\n{DateTime.Now}: [ Error fetching AI provider in {nameof(GetChatReviewsAsync)}. ]\n");
-            return null;
         }
-        if(provider != ChatProvider.Anthropic) {
+
+        if(_provider != ChatProvider.Anthropic) {
             _logger.LogError($"\n{DateTime.Now}: [ Provider configuration does not match injected service in {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
         }

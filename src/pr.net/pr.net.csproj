@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="1.10.0" />
     <PackageReference Include="Anthropic" Version="12.10.0" />
+    <PackageReference Include="AWSSDK.SecretsManager" Version="4.0.4.16" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
@@ -21,5 +23,8 @@
     <EnvironmentName>Production</EnvironmentName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="*.md" CopyToOutputDirectory="Always" />
+  </ItemGroup>
 
 </Project>

@@ -154,7 +154,26 @@
         }
       },
       "required": ["Provider", "Model", "MaxTokens", "Instructions", "Filtering"]
+    },
+    "Host": {
+      "type": "object",
+      "properties": {
+        "Provider": {
+          "type": "string" // [ definition: the provider running the server. ], [ recommendation: "local" for development. ]
+        },
+        "Amazon": { // [ definition: amazon specific configuration settings. ]
+          "type": "object",
+          "properties": {
+            "SecretsManagerPath": {
+              "type": "string" // [ definition: path to stored secrets (secrets are assumed to be stored in JSON format). ]
+            }
+          },
+          "required": ["SecretsManagerPath"]
+        }
+      },
+      "required": ["Provider"]
     }
   },
-  "required": ["Logging", "Serilog", "Repo", "Auth", "Chat"]
+  "required": ["Logging", "Serilog", "Repo", "Auth", "Chat", "Host"]
+
 }
