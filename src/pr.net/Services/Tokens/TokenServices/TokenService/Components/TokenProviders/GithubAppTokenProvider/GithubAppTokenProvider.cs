@@ -4,9 +4,12 @@ using pr.net.Models.Tokens;
 
 namespace pr.net.Services.Tokens;
 
-public class GithubAppTokenProvider(HttpClient _client, IConfiguration _config) : ITokenProvider { 
+public class GithubAppTokenProvider(
+    HttpClient _client, 
+    IConfiguration _config
+) : ITokenProvider { 
 
-    public async ValueTask<string> FetchAsync(Token target, PullReviewCreatedEvent? prEvent) =>
+    public async ValueTask<string?> FetchAsync(Token target, PullReviewCreatedEvent? prEvent) =>
         (target == Token.PR_NET_REPO_TOKEN)
         ? (await this.FetchJwtAsync(prEvent!)).Token
             ?? throw new InvalidOperationException($"{target} environment variable not found.")

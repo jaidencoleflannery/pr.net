@@ -86,7 +86,7 @@ public class Program {
         }
 
         switch(repoProvider) {
-            case RepoProvider.Bitbucket: 
+            case RepoProvider.Bitbucket:
                 builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   

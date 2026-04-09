@@ -23,5 +23,8 @@
     <EnvironmentName>Production</EnvironmentName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="*.md" CopyToOutputDirectory="Always" />
+  </ItemGroup>
 
 </Project>

@@ -19,6 +19,9 @@ public static class BitbucketPullRequestEndpoints {
             if(request.Headers["X-Event-Key"].ToString() is not "pullrequest:created")
                 return;
 
+            // add webhook secret validation here.
+            // --
+
             await orchestrator.ProcessNewPullRequest(prEvent);
         });
     } 
