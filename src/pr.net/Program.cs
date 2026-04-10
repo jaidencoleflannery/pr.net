@@ -82,18 +82,18 @@ public class Program {
                 break;
 
             case HostProvider.Environment:
+                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
         }
 
         switch(repoProvider) {
-            case RepoProvider.Bitbucket:
-                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
+            case RepoProvider.Bitbucket: 
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   
                 break;
 
             case RepoProvider.Github: 
-                builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
+                builder.Services.AddScoped<IRepoTokenHandler, GithubAppTokenHandler>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });
                 break;
@@ -140,7 +140,7 @@ public class Program {
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddSingleton<ITokenService, TokenService>();
 
-        var app = builder.Build();
+        WebApplication app = builder.Build();
         app.MapGet("/", () => $"Server is running in {env} mode."); 
  
         // this endpoint gives you payload examples (dev only).

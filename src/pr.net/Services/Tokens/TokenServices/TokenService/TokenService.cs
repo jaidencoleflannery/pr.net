@@ -25,15 +25,11 @@ public class TokenService(
                 // switch map - this layering exists so the token can be processed for it's specific target.
                 switch(type) {
                     case Token.PR_NET_REPO_TOKEN:
-                        newToken = await CachedToken.Initialize(_repoTokenHandler, type, prEvent);
-                        if(newToken == null) {
-                            _logger.LogError($"\n{DateTime.Now}: [ Failed to set provider or type for {type} cached token in {nameof(GetTokenAsync)}. ]\n");
-                            return null;
-                        }
+                        newToken = await CachedToken.Initialize(_repoTokenHandler, type, prEvent); 
                         break;
 
                     case Token.PR_NET_CHAT_TOKEN:
-                        newToken = await CachedToken.Initialize(_chatTokenHandler, type, prEvent);
+                        newToken = await CachedToken.Initialize(_chatTokenHandler, type, prEvent); 
                         break;
                 }
                 if(newToken == null) {

@@ -35,7 +35,7 @@ public class CachedToken : ICachedToken {
 
     public async ValueTask<ICachedToken?> RefreshAsync(PullReviewCreatedEvent prEvent) {
         if(_tokenHandler == null)
-            return null;
+            throw new InvalidOperationException($"No Token Handler was provided in {RefreshAsync}.");
 
         _token = await _tokenHandler!.FetchAsync(prEvent);
         if(_token == null) {
