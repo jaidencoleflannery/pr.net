@@ -52,7 +52,7 @@ public class GithubAppTokenHandler(
                 return null;
             }
 
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt.Encode(jwtToken));
+            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
             message.Headers.Add("User-Agent", appName);
             
             var response = await _client.SendAsync(message);  
