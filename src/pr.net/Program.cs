@@ -77,8 +77,9 @@ public class Program {
         switch(hostProvider) {
             case HostProvider.Amazon:
                 builder.Services.AddHttpClient<IAmazonSecretsManager, AmazonSecretsManagerClient>()
-                        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });    
+                        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });     
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
+                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
                 break;
 
             case HostProvider.Environment:
