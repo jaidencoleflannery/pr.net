@@ -20,7 +20,9 @@ public class GithubApiClient(HttpClient _client, ITokenService _tokenService, IC
             : request.PullRequest?.DiffUrl)!;
 
         using(var message = new HttpRequestMessage(HttpMethod.Get, url)) {
-            string token = await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent: prEvent); 
+            string? token = await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent: prEvent); 
+            if(token == null)
+                throw new InvalidOperationException("Unable to retrieve JWT for Github request, validate that stored secrets are accurate.");
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             HttpResponseMessage response = await _client.SendAsync(message);
 

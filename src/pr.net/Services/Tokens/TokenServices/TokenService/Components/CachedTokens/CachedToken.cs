@@ -3,7 +3,7 @@ using pr.net.Models.Incoming.Generic;
 namespace pr.net.Services.Tokens;
 
 public class CachedToken : ICachedToken {  
-    private ITokenProvider? _provider;
+    private ITokenHandler? _tokenHandler;
     private Token _type;  
     private string? _token; 
     private bool _tokenExpired = true;
@@ -21,23 +21,23 @@ public class CachedToken : ICachedToken {
 
     private CachedToken() { }
 
-    public static async ValueTask<ICachedToken> Initialize(ITokenProvider provider, Token type, PullReviewCreatedEvent prEvent) {
+    public static async ValueTask<ICachedToken?> Initialize(ITokenHandler handler, Token type, PullReviewCreatedEvent prEvent) {
         CachedToken instance = new CachedToken();
-        instance._provider = provider;
+        instance._tokenHandler = handler;
         instance._type = type;
-        if(instance._provider == null)
-            throw new InvalidOperationException($"Failed to set provider or type for {type} cached token.");
+        if(instance._tokenHandler == null)
+            return null;
         return await instance.RefreshAsync(prEvent);
     } 
 
-    public async ValueTask<string> GetValueAsync() =>
+    public async ValueTask<string?> GetValueAsync() =>
         await ValueTask.FromResult(_token!);
 
-    public async ValueTask<ICachedToken> RefreshAsync(PullReviewCreatedEvent prEvent) {
-        if(_provider == null)
-            throw new InvalidOperationException("Cached token has no provider or type set."); 
+    public async ValueTask<ICachedToken?> RefreshAsync(PullReviewCreatedEvent prEvent) {
+        if(_tokenHandler == null)
+            return null;
 
-        _token = await _provider!.FetchAsync(_type, prEvent);
+        _token = await _tokenHandler!.FetchAsync(prEvent);
         if(_token == null) {
             throw new InvalidOperationException("Provider failed to fetch token, value null."); 
         } else {

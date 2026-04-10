@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 namespace pr.net.Models.Tokens;
 
 public class Jwt : Token {
+
     private string _encodedHeader = string.Empty;
     private string EncodedHeader { 
         get {
@@ -21,15 +22,6 @@ public class Jwt : Token {
             if(string.IsNullOrWhiteSpace(_encodedPayload))
                 _encodedPayload = EncodePayload();
             return _encodedPayload;
-        }
-    }
-
-    private string _encodedSignature = string.Empty;
-    private string EncodedSignature { 
-        get {
-            if(string.IsNullOrWhiteSpace(_encodedSignature))
-                _encodedSignature = EncodeSignature();
-            return _encodedSignature;
         }
     }
 
@@ -53,18 +45,13 @@ public class Jwt : Token {
         } 
     }
 
-    private string _signature = string.Empty;
     [JsonPropertyName("signature")]
-    public string Signature { 
-        get => _signature; 
-        set {
-            _signature = value;
-            _encodedSignature = EncodeSignature();
-        } 
-    } // signature should just be Base64UrlEncode(header.payload) 
+    public string Signature { get; set; }= string.Empty;
+    // signature should just be Base64UrlEncode(header.payload)  
 
-    public string Encode() =>
-        $"{EncodedHeader}.{EncodedPayload}.{EncodedSignature}";
+    public string Encode(string secret) {
+        return $"{EncodedHeader}.{EncodedPayload}.{EncodeSignature(secret)}";
+    }
 
     private string EncodeHeader() =>
         Base64Encode(JsonSerializer.SerializeToUtf8Bytes(this.Header));
@@ -72,11 +59,10 @@ public class Jwt : Token {
     private string EncodePayload() =>
         Base64Encode(JsonSerializer.SerializeToUtf8Bytes(this.Payload));
 
-    private string EncodeSignature() {
+    private string? EncodeSignature(string secret) {
         using (RSA rsa = RSA.Create()) {
-            string secret = Environment.GetEnvironmentVariable("PR_NET_REPO_TOKEN") ?? string.Empty;
             if(string.IsNullOrWhiteSpace(secret))
-                throw new InvalidOperationException("Environment variable PR_NET_REPO_TOKEN either does not exist or could not be found.");
+                return null;
 
             rsa.ImportFromPem(secret);
 
@@ -84,14 +70,14 @@ public class Jwt : Token {
             var signatureBytes = rsa.SignData(
                 Encoding.UTF8.GetBytes(input),
                 HashAlgorithmName.SHA256,
-                RSASignaturePadding.Pkcs1 // this will depend on the provider's expectation - github uses rs256 so we're defaulting to that for now
+                RSASignaturePadding.Pkcs1 // note: github uses rs256.
             );
 
             return Base64Encode(signatureBytes);
         }
     }
 
-    private string Base64Encode(byte[] bytes) =>
+    private static string Base64Encode(byte[] bytes) =>
         Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
 }
