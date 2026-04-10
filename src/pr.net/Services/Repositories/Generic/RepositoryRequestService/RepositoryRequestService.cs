@@ -12,7 +12,11 @@ public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger,
     public async Task<IEnumerable<DiffSection>?> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
         try {
             // get the pull request diff.
-            string diff = await _client.GetPullRequestDataAsync(prEvent);
+            string? diff = await _client.GetPullRequestDataAsync(prEvent);
+            if(diff == null) {
+                _logger.LogError($"\n{DateTime.Now}: [ Error, fiff files could not be fetched. in {nameof(GetPullReviewFiles)}]\n");
+                return null;
+            }
 
             // split diff per file, diffSections should be key: file, value: diff.
             if(ParserService.ParseDiff(diff, out List<DiffSection> diffSections))

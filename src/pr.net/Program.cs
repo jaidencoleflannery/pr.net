@@ -82,18 +82,20 @@ public class Program {
                 break;
 
             case HostProvider.Environment:
+                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
         }
 
         switch(repoProvider) {
-            case RepoProvider.Bitbucket:
-                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
+            case RepoProvider.Bitbucket: 
+                // token source - repotokenhandler is the generic, no special behavior option.
+                builder.Services.AddSingleton<IRepoTokenHandler, RepoTokenHandler>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   
                 break;
 
             case RepoProvider.Github: 
-                builder.Services.AddSingleton<ITokenProvider, GithubAppTokenProvider>();
+                builder.Services.AddSingleton<IRepoTokenHandler, GithubAppTokenHandler>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });
                 break;
@@ -112,9 +114,11 @@ public class Program {
 
         switch(chatProvider) {
             case ChatProvider.Anthropic: 
-
+                // schemas to format ai output.
                 builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicReviewProperties>>();
                 builder.Services.AddSingleton<IAnthropicFilteringSchema, AnthropicSchema<AnthropicFilteringProperties>>();
+                // token source - chattokenhandler is the generic, no special behavior option.
+                builder.Services.AddSingleton<IChatTokenHandler, ChatTokenHandler>();
                 // the anthropic sdk handles httpclient, leave as a singleton here.
                 builder.Services.AddSingleton<IAnthropicClient>(new AnthropicClient() {
                     ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
@@ -140,7 +144,7 @@ public class Program {
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddSingleton<ITokenService, TokenService>();
 
-        var app = builder.Build();
+        WebApplication app = builder.Build();
         app.MapGet("/", () => $"Server is running in {env} mode."); 
  
         // this endpoint gives you payload examples (dev only).

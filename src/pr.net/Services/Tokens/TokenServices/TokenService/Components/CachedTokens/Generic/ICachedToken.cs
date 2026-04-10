@@ -8,9 +8,9 @@ public interface ICachedToken {
     /// <returns>The access token as a string.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the token is not cached or configured.</exception>
     /// <remarks>Ensure the environment variable PR_NET_{type}_TOKEN is set before calling.</remarks> 
-    ValueTask<string> GetValueAsync();
+    ValueTask<string?> GetValueAsync();
 
-    ValueTask<ICachedToken> RefreshAsync(PullReviewCreatedEvent prEvent);
+    ValueTask<ICachedToken?> RefreshAsync(PullReviewCreatedEvent prEvent);
 
     bool Expired { get; }
 
