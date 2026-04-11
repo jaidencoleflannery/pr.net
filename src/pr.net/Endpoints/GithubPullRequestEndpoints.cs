@@ -6,6 +6,8 @@ using pr.net.Services.Validations;
 
 using pr.net.Models.Github;
 
+using static Microsoft.AspNetCore.Http.Results;
+
 namespace pr.net.Endpoints;
 
 public static class GithubPullRequestEndpoints {
@@ -19,14 +21,15 @@ public static class GithubPullRequestEndpoints {
         ) => {
             // augment this line if you'd like to add functionality for other events.
             if(!validator.ValidateType(prEvent.Action.ToString()))
-                return; 
+                return BadRequest(new { message = "Invalid event type." });
 
             // webhook secret validation.
             if(!await validator.ValidateWebhookSecretAsync(JsonSerializer.Serialize(prEvent)))
-                return; 
+                return BadRequest(new { message = "Invalid webhook identifier." });
 
             // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);
+            return Ok("Successfully posted reviews");
         });
     } 
 

@@ -94,6 +94,8 @@ public class Program {
             case RepoProvider.Bitbucket: 
                 // token middleware to augment stored value to the provider's specification - repotokenhandler is the default.
                 builder.Services.AddSingleton<IRepoTokenHandler, RepoTokenHandler>();
+                // webhook token fetcher.
+                builder.Services.AddSingleton<IWebhookSecretHandler, WebhookSecretHandler>();
                 // webhook secret validation to authenticate provider.
                 builder.Services.AddSingleton<IValidator, BitbucketValidator>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
@@ -103,6 +105,8 @@ public class Program {
             case RepoProvider.Github: 
                 // token middleware to augment stored value to the provider's specification.
                 builder.Services.AddSingleton<IRepoTokenHandler, GithubAppTokenHandler>();
+                // webhook token fetcher.
+                builder.Services.AddSingleton<IWebhookSecretHandler, WebhookSecretHandler>();
                 // webhook secret validation to authenticate provider.
                 builder.Services.AddSingleton<IValidator, GithubValidator>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
