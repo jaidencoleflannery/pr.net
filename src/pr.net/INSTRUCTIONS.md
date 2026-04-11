@@ -16,7 +16,6 @@ Do not add an introduction, just directly give the answer. Don't worry about for
 Prefix every comment with one of: `Blocker:` `Warning:` `Nit:`
 
 ```c#
-GOOBER
 [severity]: [problem statement]
 [why it matters, if non-obvious]
 ```
