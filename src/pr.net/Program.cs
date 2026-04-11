@@ -80,25 +80,30 @@ public class Program {
                 // the aws sdk handles httpclient, leave as a singleton here.
                 builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
-                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
+                // token fetcher.
+                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>(); // make this dynamic so if the user wants, they can use the lambda and still pull the environment variables.
                 break;
 
             case HostProvider.Environment:
+                // token fetcher - envtokenprovider is the default.
                 builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
         }
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
-                // token source - repotokenhandler is the generic, no special behavior option.
+                // token middleware to augment stored value to the provider's specification - repotokenhandler is the default.
                 builder.Services.AddSingleton<IRepoTokenHandler, RepoTokenHandler>();
+                // webhook secret validation to authenticate provider.
                 builder.Services.AddSingleton<IValidator, BitbucketValidator>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   
                 break;
 
             case RepoProvider.Github: 
+                // token middleware to augment stored value to the provider's specification.
                 builder.Services.AddSingleton<IRepoTokenHandler, GithubAppTokenHandler>();
+                // webhook secret validation to authenticate provider.
                 builder.Services.AddSingleton<IValidator, GithubValidator>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });
