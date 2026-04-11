@@ -76,8 +76,8 @@ public class Program {
 
         switch(hostProvider) {
             case HostProvider.Amazon:
-                builder.Services.AddHttpClient<IAmazonSecretsManager, AmazonSecretsManagerClient>()
-                        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });     
+                // the aws sdk handles httpclient, leave as a singleton here.
+                builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
                 builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
                 break;
