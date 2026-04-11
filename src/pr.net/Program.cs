@@ -12,6 +12,7 @@ using pr.net.Services.Clients.Bitbucket;
 using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
+using pr.net.Services.Validations;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
@@ -91,12 +92,14 @@ public class Program {
             case RepoProvider.Bitbucket: 
                 // token source - repotokenhandler is the generic, no special behavior option.
                 builder.Services.AddSingleton<IRepoTokenHandler, RepoTokenHandler>();
+                builder.Services.AddSingleton<IValidator, BitbucketValidator>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   
                 break;
 
             case RepoProvider.Github: 
                 builder.Services.AddSingleton<IRepoTokenHandler, GithubAppTokenHandler>();
+                builder.Services.AddSingleton<IValidator, GithubValidator>();
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });
                 break;

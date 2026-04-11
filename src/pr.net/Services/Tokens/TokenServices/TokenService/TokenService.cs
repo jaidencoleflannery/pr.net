@@ -8,6 +8,7 @@ namespace pr.net.Services.Tokens;
 public class TokenService( 
     IRepoTokenHandler _repoTokenHandler, 
     IChatTokenHandler _chatTokenHandler,
+    IWebhookSecretHandler _webhookSecretHandler,
     ILogger<TokenService> _logger
 ) : ITokenService {
 
@@ -15,7 +16,7 @@ public class TokenService(
     private static readonly SemaphoreSlim _repoLock = new SemaphoreSlim(1, 1);
 
     // ensure token exists and is not expired.
-    public async ValueTask<string?> GetTokenAsync(Token type, PullReviewCreatedEvent prEvent) {   
+    public async ValueTask<string?> GetTokenAsync(Token type, PullReviewCreatedEvent? prEvent = null) {   
         if(!_tokens.TryGetValue(type, out var token)) { 
             await _repoLock.WaitAsync(); // avoid multiple refreshes on init.
             try {
@@ -30,6 +31,10 @@ public class TokenService(
 
                     case Token.PR_NET_CHAT_TOKEN:
                         newToken = await CachedToken.Initialize(_chatTokenHandler, type, prEvent); 
+                        break;
+
+                    case Token.PR_NET_WEBHOOK_SECRET:
+                        newToken = await CachedToken.Initialize(_webhookSecretHandler, type, prEvent);
                         break;
                 }
                 if(newToken == null) {

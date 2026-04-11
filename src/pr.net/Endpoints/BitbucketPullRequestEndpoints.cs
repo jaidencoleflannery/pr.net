@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using pr.net.Services.Orchestration;
+using pr.net.Services.Validations;
 
 using pr.net.Models.Bitbucket;
 
@@ -12,16 +13,19 @@ public static class BitbucketPullRequestEndpoints {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
+            [FromServices] IValidator validator,
             [FromBody] BitbucketPullReviewCreatedEventDto prEvent,
             HttpRequest request
         ) => {
             // augment this line if you'd like to add functionality for other events.
-            if(request.Headers["X-Event-Key"].ToString() is not "pullrequest:created")
-                return;
+            if(!validator.ValidateType(request.Headers["X-Event-Key"].ToString()))
+                return; 
 
-            // add webhook secret validation here.
-            // --
+            // webhook uuid validation (stored under the generic webhook secret token).
+            if(!await validator.ValidateWebhookSecretAsync(request.Headers["X-Hook-UUID"].ToString()))
+                return; 
 
+            // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);
         });
     } 
