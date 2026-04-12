@@ -1,8 +1,8 @@
-# Knitpick
-An open source, automated AI pull-request review system.
+# knitpick
+an open source, automated ai pull-request review system.
 
-> **status:** In development.
+> **status:** in development.
 
-## License
-This project is licensed under the [Business Source License 1.1](https://github.com/jaidencoleflannery/pr.net/blob/main/LICENSE). You may use it for any purpose, including internal business operations, but any for-profit use is prohibited. 
-On 2030-04-10, it converts to Apache-2.0.
+## license
+this project is licensed under the [business source license 1.1](https://github.com/jaidencoleflannery/pr.net/blob/main/LICENSE). you may use it for any purpose, including internal business operations, but any for-profit use is prohibited. 
+on 2030-04-10, it converts to apache-2.0.
