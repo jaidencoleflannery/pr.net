@@ -30,16 +30,21 @@ public static class GithubPullRequestEndpoints {
             if(string.IsNullOrWhiteSpace(secretHeader) || !await validator.ValidateWebhookSecretAsync(secretHeader, body))
                 return BadRequest(new { message = "Unauthorized." });
 
+            // deserialize the string so we can pull values.
             GithubPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<GithubPullReviewCreatedEventDto>(body)
                 ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
 
-            // validate webhook event type
-            string? eventHeader = request.Headers["X-Event-Key"].ToString();
-            if(eventHeader is null || !ValidateEvent(prEvent.Action.ToString(), RepoProvider.Github))
-                return BadRequest(new { message = "Event type not configured." });  
+            // validate webhook event type.
+            if(prEvent.Action is null || !ValidateEvent(prEvent.Action, RepoProvider.Github))
+                return BadRequest(new { message = "Event type not configured." });
+
+            // validate that user is in list of approved users.
+            if(!validator.ValidateUser(prEvent.PullRequest.User.Id.ToString()))
+                return BadRequest(new { message = "Invalid author." });
 
             // filter event type from configuration.
-            await validator.ValidateEventTypeAsync(eventHeader);
+            if(!validator.ValidateEventType(prEvent.Action, RepoProvider.Github))
+                return BadRequest(new { message = "System is not configured to accept provided event type."});
             
             // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);

@@ -6,6 +6,9 @@ using pr.net.Services.Tokens;
 
 using pr.net.Configurations.Repo;
 
+using static pr.net.Models.Enums.RepoProviders;
+using static pr.net.Models.Enums.Events;
+
 namespace pr.net.Services.Validations;
 
 public class WebhookValidator(
@@ -45,14 +48,35 @@ public class WebhookValidator(
         }
     }
 
-    public async Task<bool> ValidateEventTypeAsync(string type) {
-        List<string> validEventTypes = _configuration.Value.AcceptedEvents;
-        if(validEventTypes.Count == 0) {
-            _logger.LogError($"No event types could be fetched from configuration in {nameof(ValidateEventTypeAsync)}");
+    public bool ValidateEventType(string type, RepoProvider provider) {
+        List<string> configuredEventTypes = _configuration.Value.AcceptedEvents;
+        List<Event> validatedEventTypes = new();
+        // build a list of configured event types.
+        foreach(string line in configuredEventTypes) {
+            Event result = StringToEvent(line, provider);
+            if(result != Event.None)
+                validatedEventTypes.Add(result);
+        }
+        if(validatedEventTypes.Count <= 0) {
+            _logger.LogError($"No configured event types match stored values in {nameof(ValidateEventType)}");
             return false;
         }
 
-        if(validEventTypes.Contains(type))
+        // compare provided event against our configured list of event types.
+        if(validatedEventTypes.Contains(StringToEvent(type, provider)))
+            return true;
+        else
+            return false;
+    }
+
+    public bool ValidateUser(string id) {
+        if(_configuration.Value.Users == null || _configuration.Value.Users?.AuthorizedUsers == null) {
+            _logger.LogError($"No authorized users could be fetched from configuration in {nameof(ValidateUser)}");
+            return false;
+        }
+
+        List<string> validUsers = _configuration.Value.Users?.AuthorizedUsers!; // this is a list of approved user's ids, not usernames.
+        if(validUsers.Contains(id))
             return true;
         else
             return false;

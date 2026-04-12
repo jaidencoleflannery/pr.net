@@ -10,11 +10,15 @@ public class RepoConfiguration {
 
     [Required]
     [ConfigurationKeyName("Provider")] 
-    public string? ProviderString { get => field; init { Provider = ValidateRepoProvider(value); field = value; } }
+    public string? ProviderString { get; init { Provider = ValidateRepoProvider(value); field = value; } }
 
     [Required]
     [ConfigurationKeyName("AcceptedEvents")]
     public List<string> AcceptedEvents { get; init; } = [];
+
+    [Required]
+    [ConfigurationKeyName("Users")]
+    public RepoUsersConfiguration? Users { get; init; }
 
     public IRepoProviderConfiguration? ActiveConfiguration => Provider switch {
       RepoProvider.Github => Github ?? throw new InvalidOperationException("Github configuration could not be found, please confirm values are properly set."),
@@ -23,9 +27,9 @@ public class RepoConfiguration {
     };
 
     [ConfigurationKeyName("Bitbucket")]
-    public RepoBitbucketConfiguration? Bitbucket { get => field; init; }
+    public RepoBitbucketConfiguration? Bitbucket { get; init; }
 
     [ConfigurationKeyName("Github")]
-    public RepoGithubConfiguration? Github { get => field; init; }
+    public RepoGithubConfiguration? Github { get; init; }
 
 }
