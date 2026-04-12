@@ -1,12 +1,16 @@
 using System.Text;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Options;
 
 using pr.net.Services.Tokens;
+
+using pr.net.Configurations.Repo;
 
 namespace pr.net.Services.Validations;
 
 public class WebhookValidator(
     ITokenService _tokenService,
+    IOptions<RepoConfiguration> _configuration,
     ILogger<WebhookValidator> _logger
 ) : IWebhookValidator {
     
@@ -39,6 +43,19 @@ public class WebhookValidator(
             _logger.LogError($"Unexpected failure occurred attempting to compare hashed values.");
             return false;
         }
+    }
+
+    public async Task<bool> ValidateEventTypeAsync(string type) {
+        List<string> validEventTypes = _configuration.Value.AcceptedEvents;
+        if(validEventTypes.Count == 0) {
+            _logger.LogError($"No event types could be fetched from configuration in {nameof(ValidateEventTypeAsync)}");
+            return false;
+        }
+
+        if(validEventTypes.Contains(type))
+            return true;
+        else
+            return false;
     }
 
 }

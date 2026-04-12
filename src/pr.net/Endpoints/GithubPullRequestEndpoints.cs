@@ -33,11 +33,14 @@ public static class GithubPullRequestEndpoints {
             GithubPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<GithubPullReviewCreatedEventDto>(body)
                 ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
 
-            // filter event type.
+            // validate webhook event type
             string? eventHeader = request.Headers["X-Event-Key"].ToString();
             if(eventHeader is null || !ValidateEvent(prEvent.Action.ToString(), RepoProvider.Github))
-                return BadRequest(new { message = "Event type not configured." }); 
+                return BadRequest(new { message = "Event type not configured." });  
 
+            // filter event type.
+            await validator.ValidateEventTypeAsync(eventHeader);
+            
             // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);
             return Ok("Successfully posted reviews");
