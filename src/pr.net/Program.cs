@@ -174,6 +174,17 @@ public class Program {
             // chain other types of repo provider endpoints here.
         } 
 
+        Console.WriteLine(
+            @$"  
+            {'\u2873'}{'\u28F6'}{'\u28A5'}{'\u282E'} is running in {env} mode.
+
+            | Configuration |
+            | * Host:       | [{hostProvider}]
+            | * Repository: | [{repoProvider}]
+            | * Chat:       | [{chatProvider}]
+            "
+        );
+
         app.Run();
     }
 }

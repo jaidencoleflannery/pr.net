@@ -92,6 +92,7 @@ public class AnthropicChatService(
                                 Schema = schema 
                             }, 
                         },
+                        System = instructions,
                         Temperature = 0.0,
                     }));
         }
@@ -199,6 +200,7 @@ public class AnthropicChatService(
                                 Schema = schema 
                             }, 
                         },
+                        System = instructions,
                         Temperature = 0.0,
                     }));
         }
