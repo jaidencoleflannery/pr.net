@@ -12,6 +12,7 @@ using pr.net.Services.Clients.Bitbucket;
 using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
+using pr.net.Services.Validations;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
@@ -79,24 +80,31 @@ public class Program {
                 // the aws sdk handles httpclient, leave as a singleton here.
                 builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
-                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
+                // token fetcher.
+                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>(); // make this dynamic so if the user wants, they can use the lambda and still pull the environment variables.
                 break;
 
             case HostProvider.Environment:
+                // token fetcher - envtokenprovider is the default.
                 builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
         }
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket: 
-                // token source - repotokenhandler is the generic, no special behavior option.
+                // token middleware to augment stored value to the provider's specification - repotokenhandler is the default.
                 builder.Services.AddSingleton<IRepoTokenHandler, RepoTokenHandler>();
+                // webhook token fetcher.
+                builder.Services.AddSingleton<IWebhookSecretHandler, WebhookSecretHandler>(); 
                 builder.Services.AddHttpClient<IRepositoryApiClient, BitbucketApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });   
                 break;
 
             case RepoProvider.Github: 
+                // token middleware to augment stored value to the provider's specification.
                 builder.Services.AddSingleton<IRepoTokenHandler, GithubAppTokenHandler>();
+                // webhook token fetcher.
+                builder.Services.AddSingleton<IWebhookSecretHandler, WebhookSecretHandler>(); 
                 builder.Services.AddHttpClient<IRepositoryApiClient, GithubApiClient>()
                     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { });
                 break;
@@ -144,6 +152,8 @@ public class Program {
         builder.Services.AddScoped<Orchestrator>();
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddSingleton<ITokenService, TokenService>();
+        // webhook secret validation to authenticate provider.
+        builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>();
 
         WebApplication app = builder.Build();
         app.MapGet("/", () => $"Server is running in {env} mode."); 

@@ -12,6 +12,10 @@ public class RepoConfiguration {
     [ConfigurationKeyName("Provider")] 
     public string? ProviderString { get => field; init { Provider = ValidateRepoProvider(value); field = value; } }
 
+    [Required]
+    [ConfigurationKeyName("AcceptedEvents")]
+    public List<string> AcceptedEvents { get; init; } = [];
+
     public IRepoProviderConfiguration? ActiveConfiguration => Provider switch {
       RepoProvider.Github => Github ?? throw new InvalidOperationException("Github configuration could not be found, please confirm values are properly set."),
       RepoProvider.Bitbucket => Bitbucket ?? throw new InvalidOperationException("Bitbucket configuration could not be found, please confirm values are properly set."),

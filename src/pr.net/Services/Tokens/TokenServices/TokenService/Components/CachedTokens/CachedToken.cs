@@ -21,7 +21,7 @@ public class CachedToken : ICachedToken {
 
     private CachedToken() { }
 
-    public static async ValueTask<ICachedToken?> Initialize(ITokenHandler handler, Token type, PullReviewCreatedEvent prEvent) {
+    public static async ValueTask<ICachedToken?> Initialize(ITokenHandler handler, Token type, PullReviewCreatedEvent? prEvent = null) {
         CachedToken instance = new CachedToken();
         instance._tokenHandler = handler;
         instance._type = type;
@@ -33,7 +33,7 @@ public class CachedToken : ICachedToken {
     public async ValueTask<string?> GetValueAsync() =>
         await ValueTask.FromResult(_token!);
 
-    public async ValueTask<ICachedToken?> RefreshAsync(PullReviewCreatedEvent prEvent) {
+    public async ValueTask<ICachedToken?> RefreshAsync(PullReviewCreatedEvent? prEvent = null) {
         if(_tokenHandler == null)
             throw new InvalidOperationException($"No Token Handler was provided in {RefreshAsync}.");
 
