@@ -33,10 +33,13 @@ public static class BitbucketPullRequestEndpoints {
             BitbucketPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<BitbucketPullReviewCreatedEventDto>(body)
                 ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
 
-            // filter event type.
+            // validate webhook event type.
             string? eventHeader = request.Headers["X-Event-Key"].ToString();
             if(eventHeader is null || !ValidateEvent(eventHeader, RepoProvider.Bitbucket))
-                return BadRequest(new { message = "Event type not configured." }); 
+                return BadRequest(new { message = "Event type not configured." });  
+
+            // filter event type from configuration.
+            await validator.ValidateEventTypeAsync(eventHeader);
 
             // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);

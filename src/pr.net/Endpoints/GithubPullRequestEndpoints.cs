@@ -38,7 +38,7 @@ public static class GithubPullRequestEndpoints {
             if(eventHeader is null || !ValidateEvent(prEvent.Action.ToString(), RepoProvider.Github))
                 return BadRequest(new { message = "Event type not configured." });  
 
-            // filter event type.
+            // filter event type from configuration.
             await validator.ValidateEventTypeAsync(eventHeader);
             
             // logic pipelines.
