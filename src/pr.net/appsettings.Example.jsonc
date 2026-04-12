@@ -60,6 +60,12 @@
         "Provider": {
           "type": "string" // [ definition: the repo provider; see the repoproviders enum as an example for validated providers. ]
         },
+        "AcceptedEvents": { // [ definition: types of events to accept and process. ], [ note: to see valid options, see the events enum. ]
+          "type": "array",
+          "items": {
+            "type": "string" // 
+          }
+        },
         "Bitbucket": { // [ definition: integration information for a bitbucket bot identity. ]
           "type": "object",
           "properties": {

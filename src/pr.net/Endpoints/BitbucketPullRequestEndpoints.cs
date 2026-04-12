@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 using pr.net.Services.Orchestration;
@@ -5,7 +6,9 @@ using pr.net.Services.Validations;
 
 using pr.net.Models.Bitbucket;
 
+using static pr.net.Models.Enums.Events;
 using static Microsoft.AspNetCore.Http.Results;
+using static pr.net.Models.Enums.RepoProviders;
 
 namespace pr.net.Endpoints;
 
@@ -15,17 +18,25 @@ public static class BitbucketPullRequestEndpoints {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
-            [FromServices] IValidator validator,
-            [FromBody] BitbucketPullReviewCreatedEventDto prEvent,
+            [FromServices] IWebhookValidator validator,
             HttpRequest request
         ) => {
-            // augment this line if you'd like to add functionality for other events.
-            if(!validator.ValidateType(request.Headers["X-Event-Key"].ToString()))
-                return BadRequest(new { message = "Invalid event type." });
+            // read body directly as a string so we can encode it and compare to the provided webhook secret.
+            using var reader = new StreamReader(request.Body);
+            string body = await reader.ReadToEndAsync();
 
-            // webhook uuid validation (stored under the generic webhook secret token).
-            if(!await validator.ValidateWebhookSecretAsync(request.Headers["X-Hook-UUID"].ToString()))
-                return BadRequest(new { message = "Invalid webhook identifier." });
+            // validate webhook secret.
+            string secretHeader = request.Headers["X-Hub-Signature"].ToString();
+            if(string.IsNullOrWhiteSpace(secretHeader) || !await validator.ValidateWebhookSecretAsync(secretHeader, body))
+                return BadRequest(new { message = "Unauthorized." });
+
+            BitbucketPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<BitbucketPullReviewCreatedEventDto>(body)
+                ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
+
+            // filter event type.
+            string? eventHeader = request.Headers["X-Event-Key"].ToString();
+            if(eventHeader is null || !ValidateEvent(eventHeader, RepoProvider.Bitbucket))
+                return BadRequest(new { message = "Event type not configured." }); 
 
             // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);

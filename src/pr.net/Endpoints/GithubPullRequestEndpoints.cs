@@ -6,7 +6,9 @@ using pr.net.Services.Validations;
 
 using pr.net.Models.Github;
 
+using static pr.net.Models.Enums.Events;
 using static Microsoft.AspNetCore.Http.Results;
+using static pr.net.Models.Enums.RepoProviders;
 
 namespace pr.net.Endpoints;
 
@@ -16,16 +18,25 @@ public static class GithubPullRequestEndpoints {
         var group = app.MapGroup("/github/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
-            [FromServices] IValidator validator,
-            [FromBody] GithubPullReviewCreatedEventDto prEvent
+            [FromServices] IWebhookValidator validator,
+            HttpRequest request
         ) => {
-            // augment this line if you'd like to add functionality for other events.
-            if(!validator.ValidateType(prEvent.Action.ToString()))
-                return BadRequest(new { message = "Invalid event type." });
+            // read body directly as a string so we can encode it and compare to the provided webhook secret.
+            using var reader = new StreamReader(request.Body);
+            string body = await reader.ReadToEndAsync();
 
-            // webhook secret validation.
-            if(!await validator.ValidateWebhookSecretAsync(JsonSerializer.Serialize(prEvent)))
-                return BadRequest(new { message = "Invalid webhook identifier." });
+            // validate webhook secret.
+            string secretHeader = request.Headers["X-Hub-Signature-256"].ToString();
+            if(string.IsNullOrWhiteSpace(secretHeader) || !await validator.ValidateWebhookSecretAsync(secretHeader, body))
+                return BadRequest(new { message = "Unauthorized." });
+
+            GithubPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<GithubPullReviewCreatedEventDto>(body)
+                ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
+
+            // filter event type.
+            string? eventHeader = request.Headers["X-Event-Key"].ToString();
+            if(eventHeader is null || !ValidateEvent(prEvent.Action.ToString(), RepoProvider.Github))
+                return BadRequest(new { message = "Event type not configured." }); 
 
             // logic pipelines.
             await orchestrator.ProcessNewPullRequest(prEvent);
