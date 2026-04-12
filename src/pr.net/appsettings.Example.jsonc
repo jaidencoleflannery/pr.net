@@ -63,8 +63,38 @@
         "AcceptedEvents": { // [ definition: types of events to accept and process. ], [ note: to see valid options, see the events enum. ]
           "type": "array",
           "items": {
-            "type": "string" // 
+            "type": "string"
           }
+        },
+        "Users": { // [ definition: configuration values for user specific behavior and validation. ]
+          "type": "object",
+          "properties": {
+            "Filtering": {
+              "type": "boolean" // [ definition: flag for if pull requests should be filtered by user. ], [ recommendation: true ]
+            },
+            "AuthorizedUsers": {
+              "type": "array",
+              "items": {
+                "type": "string"  // [ definition: approved user for code review. ], [ note: this string needs to be the user's unique account ID, not their username. ]
+              }
+            },
+            "Patterns": {
+              "type": "boolean"
+            },
+            "LimitRequests": {
+              "type": "object",
+              "properties": {
+                "Limit": {
+                  "type": "boolean"
+                },
+                "MaxRequests": {
+                  "type": "integer"
+                }
+              },
+              "required": ["Limit", "MaxRequests"]
+            }
+          },
+          "required": ["Filtering", "Patterns", "LimitRequests"]
         },
         "Bitbucket": { // [ definition: integration information for a bitbucket bot identity. ]
           "type": "object",
