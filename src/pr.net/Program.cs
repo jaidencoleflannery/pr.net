@@ -154,7 +154,8 @@ public class Program {
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>();
-        builder.Services.AddSingleton<IPatternService, LocalPatternService>();
+        // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
+        // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 
         WebApplication app = builder.Build();
         app.MapGet("/", () => $"Server is running in {env} mode."); 
