@@ -1,4 +1,4 @@
-# knitpick
+# pr.net
 an open source, automated ai pull-request review system.
 
 > **status:** in development.
