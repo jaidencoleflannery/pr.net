@@ -135,7 +135,8 @@ public class Program {
                         ?? throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found or read, or is in an invalid format.")
                 }); 
 
-                builder.Services.AddScoped<IChatService, AnthropicChatService>();
+                builder.Services.AddScoped<IChatClient, AnthropicChatClient>();
+ 
                 break;
             /*
             case ChatProvider.Amazon:
@@ -151,9 +152,11 @@ public class Program {
 
         // generic services.
         builder.Services.AddScoped<Orchestrator>();
+        builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
+
         builder.Services.AddSingleton<ITokenService, TokenService>();
-        builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>();
+        builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
         // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
         // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 
