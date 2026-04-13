@@ -178,30 +178,11 @@ public class AnthropicChatService(
             return null;
         }
 
-        string? instructionsString = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
-        if(string.IsNullOrWhiteSpace(instructionsString)) {
+        string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
+        if(string.IsNullOrWhiteSpace(instructions)) {
             _logger.LogError($"\n{DateTime.Now}: [ Could not fetch filtering instructions in {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
         } 
-
-        // user can be new, do not throw if empty.
-        string userPatterns = await _patternService.GetUserPatternsString(userId);
-
-        // build instructions to contain context on the user's historical behavior.
-        StringBuilder builder = new();
-        builder.AppendLine("You are reviewing a pull request.");
-        if(!string.IsNullOrWhiteSpace(userPatterns)) {
-            builder.AppendLine("Before you review the code, here is a brief history of issues this code author frequently implements, referred to as \"patterns\":");
-            builder.AppendLine($"```{userPatterns}```");
-            builder.AppendLine("In your response, you must see if the user implements any of the listed issue patterns, and if they do, return the ID of the pattern in the pattern:id field.");
-            builder.AppendLine("If they did not reimplement any of their historical patterns, you must create a new one. Set the ID to -1 and then write a concise summary of a specific issue they implemented. Do not write anything generic.");
-        }
-        if(!string.IsNullOrWhiteSpace(instructionsString)) {
-            builder.AppendLine("\nHere are instructions, adhere to them strictly:\n");
-            builder.AppendLine($"```{instructionsString}```");
-        }
-
-        string instructions = builder.ToString();
 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
         foreach(DiffSection diff in diffSections) {
