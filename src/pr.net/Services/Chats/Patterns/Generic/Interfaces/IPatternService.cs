@@ -1,9 +1,13 @@
+using pr.net.Models.Patterns;
+
 namespace pr.net.Services.Patterns;
 
 public interface IPatternService {
 
-    Task<List<string>> GetUserPatterns(string userId);
+    ValueTask<IEnumerable<Pattern>> TouchUserPatterns(string userId, CancellationToken cancellationToken);
 
-    Task<bool> InitializePatterns();
+    ValueTask<bool> TouchPattern(string userId, int patternId, CancellationToken cancellationToken);
+
+    ValueTask<bool> AddPattern(string userId, Pattern pattern, CancellationToken cancellationToken);
 
 }

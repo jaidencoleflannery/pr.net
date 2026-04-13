@@ -78,8 +78,17 @@
                 "type": "string"  // [ definition: approved user for code review. ], [ note: this string needs to be the user's unique account ID, not their username. ]
               }
             },
-            "Patterns": {
-              "type": "boolean"
+            "Patterns": { // [ definition: per user historical context on frequently encountered issues. ]
+              "type": "object",
+              "properties": {
+                "Filtering": {
+                  "type": "boolean" // [ recommendation: true. ]
+                },
+                "PatternHistoryLength": {
+                  "type": "integer" // [ recommendation: 10. ], [ note: this field will degrade inference linearly - try to keep this value < 10. ]
+                }
+              },
+              "required": ["Filtering"]
             },
             "LimitRequests": {
               "type": "object",

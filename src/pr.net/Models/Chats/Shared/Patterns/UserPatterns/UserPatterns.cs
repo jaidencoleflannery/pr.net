@@ -9,6 +9,6 @@ public class UserPatterns {
     public string UserId { get; set; } = string.Empty; // needs to be id, not username.
 
     [JsonPropertyName("patterns")]
-    public List<Pattern> Patterns { get; set; } = [];
+    public List<Pattern> PatternHistory { get; set; } = [];
 
 }
