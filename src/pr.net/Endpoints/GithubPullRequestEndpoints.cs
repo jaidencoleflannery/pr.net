@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
-using pr.net.Services.Patterns;
 
 using pr.net.Models.Github;
 
@@ -20,7 +19,6 @@ public static class GithubPullRequestEndpoints {
         group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
             [FromServices] IWebhookValidator validator,
-            [FromServices] IPatternService patternService,
             HttpRequest request
         ) => {
             // read body directly as a string so we can encode it and compare to the provided webhook secret.

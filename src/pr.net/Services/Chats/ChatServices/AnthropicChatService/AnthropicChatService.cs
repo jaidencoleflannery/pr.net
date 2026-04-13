@@ -8,7 +8,6 @@ using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 
 using pr.net.Services.Chat.Instructions;
-using pr.net.Services.Patterns;
 
 using pr.net.Configurations.Chat;
 
@@ -26,7 +25,6 @@ namespace pr.net.Services.Chat;
 public class AnthropicChatService(
     IOptions<ChatConfiguration> _configuration, 
     ILogger<AnthropicChatService> _logger,
-    IPatternService _patternService,
     IInstructionsService _instructionsService, 
     IAnthropicClient _client, 
     IAnthropicFilteringSchema _filterSchema, 
