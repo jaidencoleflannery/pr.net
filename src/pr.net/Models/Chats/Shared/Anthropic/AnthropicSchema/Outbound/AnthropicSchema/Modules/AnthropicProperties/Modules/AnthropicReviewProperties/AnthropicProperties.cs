@@ -7,6 +7,9 @@ public class AnthropicReviewProperties : IAnthropicProperties {
     [JsonPropertyName("reviews")]
     public AnthropicReviews Reviews { get; set; } = new(); 
 
-    public List<string> GetRequiredFields() => ["reviews"];
+    [JsonPropertyName("pattern")]
+    public AnthropicPattern Pattern { get; set; } = new();
+
+    public List<string> GetRequiredFields() => ["reviews", "pattern"];
 
 }

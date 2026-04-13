@@ -11,7 +11,7 @@ namespace pr.net.Services.Patterns;
 public class LocalPatternService : IPatternService { 
     private readonly ILogger<LocalPatternService> _logger; 
 
-    private static readonly string _dirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Patterns");
+    private static readonly string _dirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"PatternCache");
     private static readonly string _patternPath = Path.Combine(_dirPath, @"user-cache.json");
     private static readonly string _backupPath = Path.Combine(_dirPath, @"user-cache-backup.json");
     private static readonly string _tempPath = Path.Combine(_dirPath, @"user-cache-temp.json");
