@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
+using pr.net.Services.Patterns;
 
 using pr.net.Models.Github;
 
@@ -19,6 +20,7 @@ public static class GithubPullRequestEndpoints {
         group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
             [FromServices] IWebhookValidator validator,
+            [FromServices] IPatternService patternService,
             HttpRequest request
         ) => {
             // read body directly as a string so we can encode it and compare to the provided webhook secret.
@@ -33,6 +35,8 @@ public static class GithubPullRequestEndpoints {
             // deserialize the string so we can pull values.
             GithubPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<GithubPullReviewCreatedEventDto>(body)
                 ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
+
+            await patternService.InitializePatterns();
 
             // validate webhook event type.
             if(prEvent.Action is null || !ValidateEvent(prEvent.Action, RepoProvider.Github))
