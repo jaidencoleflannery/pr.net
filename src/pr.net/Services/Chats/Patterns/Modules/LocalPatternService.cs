@@ -8,6 +8,10 @@ using pr.net.Models.Patterns;
 
 namespace pr.net.Services.Patterns;
 
+/*
+    all functionality within this class most likely needs a rework.
+    let's have some sort of static data categorization instead of inference - see existing PATTERN_INSTRUCTIONS.md for a list of categories to perhaps implement here.
+*/
 public class LocalPatternService : IPatternService { 
     private readonly ILogger<LocalPatternService> _logger; 
 
