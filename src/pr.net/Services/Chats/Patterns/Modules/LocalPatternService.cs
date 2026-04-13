@@ -1,11 +1,10 @@
+using System.Text;
 using System.Text.Json;
-using System.Collections.Concurrent;
-using System.Threading;
 using Microsoft.Extensions.Options;
 
-using pr.net.Models.Patterns;
-
 using pr.net.Configurations.Repo;
+
+using pr.net.Models.Patterns;
 
 namespace pr.net.Services.Patterns;
 
@@ -86,10 +85,10 @@ public class LocalPatternService : IPatternService {
     }
 
     // if the user's patterns exist, return them, else append the user to the hash and return their new instance.
-    public async ValueTask<IEnumerable<Pattern>> TouchUserPatterns(string userId, CancellationToken cancellationToken) { 
+    public async ValueTask<IEnumerable<Pattern>> TouchUserPatterns(string userId, CancellationToken cancellationToken = default) { 
         await _patternLock.WaitAsync(cancellationToken);
         try {
-            if(!_patternHash.TryGetValue(userId, out LinkedList<Pattern> patterns)) {
+            if(_patternHash.TryGetValue(userId, out LinkedList<Pattern> patterns)) {
                 return patterns 
                     ?? throw new InvalidOperationException($"Given patterns from in memory cache was null in {nameof(TouchUserPatterns)}"); // this shouldn't technically be possible, but just to be safe.
             } else { 
@@ -108,7 +107,7 @@ public class LocalPatternService : IPatternService {
     }
 
     // if a pattern is touched, it gets pushed to be the most recent instance in the linked list.
-    public async ValueTask<bool> TouchPattern(string userId, int patternId, CancellationToken cancellationToken) {  
+    public async ValueTask<bool> TouchPattern(string userId, int patternId, CancellationToken cancellationToken = default) {  
         await _patternLock.WaitAsync(cancellationToken); // avoid multiple mutators.   
         try { 
             if(!_patternHash.TryGetValue(userId, out LinkedList<Pattern>? patterns)) {
@@ -144,7 +143,7 @@ public class LocalPatternService : IPatternService {
         }
     }
 
-    public async ValueTask<bool> AddPattern(string userId, Pattern pattern, CancellationToken cancellationToken) { 
+    public async ValueTask<bool> AddPattern(string userId, Pattern pattern, CancellationToken cancellationToken = default) { 
         await _patternLock.WaitAsync(cancellationToken); // avoid multiple callers.
         try {
             if(--_backupCounter <= 0)
@@ -171,6 +170,19 @@ public class LocalPatternService : IPatternService {
         } finally {
             _patternLock.Release();
         }
+    }
+
+    public async ValueTask<string> GetUserPatternsString(string userId, CancellationToken cancellationToken = default) {
+        await _patternLock.WaitAsync(cancellationToken);
+        StringBuilder builder = new();
+
+        if(!_patternCounterHash.ContainsKey(userId))
+            _patternCounterHash.TryAdd(userId, 0);
+
+        foreach(Pattern pattern in _patternHash[userId])
+            builder.AppendLine(pattern.Description);
+
+        return builder.ToString();
     }
 
     // this method must be accessed inside of a mutex.

@@ -36,8 +36,6 @@ public static class GithubPullRequestEndpoints {
             GithubPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<GithubPullReviewCreatedEventDto>(body)
                 ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
 
-            await patternService.InitializePatterns();
-
             // validate webhook event type.
             if(prEvent.Action is null || !ValidateEvent(prEvent.Action, RepoProvider.Github))
                 return BadRequest(new { message = "Event type not configured." });
@@ -51,7 +49,7 @@ public static class GithubPullRequestEndpoints {
                 return BadRequest(new { message = "System is not configured to accept provided event type."});
             
             // logic pipelines.
-            await orchestrator.ProcessNewPullRequest(prEvent);
+            await orchestrator.ProcessNewPullRequest(prEvent, prEvent.PullRequest.User.Id.ToString());
             return Ok("Successfully posted reviews");
         });
     } 

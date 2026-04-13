@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,7 @@ using Anthropic.Exceptions;
 using Anthropic.Models.Messages;
 
 using pr.net.Services.Chat.Instructions;
+using pr.net.Services.Patterns;
 
 using pr.net.Configurations.Chat;
 
@@ -23,16 +25,17 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatService(
     IOptions<ChatConfiguration> _configuration, 
+    ILogger<AnthropicChatService> _logger,
+    IPatternService _patternService,
     IInstructionsService _instructionsService, 
     IAnthropicClient _client, 
     IAnthropicFilteringSchema _filterSchema, 
-    IAnthropicReviewSchema _reviewSchema,
-    ILogger<AnthropicChatService> _logger
+    IAnthropicReviewSchema _reviewSchema
 ) : IChatService { 
 
     private ChatProvider? _provider = _configuration.Value.Provider;
 
-    public async Task<IEnumerable<DiffSection>?> FilterDiffsAsync(IEnumerable<DiffSection> diffSections) { 
+    public async Task<IEnumerable<DiffSection>?> FilterDiffsAsync(IEnumerable<DiffSection> diffSections, string userId) { 
         if(diffSections.Count() < 1) {
             _logger.LogError($"\n{DateTime.Now}: [ Error processing pull request. No diff sections were given in {nameof(FilterDiffsAsync)}. ]\n");
             return null;
@@ -59,18 +62,18 @@ public class AnthropicChatService(
             return null;
         }
 
-        string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: true));
-        if(instructions == null) {
-            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:MaxTokens could not be found or read, or is in an invalid format in {nameof(FilterDiffsAsync)}. ]\n");
-            return null;
-        }
-
         // push schema into anthropic's required type for the format field.
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema, _filterSchema.GetType())); 
         if(schema == null) {
             _logger.LogError($"\n{DateTime.Now}: [ Schema could not be deserialized in {nameof(FilterDiffsAsync)}. ]\n");
             return null;
         }
+
+        string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: true));
+        if(instructions == null) {
+            _logger.LogError($"\n{DateTime.Now}: [ Failed to fetch instructions in {nameof(FilterDiffsAsync)}. ]\n");
+            return null;
+        } 
 
         // requestsperpath's key == (path, contents), value == request. 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
@@ -144,7 +147,7 @@ public class AnthropicChatService(
         }
     } 
 
-    public async Task<IEnumerable<(DiffSection, ChatResponse)>?> GetChatReviewsAsync(IEnumerable<DiffSection> diffSections) {
+    public async Task<IEnumerable<(DiffSection, ChatResponse)>?> GetChatReviewsAsync(IEnumerable<DiffSection> diffSections, string userId) {
         if(diffSections.Count() < 1) {
             _logger.LogError($"\n{DateTime.Now}: [ No diffs provided to {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
@@ -167,12 +170,6 @@ public class AnthropicChatService(
             return null;
         }
 
-        string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
-        if(string.IsNullOrWhiteSpace(instructions)) {
-            _logger.LogError($"\n{DateTime.Now}: [ Could not fetch filtering instructions in {nameof(GetChatReviewsAsync)}. ]\n");
-            return null;
-        }
-
         // push schema into anthropic's required type for the format field.
         string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
@@ -180,6 +177,29 @@ public class AnthropicChatService(
             _logger.LogError($"\n{DateTime.Now}: [ Failure to serialize Anthropic Review schema in {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
         }
+
+        string? instructionsString = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
+        if(string.IsNullOrWhiteSpace(instructionsString)) {
+            _logger.LogError($"\n{DateTime.Now}: [ Could not fetch filtering instructions in {nameof(GetChatReviewsAsync)}. ]\n");
+            return null;
+        } 
+
+        // user can be new, do not throw if empty.
+        string userPatterns = await _patternService.GetUserPatternsString(userId);
+
+        // build instructions to contain context on the user's historical behavior.
+        StringBuilder builder = new();
+        builder.AppendLine("\nYou are reviewing a pull request.");
+        if(!string.IsNullOrWhiteSpace(userPatterns)) {
+            builder.AppendLine("\nBefore you review the code, here is a brief history of issues this code author frequently implements:\n");
+            builder.AppendLine($"```{userPatterns}```");
+        }
+        if(!string.IsNullOrWhiteSpace(instructionsString)) {
+            builder.AppendLine("\nHere are instructions, adhere to them strictly:\n");
+            builder.AppendLine($"```{instructionsString}```");
+        }
+
+        string instructions = builder.ToString();
 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
         foreach(DiffSection diff in diffSections) {
