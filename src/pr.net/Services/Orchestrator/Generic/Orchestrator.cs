@@ -6,10 +6,13 @@ using pr.net.Models.Generic;
 
 namespace pr.net.Services.Orchestration;
 
-public class Orchestrator(IConfiguration _configuration, IRepositoryRequestService _repositoryService, IChatService _chatService) {
-
+public class Orchestrator(
+    IConfiguration _configuration, 
+    IRepositoryRequestService _repositoryService, 
+    IChatService _chatService
+) {
     // each function is expected to handle logging and return null - don't handle errors at this scope.
-    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent) {  
+    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent, string userId) {  
 
         // get each file's associated diff.
         IEnumerable<DiffSection>? diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
@@ -18,13 +21,13 @@ public class Orchestrator(IConfiguration _configuration, IRepositoryRequestServi
 
         // if enabled, filter diffs for ones that are worth review.
         IEnumerable<DiffSection>? filteredDiffFiles = (_configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
-            ? await _chatService.FilterDiffsAsync(diffFiles)
+            ? await _chatService.FilterDiffsAsync(diffFiles, userId)
             : diffFiles;
         if(filteredDiffFiles == null)
             return;
 
         // get each review object (object contains file).
-        IEnumerable<(DiffSection, ChatResponse)>? reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles);
+        IEnumerable<(DiffSection, ChatResponse)>? reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles, userId);
         if(reviews == null)
             return;
 

@@ -13,6 +13,7 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
+using pr.net.Services.Patterns;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
@@ -40,7 +41,7 @@ public class Program {
                     .ReadFrom.Configuration(ctx.Configuration)
                     .WriteTo.Console();
                     if(env == "Development")
-                        config.WriteTo.File("logs/pr-.txt", rollingInterval: RollingInterval.Day);
+                        config.WriteTo.File("Logs/pr-.txt", rollingInterval: RollingInterval.Day);
                     if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system. */ } 
             }
         );
@@ -152,8 +153,9 @@ public class Program {
         builder.Services.AddScoped<Orchestrator>();
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddSingleton<ITokenService, TokenService>();
-        // webhook secret validation to authenticate provider.
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>();
+        // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
+        // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 
         WebApplication app = builder.Build();
         app.MapGet("/", () => $"Server is running in {env} mode."); 

@@ -2,8 +2,8 @@ namespace pr.net.Services.Chat.Instructions;
 
 public class LocalInstructionsService : IInstructionsService {
 
-    private string _path = Path.Combine(Directory.GetCurrentDirectory(), "INSTRUCTIONS.md");
-    private string _filteringPath = Path.Combine(Directory.GetCurrentDirectory(), "FILTERING_INSTRUCTIONS.md");
+    private string _path = Path.Combine(Directory.GetCurrentDirectory(), "Instructions/INSTRUCTIONS.md");
+    private string _filteringPath = Path.Combine(Directory.GetCurrentDirectory(), "Instructions/FILTERING_INSTRUCTIONS.md");
     private List<string>? _instructions = new List<string>();
     private List<string>? _filteringInstructions = new List<string>();
     

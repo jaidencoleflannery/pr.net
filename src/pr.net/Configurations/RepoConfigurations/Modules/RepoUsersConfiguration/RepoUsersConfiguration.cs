@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace pr.net.Configurations.Repo;
 
-public class RepoUsersConfiguration { 
+public class RepoUsersConfiguration {
 
     [Required]
     [ConfigurationKeyName("Filtering")]
@@ -14,7 +14,7 @@ public class RepoUsersConfiguration {
 
     [Required]
     [ConfigurationKeyName("Patterns")]
-    public bool Patterns { get; init; }
+    public RepoPatternsConfiguration Patterns { get; init; } = new();
 
     [Required]
     [ConfigurationKeyName("LimitRequests")]

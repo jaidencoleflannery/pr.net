@@ -47,7 +47,7 @@ public static class GithubPullRequestEndpoints {
                 return BadRequest(new { message = "System is not configured to accept provided event type."});
             
             // logic pipelines.
-            await orchestrator.ProcessNewPullRequest(prEvent);
+            await orchestrator.ProcessNewPullRequest(prEvent, prEvent.PullRequest.User.Id.ToString());
             return Ok("Successfully posted reviews");
         });
     } 
