@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 
 using pr.net.Services.Chat.Instructions;
@@ -7,9 +5,7 @@ using pr.net.Services.Chat.Instructions;
 using pr.net.Configurations.Chat;
 
 using pr.net.Models.Generic;
-using pr.net.Models.Incoming.Generic;
-
-using static System.Text.Json.JsonSerializer;
+using pr.net.Models.Incoming;
 
 using static pr.net.Models.Enums.ChatProviders;
 

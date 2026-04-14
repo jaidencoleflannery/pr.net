@@ -4,6 +4,7 @@ using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Tokens;
 
 using pr.net.Models.Bitbucket;
+using pr.net.Models.Incoming;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Generic;
 

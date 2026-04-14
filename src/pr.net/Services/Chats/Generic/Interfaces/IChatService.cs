@@ -1,5 +1,5 @@
 using pr.net.Models.Generic;
-using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Incoming;
 
 namespace pr.net.Services.Chat;
 
