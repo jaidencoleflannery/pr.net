@@ -1,24 +1,24 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using Anthropic;
-using Anthropic.Models.Messages;
-using Anthropic.Exceptions;
+using Amazon;
+using Amazon.BedrockRuntime;
+using Amazon.BedrockRuntime.Model;
+using Amazon.Lambda.Core;
+using Amazon.Lambda.APIGatewayEvents;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming.Generic;
-using pr.net.Models.Anthropic;
-using pr.net.Models.Incoming.Anthropic;
 using pr.net.Models.Schemas;
 
 using static System.Text.Json.JsonSerializer;
 
 namespace pr.net.Services.Chat;
 
-public class AnthropicChatClient(
-    ILogger<AnthropicChatClient> _logger,
-    IAnthropicClient _client,
-    IFilteringSchema _filterSchema, 
+public class AmazonChatClient(
+    ILogger<AmazonChatClient> _logger,
+    IAmazonBedrockRuntime _client,
+    IFilteringSchema _filterSchema,
     IReviewSchema _reviewSchema
 ) : IChatClient {
     
@@ -36,64 +36,68 @@ public class AnthropicChatClient(
             return null;
         }
 
-        List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
+        List<(DiffSection, ConverseRequest)> requestsPerPath = []; 
         foreach(DiffSection diff in diffSections) {
             if(!string.IsNullOrWhiteSpace(diff.Contents))
-                requestsPerPath.Add(
-                    (diff, 
-                    new MessageCreateParams {
-                        MaxTokens = maxTokens,
-                        Messages = [
-                            new() {
-                                Role = Role.User,
-                                Content = $"Is this diff worth reviewing?:\n```{diff.Contents}```"
-                            },
-                        ],
-                        Model = model,
-                        OutputConfig = new OutputConfig {
-                            Format = new JsonOutputFormat { 
-                                Schema = schema 
-                            }, 
-                        },
-                        System = instructions,
-                        Temperature = 0.0,
-                    }));
-        }
+                requestsPerPath.Add((diff, new ConverseRequest {
+                    ModelId = model,
+                    Messages = new List<Message> {
+                        new Message {
+                            Role = ConversationRole.User,
+                            Content = new List<ContentBlock> {
+                                new ContentBlock { Text = $"Is this diff worth reviewing?:\n```{diff.Contents}```" }
+                            }
+                        }
+                    },
+                    OutputConfig = new OutputConfig {
+                        TextFormat = new OutputFormat {
+                            Type = "json_schema",
+                            Structure = new OutputFormatStructure {
+                                JsonSchema = new JsonSchemaDefinition {
+                                    Schema = JsonSerializer.Serialize(_filterSchema)
+                                }
+                            }
+                        }
+                    },
+                    InferenceConfig = new InferenceConfiguration {
+                        MaxTokens = (int)maxTokens,
+                        Temperature = 0.0F
+                    }
+                }));
 
-        if(requestsPerPath.Count() < 1) {
-            _logger.LogError($"\n{DateTime.Now}: [ No diffs or paths provided to {nameof(RequestFilteringAsync)}. ]\n");
-            return null;
-        }  
+            if(requestsPerPath.Count() < 1) {
+                _logger.LogError($"\n{DateTime.Now}: [ No diffs or paths provided to {nameof(RequestFilteringAsync)}. ]\n");
+                return null;
+            }  
 
-        // iterate over every instance of requestDtos and send them individually.
-        List<DiffSection> filteredDiffSections = [];
-        List<Exception> exceptions = [];
-        foreach((DiffSection section, MessageCreateParams request) in requestsPerPath) { 
-            // note that the apikey is injected from the environment at init by the anthropic sdk.
-            Message message;
-            try {
-                message = await _client.Messages.Create(request);
-                if(message.Content[0].TryPickText(out TextBlock? textBlock)) {
-                    // due to our output config, the response will be a single text block containing a json string with our boolean value.
-                    var result = Deserialize<AnthropicIsWorthReview>(textBlock?.Text!) ??
-                        throw new InvalidOperationException("Could not parse filtering response.");
+            // iterate over every instance of requests and send them individually.
+            List<DiffSection> filteredDiffSections = [];
+            List<Exception> exceptions = []; 
+
+            foreach((DiffSection section, ConverseRequest request) in requestsPerPath) { 
+                ConverseResponse response;
+                try {
+                    response = await _client.ConverseAsync(request);
+                    string message = response.Output?.Message?.Content?[0]?.Text ?? ""; 
+                    FilteringResponse result = JsonSerializer.Deserialize<FilteringResponse>(message)
+                        ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");
                     if(result.IsWorthReview == true)
                         filteredDiffSections.Add(section);
+                } catch(Exception exception) {
+                    _logger.LogError($"[ Amazon call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
+                    exceptions.Add(exception);
                 }
-            } catch(AnthropicApiException exception) {
-                _logger.LogError($"\n{DateTime.Now}: [ Anthropic call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
-                exceptions.Add(exception);
             }
-        }
 
-        if(filteredDiffSections.Count > 0) {
-            return filteredDiffSections;
-        } else if(exceptions.Count > 0) {
-            _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review. ]\n");
-            return null;
-        } else {
-            _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call. ]\n");
-            return null;
+            if(filteredDiffSections.Count > 0) {
+                return filteredDiffSections;
+            } else if(exceptions.Count > 0) {
+                _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review. ]\n");
+                return null;
+            } else {
+                _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call. ]\n");
+                return null;
+            }
         }
     }
 

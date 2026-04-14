@@ -1,7 +1,6 @@
 using Serilog;
 
 using Anthropic;
-
 using Amazon.SecretsManager;
 
 using pr.net.Services.Chat;
@@ -13,7 +12,6 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
-using pr.net.Services.Patterns;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
@@ -22,7 +20,7 @@ using pr.net.Configurations.Auth;
 
 using pr.net.Endpoints;
 
-using pr.net.Models.Anthropic;
+using pr.net.Models.Schemas;
 
 using static pr.net.Models.Enums.HostProviders;
 using static pr.net.Models.Enums.RepoProviders;
@@ -123,10 +121,7 @@ public class Program {
         } 
 
         switch(chatProvider) {
-            case ChatProvider.Anthropic: 
-                // schemas to format ai output.
-                builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicReviewProperties>>();
-                builder.Services.AddSingleton<IAnthropicFilteringSchema, AnthropicSchema<AnthropicFilteringProperties>>();
+            case ChatProvider.Anthropic:  
                 // token source - chattokenhandler is the generic, no special behavior option.
                 builder.Services.AddSingleton<IChatTokenHandler, ChatTokenHandler>();
                 // the anthropic sdk handles httpclient, leave as a singleton here.
@@ -152,11 +147,14 @@ public class Program {
 
         // generic services.
         builder.Services.AddScoped<Orchestrator>();
-        builder.Services.AddScoped<IChatService, ChatService>();
+        builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
 
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
+        // schemas to format ai output.
+        builder.Services.AddSingleton<IReviewSchema, Schema<ReviewProperties>>();
+        builder.Services.AddSingleton<IFilteringSchema, Schema<FilteringProperties>>();
         // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
         // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 
