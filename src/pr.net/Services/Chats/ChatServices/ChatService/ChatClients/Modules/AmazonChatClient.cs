@@ -1,15 +1,12 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
-using Amazon;
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
-using Amazon.Lambda.Core;
-using Amazon.Lambda.APIGatewayEvents;
 
 using pr.net.Models.Generic;
-using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Incoming;
 using pr.net.Models.Schemas;
+using pr.net.Models.Incoming.Amazon;
 
 using static System.Text.Json.JsonSerializer;
 
@@ -149,84 +146,32 @@ public class AmazonChatClient(
                         Text = instructions
                     }]
             }));
-        };
-
-        List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
-        foreach(DiffSection diff in diffSections) {
-            if(!string.IsNullOrWhiteSpace(diff.Contents))
-                requestsPerPath.Add(
-                    (diff, 
-                    new MessageCreateParams {
-                        MaxTokens = maxTokens,
-                        Messages = [
-                            new() {
-                                Role = Role.User,
-                                Content = $"Review this diff:\n```{diff.Contents}```"
-                            },
-                        ],
-                        Model = model!,
-                        OutputConfig = new OutputConfig {
-                            Format = new JsonOutputFormat { 
-                                Schema = schema 
-                            }, 
-                        },
-                        System = instructions,
-                        Temperature = 0.0,
-                    }));
-        }
+        }; 
 
         // iterate over every instance of requestDtos and send them individually.
         var reviewPerPath = new List<(DiffSection, ChatResponse)>();
         var exceptions = new List<Exception>();
 
-
-
         foreach((DiffSection section, ConverseRequest request) in requestsPerPath) { 
             ConverseResponse response;
             try {
-                response = await _client.ConverseAsync(request);
-                string message = response.Output?.Message?.Content?[0]?.Text ?? ""; 
-                ReviewResponse result = JsonSerializer.Deserialize<ReviewResponse>(message)
-                    ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");
-                if(result.IsWorthReview == true)
-                    filteredDiffSections.Add(section);
+                response = await _client.ConverseAsync(request); 
+                ReviewResponse message = Deserialize<ReviewResponse>(response.Output?.Message?.Content?[0]?.Text ?? "")
+                    ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");  
+                foreach(Review review in message.Reviews!) {
+                    AmazonResponse currentReview = new();
+                    currentReview.Content.Add(
+                        new ChatContent() {
+                            Text = review.Body,
+                            Line = review.Line
+                        });
+                    reviewPerPath.Add((section, currentReview));
+                }
             } catch(Exception exception) {
                 _logger.LogError($"[ Amazon call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
                 exceptions.Add(exception);
             }
-        }
-
-
-
-        foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) {
-            if(parameter.Messages.Count < 1)
-                continue;
-
-            // note that the apikey is injected from the environment at init by the anthropic sdk.
-            Message message;
-            try {
-                message = await _client.Messages.Create(parameter); 
-                foreach(var content in message.Content) {
-                    if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
-                        List<AnthropicReview>? reviews = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<AnthropicReview>>();
-                        if(reviews == null)
-                            throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
-                        foreach(var review in reviews) {
-                            AnthropicResponse response = new();
-                            response.Content.Add(
-                                new AnthropicContent() {
-                                    Text = review.Body,
-                                    Line = review.Line
-                                });
-                            reviewPerPath.Add((section, response));
-                        }
-                    }
-                }
-            } catch(AnthropicApiException exception) {
-                _logger.LogError($"\n{DateTime.Now}: [ Anthropic call failed: {exception.Message} in {nameof(RequestReviewsAsync)}. ]\n");
-                exceptions.Add(exception);
-            }
-        }
+        } 
 
         return (reviewPerPath.Count > 0)
             ? reviewPerPath

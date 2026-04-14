@@ -1,16 +1,24 @@
 using System.ComponentModel.DataAnnotations;
 
 using static pr.net.Models.Enums.RepoProviders;
+using static pr.net.Models.Enums.TokenProviders;
 
 namespace pr.net.Configurations.Repo;
 
 public class RepoConfiguration {
 
-    public RepoProvider? Provider { get; set; } = null;
+    public RepoProvider? Provider { get; private set; } = null;
+    public TokenProvider? TokenProvider { get; private set; } = null;
+
+    // nullable since validation should throw.
 
     [Required]
     [ConfigurationKeyName("Provider")] 
     public string? ProviderString { get; init { Provider = ValidateRepoProvider(value); field = value; } }
+
+    [Required]
+    [ConfigurationKeyName("TokenProvider")]
+    public string? TokenProviderString { get; init { TokenProvider = ValidateTokenProvider(value); field = value; } }
 
     [Required]
     [ConfigurationKeyName("AcceptedEvents")]

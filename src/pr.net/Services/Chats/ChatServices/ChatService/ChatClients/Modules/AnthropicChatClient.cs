@@ -6,8 +6,7 @@ using Anthropic.Models.Messages;
 using Anthropic.Exceptions;
 
 using pr.net.Models.Generic;
-using pr.net.Models.Incoming.Generic;
-using pr.net.Models.Anthropic;
+using pr.net.Models.Incoming;
 using pr.net.Models.Incoming.Anthropic;
 using pr.net.Models.Schemas;
 
@@ -75,7 +74,7 @@ public class AnthropicChatClient(
                 message = await _client.Messages.Create(request);
                 if(message.Content[0].TryPickText(out TextBlock? textBlock)) {
                     // due to our output config, the response will be a single text block containing a json string with our boolean value.
-                    var result = Deserialize<AnthropicIsWorthReview>(textBlock?.Text!) ??
+                    var result = Deserialize<FilteringResponse>(textBlock?.Text!) ??
                         throw new InvalidOperationException("Could not parse filtering response.");
                     if(result.IsWorthReview == true)
                         filteredDiffSections.Add(section);
@@ -149,17 +148,17 @@ public class AnthropicChatClient(
                 message = await _client.Messages.Create(parameter); 
                 foreach(var content in message.Content) {
                     if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
-                        List<AnthropicReview>? reviews = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<AnthropicReview>>();
-                        if(reviews == null)
+                        ReviewResponse? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<ReviewResponse>();
+                        if(response == null || response.Reviews == null)
                             throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
-                        foreach(var review in reviews) {
-                            AnthropicResponse response = new();
-                            response.Content.Add(
-                                new AnthropicContent() {
+                        foreach(var review in response.Reviews) {
+                            AnthropicResponse result = new();
+                            result.Content.Add(
+                                new ChatContent() {
                                     Text = review.Body,
                                     Line = review.Line
                                 });
-                            reviewPerPath.Add((section, response));
+                            reviewPerPath.Add((section, result));
                         }
                     }
                 }

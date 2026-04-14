@@ -1,7 +1,10 @@
 using Serilog;
 
 using Anthropic;
+using Amazon;
+using Amazon.Runtime;
 using Amazon.SecretsManager;
+using Amazon.BedrockRuntime;
 
 using pr.net.Services.Chat;
 using pr.net.Services.Chat.Instructions;
@@ -23,6 +26,7 @@ using pr.net.Endpoints;
 using pr.net.Models.Schemas;
 
 using static pr.net.Models.Enums.HostProviders;
+using static pr.net.Models.Enums.TokenProviders;
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
 using static pr.net.Models.Enums.ChatProviders;
@@ -68,6 +72,7 @@ public class Program {
 
         // one time fetch for injection maps.
         HostProvider hostProvider = ValidateHostProvider(builder.Configuration["Host:Provider"]);
+        TokenProvider tokenProvider = ValidateTokenProvider(builder.Configuration["Host:TokenProvider"]);
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
@@ -79,8 +84,11 @@ public class Program {
                 // the aws sdk handles httpclient, leave as a singleton here.
                 builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
-                // token fetcher.
-                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>(); // make this dynamic so if the user wants, they can use the lambda and still pull the environment variables.
+                // token fetcher - source configured from appsettings.
+                if(tokenProvider == TokenProvider.AmazonSecretsManager)
+                    builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
+                else
+                    builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
 
             case HostProvider.Environment:
@@ -129,18 +137,30 @@ public class Program {
                     ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
                         ?? throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found or read, or is in an invalid format.")
                 }); 
-
                 builder.Services.AddScoped<IChatClient, AnthropicChatClient>();
- 
                 break;
-            /*
+
             case ChatProvider.Amazon:
-                builder.Services.AddSingleton<IAmazonReviewSchema, AmazonSchema<AmazonReviewProperties>>();
-                builder.Services.AddSingleton<IAmazonFilteringSchema, AmazonSchema<AmazonFilteringProperties>>();
-                // amazon client here ?
-                builder.Services.AddScoped<IChatService, AmazonChatService>();
+                // the amazon sdk handles httpclient, leave as a singleton here.
+                if(tokenProvider == TokenProvider.AmazonSecretsManager)
+                    builder.Services.AddSingleton<IAmazonBedrockRuntime, AmazonBedrockRuntimeClient>(); 
+                else
+                    builder.Services.AddSingleton<IAmazonBedrockRuntime>( 
+                        new AmazonBedrockRuntimeClient(
+                            new BasicAWSCredentials(
+                                Environment.GetEnvironmentVariable("AMAZON_ACCESS_KEY_ID")
+                                    ?? throw new InvalidOperationException("AMAZON_ACCESS_KEY_ID environment variable could not be found."),
+                                Environment.GetEnvironmentVariable("AMAZON_SECRET_KEY")
+                                    ?? throw new InvalidOperationException("AMAZON_SECRET_KEY environment variable could not be found")
+                            ),
+                            RegionEndpoint.GetBySystemName(
+                                Environment.GetEnvironmentVariable("AMAZON_REGION")
+                                    ?? throw new InvalidOperationException("AMAZON_REGION environment variable could not be found.")
+                            )
+                        ) 
+                    );
+                builder.Services.AddScoped<IChatClient, AmazonChatClient>();
                 break;
-            */
 
             // chain other types of chat providers here.
         }
