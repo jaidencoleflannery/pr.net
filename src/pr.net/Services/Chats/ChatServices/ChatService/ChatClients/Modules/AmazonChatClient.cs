@@ -62,42 +62,45 @@ public class AmazonChatClient(
                     InferenceConfig = new InferenceConfiguration {
                         MaxTokens = (int)maxTokens,
                         Temperature = 0.0F
-                    }
-                }));
+                    },
+                    System = [new SystemContentBlock {
+                        Text = instructions
+                    }]
+            }));
+        };
 
-            if(requestsPerPath.Count() < 1) {
-                _logger.LogError($"\n{DateTime.Now}: [ No diffs or paths provided to {nameof(RequestFilteringAsync)}. ]\n");
-                return null;
-            }  
+        if(requestsPerPath.Count() < 1) {
+            _logger.LogError($"\n{DateTime.Now}: [ No diffs or paths provided to {nameof(RequestFilteringAsync)}. ]\n");
+            return null;
+        }  
 
-            // iterate over every instance of requests and send them individually.
-            List<DiffSection> filteredDiffSections = [];
-            List<Exception> exceptions = []; 
+        // iterate over every instance of requests and send them individually.
+        List<DiffSection> filteredDiffSections = [];
+        List<Exception> exceptions = []; 
 
-            foreach((DiffSection section, ConverseRequest request) in requestsPerPath) { 
-                ConverseResponse response;
-                try {
-                    response = await _client.ConverseAsync(request);
-                    string message = response.Output?.Message?.Content?[0]?.Text ?? ""; 
-                    FilteringResponse result = JsonSerializer.Deserialize<FilteringResponse>(message)
-                        ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");
-                    if(result.IsWorthReview == true)
-                        filteredDiffSections.Add(section);
-                } catch(Exception exception) {
-                    _logger.LogError($"[ Amazon call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
-                    exceptions.Add(exception);
-                }
+        foreach((DiffSection section, ConverseRequest request) in requestsPerPath) { 
+            ConverseResponse response;
+            try {
+                response = await _client.ConverseAsync(request);
+                string message = response.Output?.Message?.Content?[0]?.Text ?? ""; 
+                FilteringResponse result = JsonSerializer.Deserialize<FilteringResponse>(message)
+                    ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");
+                if(result.IsWorthReview == true)
+                    filteredDiffSections.Add(section);
+            } catch(Exception exception) {
+                _logger.LogError($"[ Amazon call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
+                exceptions.Add(exception);
             }
+        }
 
-            if(filteredDiffSections.Count > 0) {
-                return filteredDiffSections;
-            } else if(exceptions.Count > 0) {
-                _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review. ]\n");
-                return null;
-            } else {
-                _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call. ]\n");
-                return null;
-            }
+        if(filteredDiffSections.Count > 0) {
+            return filteredDiffSections;
+        } else if(exceptions.Count > 0) {
+            _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were successfull, failed to perform review. ]\n");
+            return null;
+        } else {
+            _logger.LogError($"\n{DateTime.Now}: [ No {nameof(RequestFilteringAsync)} calls were deemed worthy of review, short circuiting call. ]\n");
+            return null;
         }
     }
 
@@ -114,6 +117,39 @@ public class AmazonChatClient(
             _logger.LogError($"\n{DateTime.Now}: [ Failure to serialize Anthropic Review schema in {nameof(RequestReviewsAsync)}. ]\n");
             return null;
         }
+
+        List<(DiffSection, ConverseRequest)> requestsPerPath = []; 
+        foreach(DiffSection diff in diffSections) {
+            if(!string.IsNullOrWhiteSpace(diff.Contents))
+                requestsPerPath.Add((diff, new ConverseRequest {
+                    ModelId = model,
+                    Messages = new List<Message> {
+                        new Message {
+                            Role = ConversationRole.User,
+                            Content = new List<ContentBlock> {
+                                new ContentBlock { Text = $"Review this diff:\n```{diff.Contents}```" }
+                            }
+                        }
+                    },
+                    OutputConfig = new OutputConfig {
+                        TextFormat = new OutputFormat {
+                            Type = "json_schema",
+                            Structure = new OutputFormatStructure {
+                                JsonSchema = new JsonSchemaDefinition {
+                                    Schema = JsonSerializer.Serialize(_reviewSchema)
+                                }
+                            }
+                        }
+                    },
+                    InferenceConfig = new InferenceConfiguration {
+                        MaxTokens = (int)maxTokens,
+                        Temperature = 0.0F
+                    },
+                    System = [new SystemContentBlock {
+                        Text = instructions
+                    }]
+            }));
+        };
 
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
         foreach(DiffSection diff in diffSections) {
@@ -142,6 +178,25 @@ public class AmazonChatClient(
         // iterate over every instance of requestDtos and send them individually.
         var reviewPerPath = new List<(DiffSection, ChatResponse)>();
         var exceptions = new List<Exception>();
+
+
+
+        foreach((DiffSection section, ConverseRequest request) in requestsPerPath) { 
+            ConverseResponse response;
+            try {
+                response = await _client.ConverseAsync(request);
+                string message = response.Output?.Message?.Content?[0]?.Text ?? ""; 
+                ReviewResponse result = JsonSerializer.Deserialize<ReviewResponse>(message)
+                    ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");
+                if(result.IsWorthReview == true)
+                    filteredDiffSections.Add(section);
+            } catch(Exception exception) {
+                _logger.LogError($"[ Amazon call failed: {exception.Message} in {nameof(RequestFilteringAsync)}. ]\n");
+                exceptions.Add(exception);
+            }
+        }
+
+
 
         foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) {
             if(parameter.Messages.Count < 1)
