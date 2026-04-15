@@ -98,7 +98,8 @@ public class AnthropicChatClient(
 
     public async Task<List<(DiffSection, ChatResponse)>?> RequestReviewsAsync(
         IEnumerable<DiffSection> diffSections,
-        long maxTokens, string model, 
+        long maxTokens, 
+        string model, 
         string instructions,
         TimeSpan? timeout
     ) {
