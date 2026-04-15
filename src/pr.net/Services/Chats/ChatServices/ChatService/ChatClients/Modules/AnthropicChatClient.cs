@@ -147,12 +147,11 @@ public class AnthropicChatClient(
             Message message;
             try {
                 message = await _client.Messages.Create(parameter); 
-                foreach(var content in message.Content) {
+                foreach(ContentBlock content in message.Content) {
                     if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
-                        ReviewResponse? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<ReviewResponse>();
-                        if(response == null || response.Reviews == null)
-                            throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
-                        foreach(var review in response.Reviews) {
+                        List<Review>? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<Review>>()
+                            ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
+                        foreach(Review review in response) {
                             AnthropicResponse result = new();
                             result.Content.Add(
                                 new ChatContent() {
