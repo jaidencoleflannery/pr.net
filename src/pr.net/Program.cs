@@ -1,8 +1,10 @@
 using Serilog;
 
 using Anthropic;
-
+using Amazon;
+using Amazon.Runtime;
 using Amazon.SecretsManager;
+using Amazon.BedrockRuntime;
 
 using pr.net.Services.Chat;
 using pr.net.Services.Chat.Instructions;
@@ -13,7 +15,6 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
-using pr.net.Services.Patterns;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
@@ -22,9 +23,10 @@ using pr.net.Configurations.Auth;
 
 using pr.net.Endpoints;
 
-using pr.net.Models.Anthropic;
+using pr.net.Models.Schemas;
 
 using static pr.net.Models.Enums.HostProviders;
+using static pr.net.Models.Enums.TokenProviders;
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
 using static pr.net.Models.Enums.ChatProviders;
@@ -70,6 +72,7 @@ public class Program {
 
         // one time fetch for injection maps.
         HostProvider hostProvider = ValidateHostProvider(builder.Configuration["Host:Provider"]);
+        TokenProvider tokenProvider = ValidateTokenProvider(builder.Configuration["Host:TokenProvider"]);
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
@@ -81,8 +84,11 @@ public class Program {
                 // the aws sdk handles httpclient, leave as a singleton here.
                 builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
-                // token fetcher.
-                builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>(); // make this dynamic so if the user wants, they can use the lambda and still pull the environment variables.
+                // token fetcher - source configured from appsettings.
+                if(tokenProvider == TokenProvider.AmazonSecretsManager)
+                    builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
+                else
+                    builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
 
             case HostProvider.Environment:
@@ -123,10 +129,7 @@ public class Program {
         } 
 
         switch(chatProvider) {
-            case ChatProvider.Anthropic: 
-                // schemas to format ai output.
-                builder.Services.AddSingleton<IAnthropicReviewSchema, AnthropicSchema<AnthropicReviewProperties>>();
-                builder.Services.AddSingleton<IAnthropicFilteringSchema, AnthropicSchema<AnthropicFilteringProperties>>();
+            case ChatProvider.Anthropic:  
                 // token source - chattokenhandler is the generic, no special behavior option.
                 builder.Services.AddSingleton<IChatTokenHandler, ChatTokenHandler>();
                 // the anthropic sdk handles httpclient, leave as a singleton here.
@@ -134,26 +137,40 @@ public class Program {
                     ApiKey = Environment.GetEnvironmentVariable("PR_NET_CHAT_TOKEN") 
                         ?? throw new InvalidOperationException("Environment variable PR_NET_CHAT_TOKEN could not be found or read, or is in an invalid format.")
                 }); 
+                builder.Services.AddScoped<IChatClient, AnthropicChatClient>();
+                break;
 
-                builder.Services.AddScoped<IChatService, AnthropicChatService>();
-                break;
-            /*
             case ChatProvider.Amazon:
-                builder.Services.AddSingleton<IAmazonReviewSchema, AmazonSchema<AmazonReviewProperties>>();
-                builder.Services.AddSingleton<IAmazonFilteringSchema, AmazonSchema<AmazonFilteringProperties>>();
-                // amazon client here ?
-                builder.Services.AddScoped<IChatService, AmazonChatService>();
+                // token source - chattokenhandler is the generic, no special behavior option.
+                builder.Services.AddSingleton<IChatTokenHandler, ChatTokenHandler>();
+                // the amazon sdk handles httpclient, leave as a singleton here.
+                // the amazon sdk resolves the token from AWS_BEARER_TOKEN_BEDROCK in the environment - this just verifies that it's set on boot.
+                _ = Environment.GetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK")
+                    ?? throw new InvalidOperationException("Environment variable AWS_BEARER_TOKEN_BEDROCK could not be found or read, or is in an invalid format.");
+                builder.Services.AddSingleton<IAmazonBedrockRuntime>( 
+                    new AmazonBedrockRuntimeClient( 
+                        RegionEndpoint.GetBySystemName(
+                            Environment.GetEnvironmentVariable("AWS_REGION")
+                                ?? throw new InvalidOperationException("AWS_REGION environment variable could not be found.")
+                        )
+                    ) 
+                );
+                builder.Services.AddScoped<IChatClient, AmazonChatClient>();
                 break;
-            */
 
             // chain other types of chat providers here.
         }
 
         // generic services.
         builder.Services.AddScoped<Orchestrator>();
+        builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
+
         builder.Services.AddSingleton<ITokenService, TokenService>();
-        builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>();
+        builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
+        // schemas to format ai output.
+        builder.Services.AddSingleton<IReviewSchema, Schema<ReviewProperties>>();
+        builder.Services.AddSingleton<IFilteringSchema, Schema<FilteringProperties>>();
         // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
         // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 

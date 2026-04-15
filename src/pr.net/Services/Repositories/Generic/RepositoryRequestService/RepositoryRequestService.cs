@@ -2,6 +2,7 @@ using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Parsing;
 
 using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Incoming;
 using pr.net.Models.Generic;
 
 namespace pr.net.Services.Requests;

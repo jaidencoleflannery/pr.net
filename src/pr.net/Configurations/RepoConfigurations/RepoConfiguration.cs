@@ -6,7 +6,7 @@ namespace pr.net.Configurations.Repo;
 
 public class RepoConfiguration {
 
-    public RepoProvider? Provider { get; set; } = null;
+    public RepoProvider Provider { get; private set; }
 
     [Required]
     [ConfigurationKeyName("Provider")] 

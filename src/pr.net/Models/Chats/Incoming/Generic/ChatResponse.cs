@@ -1,3 +1,10 @@
-namespace pr.net.Models.Incoming.Generic;
+using System.Text.Json.Serialization;
 
-public abstract class ChatResponse { }
+namespace pr.net.Models.Incoming;
+
+public class ChatResponse {
+
+    [JsonPropertyName("content")]
+    public List<ChatContent> Content { get; set; } = new(); 
+
+}

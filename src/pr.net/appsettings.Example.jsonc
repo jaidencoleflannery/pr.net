@@ -206,6 +206,14 @@
         "Provider": {
           "type": "string" // [ definition: the provider running the server. ], [ recommendation: "local" for development. ]
         },
+        "TokenProvider": {
+          "type": "string" // [ definition: source to pull tokens from. ], [ note: value must match a value from the token providers enum. ]
+        },
+        "Bitbucket": { // [ definition: bitbucket specific configuration settings. ]
+          "type": "object",
+          "properties": { },
+          "required": []
+        },
         "Amazon": { // [ definition: amazon specific configuration settings. ]
           "type": "object",
           "properties": {

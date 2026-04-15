@@ -5,6 +5,7 @@ using pr.net.Services.Tokens;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming.Generic;
+using pr.net.Models.Incoming;
 using pr.net.Models.Github;
 
 namespace pr.net.Services.Clients.Github;

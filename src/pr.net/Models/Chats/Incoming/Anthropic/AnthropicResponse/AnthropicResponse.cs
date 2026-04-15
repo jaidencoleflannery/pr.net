@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Models.Incoming.Anthropic;
 
@@ -15,10 +14,7 @@ public class AnthropicResponse : ChatResponse {
     public string Type { get; set; } = string.Empty;
 
     [JsonPropertyName("role")]
-    public string Role { get; set; } = string.Empty; 
-
-    [JsonPropertyName("content")]
-    public List<AnthropicContent> Content { get; set; } = new(); 
+    public string Role { get; set; } = string.Empty;  
 
     [JsonPropertyName("stop_reason")]
     public string StopReason { get; set; } = string.Empty;
@@ -28,4 +24,5 @@ public class AnthropicResponse : ChatResponse {
 
     [JsonPropertyName("usage")]
     public AnthropicUsage Usage { get; set; } = new AnthropicUsage();
+
 }
