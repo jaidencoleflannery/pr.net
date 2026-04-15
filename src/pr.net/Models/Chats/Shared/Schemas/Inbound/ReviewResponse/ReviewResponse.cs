@@ -4,7 +4,7 @@ namespace pr.net.Models.Schemas;
 
 public class ReviewResponse {
  
-    [JsonPropertyName("review")]
+    [JsonPropertyName("reviews")]
     public List<Review>? Reviews { get; set; } = [];
 
 } 

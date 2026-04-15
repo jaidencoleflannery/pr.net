@@ -141,24 +141,20 @@ public class Program {
                 break;
 
             case ChatProvider.Amazon:
+                // token source - chattokenhandler is the generic, no special behavior option.
+                builder.Services.AddSingleton<IChatTokenHandler, ChatTokenHandler>();
                 // the amazon sdk handles httpclient, leave as a singleton here.
-                if(tokenProvider == TokenProvider.AmazonSecretsManager)
-                    builder.Services.AddSingleton<IAmazonBedrockRuntime, AmazonBedrockRuntimeClient>(); 
-                else
-                    builder.Services.AddSingleton<IAmazonBedrockRuntime>( 
-                        new AmazonBedrockRuntimeClient(
-                            new BasicAWSCredentials(
-                                Environment.GetEnvironmentVariable("AMAZON_ACCESS_KEY_ID")
-                                    ?? throw new InvalidOperationException("AMAZON_ACCESS_KEY_ID environment variable could not be found."),
-                                Environment.GetEnvironmentVariable("AMAZON_SECRET_KEY")
-                                    ?? throw new InvalidOperationException("AMAZON_SECRET_KEY environment variable could not be found")
-                            ),
-                            RegionEndpoint.GetBySystemName(
-                                Environment.GetEnvironmentVariable("AMAZON_REGION")
-                                    ?? throw new InvalidOperationException("AMAZON_REGION environment variable could not be found.")
-                            )
-                        ) 
-                    );
+                // the amazon sdk resolves the token from AWS_BEARER_TOKEN_BEDROCK in the environment - this just verifies that it's set on boot.
+                _ = Environment.GetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK")
+                    ?? throw new InvalidOperationException("Environment variable AWS_BEARER_TOKEN_BEDROCK could not be found or read, or is in an invalid format.");
+                builder.Services.AddSingleton<IAmazonBedrockRuntime>( 
+                    new AmazonBedrockRuntimeClient( 
+                        RegionEndpoint.GetBySystemName(
+                            Environment.GetEnvironmentVariable("AWS_REGION")
+                                ?? throw new InvalidOperationException("AWS_REGION environment variable could not be found.")
+                        )
+                    ) 
+                );
                 builder.Services.AddScoped<IChatClient, AmazonChatClient>();
                 break;
 

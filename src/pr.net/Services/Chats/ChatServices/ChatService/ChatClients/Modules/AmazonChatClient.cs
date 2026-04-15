@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
+using Amazon.Runtime.Documents;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
@@ -27,12 +28,15 @@ public class AmazonChatClient(
         TimeSpan? timeout
     ) {
         // push schema into provider's required type for the format field.
-        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema, _filterSchema.GetType())); 
+        string schema = Serialize(_filterSchema, _filterSchema.GetType());
         if(schema == null) {
             _logger.LogError($"\n{DateTime.Now}: [ Schema could not be deserialized in {nameof(RequestFilteringAsync)}. ]\n");
             return null;
         }
 
+        List<DiffSection> diffs = [..diffSections];
+
+        Console.WriteLine($"\n{schema}\n");
         List<(DiffSection, ConverseRequest)> requestsPerPath = []; 
         foreach(DiffSection diff in diffSections) {
             if(!string.IsNullOrWhiteSpace(diff.Contents))
@@ -51,7 +55,8 @@ public class AmazonChatClient(
                             Type = "json_schema",
                             Structure = new OutputFormatStructure {
                                 JsonSchema = new JsonSchemaDefinition {
-                                    Schema = JsonSerializer.Serialize(_filterSchema)
+                                    Name = "filter_result",
+                                    Schema = schema
                                 }
                             }
                         }
@@ -80,7 +85,7 @@ public class AmazonChatClient(
             try {
                 response = await _client.ConverseAsync(request);
                 string message = response.Output?.Message?.Content?[0]?.Text ?? ""; 
-                FilteringResponse result = JsonSerializer.Deserialize<FilteringResponse>(message)
+                FilteringResponse result = Deserialize<FilteringResponse>(message)
                     ?? throw new InvalidOperationException($"[ Could not deserialize response in ${RequestFilteringAsync}]");
                 if(result.IsWorthReview == true)
                     filteredDiffSections.Add(section);
@@ -108,9 +113,8 @@ public class AmazonChatClient(
         TimeSpan? timeout
     ) {
         // push schema into anthropic's required type for the format field.
-        string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
-        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
-        if(schema == null) {
+        string schema = Serialize(_reviewSchema, _reviewSchema.GetType());
+        if(string.IsNullOrWhiteSpace(schema)) {
             _logger.LogError($"\n{DateTime.Now}: [ Failure to serialize Anthropic Review schema in {nameof(RequestReviewsAsync)}. ]\n");
             return null;
         }
@@ -133,7 +137,7 @@ public class AmazonChatClient(
                             Type = "json_schema",
                             Structure = new OutputFormatStructure {
                                 JsonSchema = new JsonSchemaDefinition {
-                                    Schema = JsonSerializer.Serialize(_reviewSchema)
+                                    Schema = schema
                                 }
                             }
                         }

@@ -67,11 +67,6 @@ public class ChatService(
             _logger.LogError($"\n{DateTime.Now}: [ No diffs provided to {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
         }
-
-        if(_provider != ChatProvider.Anthropic) {
-            _logger.LogError($"\n{DateTime.Now}: [ Provider configuration does not match injected service in {nameof(GetChatReviewsAsync)}. ]\n");
-            return null;
-        }
  
         string? model = _configuration.Value.Model;
         if(string.IsNullOrWhiteSpace(model)) {
