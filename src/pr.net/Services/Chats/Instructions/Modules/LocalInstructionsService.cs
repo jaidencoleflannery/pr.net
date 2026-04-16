@@ -27,4 +27,5 @@ public class LocalInstructionsService : IInstructionsService {
                 throw new InvalidOperationException("Could not read INSTRUCTIONS.md for instructions. Please ensure this file is in the root directory of this project.");
         }
     }
+
 }

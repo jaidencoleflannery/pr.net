@@ -29,7 +29,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
 
     public async Task<List<string>> PostReviewsAsync(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request)
-           throw new InvalidOperationException($"AmbientContext could not provide a created event object in {nameof(BitbucketApiClient)}.");
+           throw new InvalidOperationException($"The type of event does not match the injected service in {nameof(BitbucketApiClient)}.");
 
         BitbucketPullReviewCreatedMetadataDto metadata = new(request); // grab minimum metadata.
 

@@ -39,13 +39,9 @@ public class AmazonTokenProvider(
         if(json == null)
             throw new InvalidOperationException($"JSON response from Amazon Secrets Manager could not be parsed in {nameof(FetchAsync)}."); 
 
-        string? key = null;
-        if(target == Token.PR_NET_REPO_TOKEN)
-            key = json!.PR_NET_REPO_TOKEN;
-        else if(target == Token.PR_NET_CHAT_TOKEN) 
-            key = json!.PR_NET_CHAT_TOKEN;
+        string? key = json.GetToken(target);
         if(key == null)
-            throw new InvalidOperationException($"Token target could not be pulled from Amazon Secrets Manager response in {nameof(FetchAsync)}."); 
+            throw new InvalidOperationException($"Token target {key} could not be pulled from Amazon Secrets Manager response in {nameof(FetchAsync)}."); 
 
         return key;
     }

@@ -63,7 +63,8 @@ public class WebhookValidator(
         }
 
         // compare provided event against our configured list of event types.
-        if(validatedEventTypes.Contains(StringToEvent(type, provider)))
+        Event eventInstance = StringToEvent(type, provider);
+        if(validatedEventTypes.Contains(eventInstance))
             return true;
         else
             return false;

@@ -144,17 +144,8 @@ public class Program {
                 // token source - chattokenhandler is the generic, no special behavior option.
                 builder.Services.AddSingleton<IChatTokenHandler, ChatTokenHandler>();
                 // the amazon sdk handles httpclient, leave as a singleton here.
-                // the amazon sdk resolves the token from AWS_BEARER_TOKEN_BEDROCK in the environment - this just verifies that it's set on boot.
-                _ = Environment.GetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK")
-                    ?? throw new InvalidOperationException("Environment variable AWS_BEARER_TOKEN_BEDROCK could not be found or read, or is in an invalid format.");
-                builder.Services.AddSingleton<IAmazonBedrockRuntime>( 
-                    new AmazonBedrockRuntimeClient( 
-                        RegionEndpoint.GetBySystemName(
-                            Environment.GetEnvironmentVariable("AWS_REGION")
-                                ?? throw new InvalidOperationException("AWS_REGION environment variable could not be found.")
-                        )
-                    ) 
-                );
+                // the amazon sdk resolves the token from AWS_BEARER_TOKEN_BEDROCK in the environment - if you're running locally, set the variable in your shell.
+                builder.Services.AddSingleton<IAmazonBedrockRuntime, AmazonBedrockRuntimeClient>();
                 builder.Services.AddScoped<IChatClient, AmazonChatClient>();
                 break;
 

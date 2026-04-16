@@ -39,11 +39,11 @@ public static class BitbucketPullRequestEndpoints {
                 return BadRequest(new { message = "Event type not configured." });  
 
             // validate that user is in list of approved users.
-            if(validator.ValidateUser(prEvent.PullRequest.Author.AccountId))
+            if(!validator.ValidateUser(prEvent.PullRequest.Author.AccountId))
                 return BadRequest(new { message = "Invalid author." });
 
             // filter event type from configuration.
-            if(validator.ValidateEventType(eventHeader, RepoProvider.Bitbucket))
+            if(!validator.ValidateEventType(eventHeader, RepoProvider.Bitbucket))
                 return BadRequest(new { message = "System is not configured to accept provided event type."});
 
             // logic pipelines.
