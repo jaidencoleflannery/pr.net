@@ -1,7 +1,7 @@
 # pr.net
 an open source, automated ai pull-request review system.
 
-> **status:** in development.
+> **status:** fully functioning, but still in development.
 
 ## license
 this project is licensed under the [business source license 1.1](https://github.com/jaidencoleflannery/pr.net/blob/main/LICENSE). you may use it for any purpose, including internal business operations, but any for-profit use is prohibited. 
