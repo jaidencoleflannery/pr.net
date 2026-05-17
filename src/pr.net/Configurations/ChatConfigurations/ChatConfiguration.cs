@@ -10,30 +10,30 @@ public class ChatConfiguration {
  
     [Required]
     [ConfigurationKeyName("Provider")] 
-    public string? ProviderString { get => field; init { Provider = ValidateChatProvider(value); field = value; } }
+    public string? ProviderString { get; init { Provider = ValidateChatProvider(value); field = value; } }
 
     [Required]
     [ConfigurationKeyName("Model")]
-    public string? Model { get => field; init; }
+    public string? Model { get; init; }
 
     [Required]
     [ConfigurationKeyName("MaxTokens")]
-    public long? MaxTokens { get => field; init; }
+    public long? MaxTokens { get; init; }
 
     [Required]
     [ConfigurationKeyName("Url")]
-    public string? Url { get => field; init; }
+    public string? Url { get; init; }
 
     [Required]
     [ConfigurationKeyName("Timeout")]
-    public int? Timeout { get => field; init; }
+    public int? Timeout { get; init; }
 
     [Required]
     [ConfigurationKeyName("Instructions")]
-    public ChatInstructionsConfiguration? Instructions { get => field; init; }
+    public ChatInstructionsConfiguration? Instructions { get; init; }
 
     [Required]
     [ConfigurationKeyName("Filtering")]
-    public ChatFilteringConfiguration? Filtering { get => field; init; }
+    public ChatFilteringConfiguration? Filtering { get; init; }
 
 }

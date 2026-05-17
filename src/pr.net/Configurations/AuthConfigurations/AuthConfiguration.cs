@@ -6,6 +6,6 @@ public class AuthConfiguration {
  
     [Required]
     [ConfigurationKeyName("Provider")] 
-    public string? Provider { get => field; init; }
+    public string? Provider { get; init; }
     
 }

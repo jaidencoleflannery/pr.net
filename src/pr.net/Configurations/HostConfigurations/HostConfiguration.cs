@@ -13,8 +13,7 @@ public class HostConfiguration {
  
     [Required]
     [ConfigurationKeyName("Provider")] 
-    public string? ProviderString { get => field; init { Provider = ValidateHostProvider(value); field = value; } }
-
+    public string? ProviderString { get; init { Provider = ValidateHostProvider(value); field = value; } }
 
     [Required]
     [ConfigurationKeyName("TokenProvider")]
@@ -27,6 +26,6 @@ public class HostConfiguration {
     };
 
     [ConfigurationKeyName("Amazon")]
-    public HostAmazonConfiguration? Amazon { get => field; init; }
+    public HostAmazonConfiguration? Amazon { get; init; }
 
 }
