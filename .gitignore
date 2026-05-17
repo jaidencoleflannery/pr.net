@@ -172,5 +172,12 @@ docs/_build/
 StyleCopReport.xml
 stylecop.json.cache
 
-#Claude
+# Claude
 .claude
+
+# Azure
+.Azure
+
+# Docker
+Dockerfile
+.dockerignore

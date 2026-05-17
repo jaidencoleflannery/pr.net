@@ -83,6 +83,7 @@ public class Program {
         switch(hostProvider) {
             case HostProvider.Amazon:
                 // the aws sdk handles httpclient, leave as a singleton here.
+                // this needs to be fixed - auth is per config, not per host.
                 builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
                 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
                 // token fetcher - source configured from appsettings.
@@ -91,6 +92,11 @@ public class Program {
                 else
                     builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
                 break;
+
+            case HostProvider.Azure:
+                builder.Services.AddSingleton<ITokenProvider, EnvTokenProvider>();
+                break;
+
 
             case HostProvider.Environment:
                 // token fetcher - envtokenprovider is the default.
