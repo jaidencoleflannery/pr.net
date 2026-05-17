@@ -6,18 +6,18 @@ public class RepoBitbucketConfiguration : IRepoProviderConfiguration {
  
     [Required]
     [ConfigurationKeyName("RepoEmail")] 
-    public string? RepoEmail { get => field; init; }
+    public string? RepoEmail { get; init; }
 
     [Required]
     [ConfigurationKeyName("Workspace")]
-    public string? Workspace { get => field; init; }
+    public string? Workspace { get; init; }
 
     [Required]
     [ConfigurationKeyName("RepoSlug")]
-    public string? RepoSlug { get => field; init; }
+    public string? RepoSlug { get; init; }
 
     [Required]
     [ConfigurationKeyName("PostCommentsUri")]
-    public string? PostCommentsUri { get => field; init; }
+    public string? PostCommentsUri { get; init; }
 
 }

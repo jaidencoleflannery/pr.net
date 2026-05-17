@@ -6,6 +6,6 @@ public class HostAmazonConfiguration : IHostProviderConfiguration {
  
     [Required]
     [ConfigurationKeyName("SecretsManagerPath")] 
-    public string? SecretsManagerPath { get => field; init; }
+    public string? SecretsManagerPath { get; init; }
 
 }

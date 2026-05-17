@@ -1,5 +1,4 @@
 using Serilog;
-
 using Anthropic;
 using Amazon;
 using Amazon.Runtime;
@@ -37,6 +36,8 @@ public class Program {
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
         string? env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if(string.IsNullOrWhiteSpace(env))
+            env = "Default";
         builder.Host.UseSerilog(
             (ctx, config) => {
                 config
