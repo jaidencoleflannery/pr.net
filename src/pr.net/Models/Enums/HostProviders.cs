@@ -20,9 +20,11 @@ public static class HostProviders {
             .ToDictionary(p => p.ToString().ToLower(), p => p);
 
     public enum HostProvider {
-        Amazon, 
+        Amazon,
+        Azure,
         Environment,
         None
     }
 
 }
+
