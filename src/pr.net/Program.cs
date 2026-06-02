@@ -1,7 +1,5 @@
 using Serilog;
 using Anthropic;
-using Amazon;
-using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.BedrockRuntime;
 
@@ -44,8 +42,7 @@ public class Program {
                     .ReadFrom.Configuration(ctx.Configuration)
                     .WriteTo.Console();
                     if(env == "Development")
-                        config.WriteTo.File("Logs/pr-.txt", rollingInterval: RollingInterval.Day);
-                    if(env == "Production") { /* if not reliant on console logging, configure for provider's logging system. */ } 
+                        config.WriteTo.File("Logs/pr-.txt", rollingInterval: RollingInterval.Day); 
             }
         );
 
@@ -175,9 +172,11 @@ public class Program {
         WebApplication app = builder.Build();
         app.MapGet("/", () => $"Server is running in {env} mode."); 
  
+        /*
         // this endpoint gives you payload examples (dev only).
         if(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             app.MapIntakeTestingEndpoints(); 
+        */
 
         switch(repoProvider) {
             case RepoProvider.Bitbucket:  

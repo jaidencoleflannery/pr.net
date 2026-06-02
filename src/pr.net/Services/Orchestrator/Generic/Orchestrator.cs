@@ -35,5 +35,5 @@ public class Orchestrator(
         // post reviews to branch
         await _repositoryService.PostChatReviews(reviews, prEvent);
     }
-
 }
+
