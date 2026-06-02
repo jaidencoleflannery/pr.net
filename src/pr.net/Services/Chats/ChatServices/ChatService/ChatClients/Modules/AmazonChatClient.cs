@@ -1,8 +1,5 @@
-using System.Text.Json;
-
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
-using Amazon.Runtime.Documents;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
