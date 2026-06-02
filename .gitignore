@@ -181,3 +181,6 @@ stylecop.json.cache
 # Docker
 Dockerfile
 .dockerignore
+
+# Compiled Zip
+*.zip

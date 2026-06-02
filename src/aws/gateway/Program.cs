@@ -5,13 +5,12 @@ using System.Text.Json;
 public class Program {
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
+
         var app = builder.Build();
 
         string functionName = builder.Configuration["Lambda:FunctionName"]
             ?? throw new InvalidOperationException("Configuration value for Lambda:FunctionName is invalid.");
-
-        string repoProvider = builder.Configuration["Repo:Provider"]
-            ?? throw new InvalidOperationException("Configuration value for Repo:Provider is invalid.");
 
         AmazonLambdaClient lambdaClient = new();
 
