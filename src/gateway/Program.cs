@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Amazon.Lambda;
 using Amazon.Lambda.Model;
-using System.Text.Json;
 
 public class Program {
     public static void Main(string[] args) {
@@ -33,12 +33,13 @@ public class Program {
                 isBase64Encoded = false
             });
 
-            _ = lambdaClient.InvokeAsync(new InvokeRequest {
+            var result = await lambdaClient.InvokeAsync(new InvokeRequest {
                 FunctionName = functionName,
                 InvocationType = InvocationType.Event,
                 Payload = payload
             });
 
+            Console.WriteLine($"AWS Lambda Invocation Status: {result.StatusCode}.");
             return Results.Ok();
         });
 
