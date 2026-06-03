@@ -1,13 +1,14 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
+using static Microsoft.AspNetCore.Http.Results;
+
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
 
 using pr.net.Models.Bitbucket;
 
 using static pr.net.Models.Enums.Events;
-using static Microsoft.AspNetCore.Http.Results;
 using static pr.net.Models.Enums.RepoProviders;
 
 namespace pr.net.Endpoints;
