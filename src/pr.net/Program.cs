@@ -82,7 +82,7 @@ public class Program {
                 // the aws sdk handles httpclient, leave as a singleton here.
                 // this needs to be fixed - auth is per config, not per host.
                 builder.Services.AddSingleton<IAmazonSecretsManager, AmazonSecretsManagerClient>();
-                builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
+                builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
                 // token fetcher - source configured from appsettings.
                 if(tokenProvider == TokenProvider.AmazonSecretsManager)
                     builder.Services.AddSingleton<ITokenProvider, AmazonTokenProvider>();
