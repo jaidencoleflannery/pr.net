@@ -14,14 +14,22 @@ using static pr.net.Models.Enums.RepoProviders;
 namespace pr.net.Endpoints;
 
 public static class BitbucketPullRequestEndpoints {
-
     public static void MapBitbucketPullRequestEndpoints(this IEndpointRouteBuilder app) {
         var group = app.MapGroup("/bitbucket/pullrequest").WithTags("PullRequests");
         group.MapPost("/created", async (
             [FromServices] Orchestrator orchestrator,
             [FromServices] IWebhookValidator validator,
-            HttpRequest request
+            HttpRequest request,
+            HttpContext context
         ) => {
+            /*
+             * due to the fact that repositories like bitbucket and github 
+             * will send multiple webhooks if the service does not respond quickly enough,
+             * we have to give a fake status code and rely on logging for errors.
+             */
+            context.Response.StatusCode = 200;
+            await context.Response.CompleteAsync();
+
             // read body directly as a string so we can encode it and compare to the provided webhook secret.
             using var reader = new StreamReader(request.Body);
             string body = await reader.ReadToEndAsync();
@@ -52,5 +60,5 @@ public static class BitbucketPullRequestEndpoints {
             return Ok("Successfully posted reviews");
         });
     } 
-
 }
+
