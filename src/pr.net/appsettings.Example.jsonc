@@ -1,232 +1,232 @@
 /*
-  > this file is a json format example of the expected appsettings.json structure, with included field definitions and recommendations.
-  > the user running this system is expected to convert the included json format into a valid json file.
-*/
+ * this file is a json format example of the expected appsettings.json structure, with included field definitions and recommendations.
+ * the user running this system is expected to convert the included json format into a valid json file.
+ */
 
 {
-  "type": "object",
-  "properties": {
-    "Logging": { // [ definition: default .net logging object. ]
-      "type": "object",
-      "properties": {
-        "LogLevel": {
-          "type": "object",
-          "properties": {
-            "Default": {
-              "type": "string"
-            },
-            "Microsoft.AspNetCore": {
-              "type": "string"
-            },
-            "MyApi.Endpoints": {
-              "type": "string"
-            }
-          },
-          "required": ["Default", "Microsoft.AspNetCore", "MyApi.Endpoints"]
-        }
-      },
-      "required": ["LogLevel"]
-    },
-    "Serilog": { // [ definition: default serilog logging object. ]
-      "type": "object",
-      "properties": {
-        "MinimumLevel": {
-          "type": "object",
-          "properties": {
-            "Default": {
-              "type": "string"
-            },
-            "Override": {
-              "type": "object",
-              "properties": {
-                "Microsoft.AspNetCore": {
-                  "type": "string"
-                },
-                "Microsoft.Hosting.Lifetime": {
-                  "type": "string"
+    "type": "object",
+    "properties": {
+        "Logging": { // [ definition: default .net logging object. ]
+            "type": "object",
+            "properties": {
+                "LogLevel": {
+                    "type": "object",
+                    "properties": {
+                        "Default": {
+                            "type": "string"
+                        },
+                        "Microsoft.AspNetCore": {
+                            "type": "string"
+                        },
+                        "MyApi.Endpoints": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["Default", "Microsoft.AspNetCore", "MyApi.Endpoints"]
                 }
-              },
-              "required": ["Microsoft.AspNetCore", "Microsoft.Hosting.Lifetime"]
-            }
-          },
-          "required": ["Default", "Override"]
-        }
-      },
-      "required": ["MinimumLevel"]
-    }, 
-    "Repo": { // [ definition: repository configuration. ]
-      "type": "object",
-      "properties": {
-        "Provider": {
-          "type": "string" // [ definition: the repo provider; see the repoproviders enum as an example for validated providers. ]
-        },
-        "AcceptedEvents": { // [ definition: types of events to accept and process. ], [ note: to see valid options, see the events enum. ]
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "Users": { // [ definition: configuration values for user specific behavior and validation. ]
-          "type": "object",
-          "properties": {
-            "Filtering": {
-              "type": "boolean" // [ definition: flag for if pull requests should be filtered by user. ], [ recommendation: true ]
             },
-            "AuthorizedUsers": {
-              "type": "array",
-              "items": {
-                "type": "string"  // [ definition: approved user for code review. ], [ note: this string needs to be the user's unique account ID, not their username. ]
-              }
-            },
-            "Patterns": { // [ definition: per user historical context on frequently encountered issues. ]
-              "type": "object",
-              "properties": {
-                "Filtering": {
-                  "type": "boolean" // [ recommendation: true. ]
-                },
-                "PatternHistoryLength": {
-                  "type": "integer" // [ recommendation: 10. ], [ note: this field will degrade inference linearly - try to keep this value < 10. ]
+            "required": ["LogLevel"]
+        },
+        "Serilog": { // [ definition: default serilog logging object. ]
+            "type": "object",
+            "properties": {
+                "MinimumLevel": {
+                    "type": "object",
+                    "properties": {
+                        "Default": {
+                            "type": "string"
+                        },
+                        "Override": {
+                            "type": "object",
+                            "properties": {
+                                "Microsoft.AspNetCore": {
+                                    "type": "string"
+                                },
+                                "Microsoft.Hosting.Lifetime": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["Microsoft.AspNetCore", "Microsoft.Hosting.Lifetime"]
+                        }
+                    },
+                    "required": ["Default", "Override"]
                 }
-              },
-              "required": ["Filtering"]
             },
-            "LimitRequests": {
-              "type": "object",
-              "properties": {
-                "Limit": {
-                  "type": "boolean"
+            "required": ["MinimumLevel"]
+        }, 
+        "Repo": { // [ definition: repository configuration. ]
+            "type": "object",
+            "properties": {
+                "Provider": {
+                    "type": "string" // [ definition: the repo provider; see the repoproviders enum as an example for validated providers. ]
                 },
-                "MaxRequests": {
-                  "type": "integer"
+                "AcceptedEvents": { // [ definition: types of events to accept and process. ], [ note: to see valid options, see the events enum. ]
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "Users": { // [ definition: configuration values for user specific behavior and validation. ]
+                    "type": "object",
+                    "properties": {
+                        "Filtering": {
+                            "type": "boolean" // [ definition: flag for if pull requests should be filtered by user. ], [ recommendation: true ]
+                        },
+                        "AuthorizedUsers": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"  // [ definition: approved user for code review. ], [ note: this string needs to be the user's unique account ID, not their username. ]
+                            }
+                        },
+                        "Patterns": { // [ definition: per user historical context on frequently encountered issues. ]
+                            "type": "object",
+                            "properties": {
+                                "Filtering": {
+                                    "type": "boolean" // [ recommendation: true. ]
+                                },
+                                "PatternHistoryLength": {
+                                    "type": "integer" // [ recommendation: 10. ], [ note: this field will degrade inference linearly - try to keep this value < 10. ]
+                                }
+                            },
+                            "required": ["Filtering"]
+                        },
+                        "LimitRequests": {
+                            "type": "object",
+                            "properties": {
+                                "Limit": {
+                                    "type": "boolean"
+                                },
+                                "MaxRequests": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": ["Limit", "MaxRequests"]
+                        }
+                    },
+                    "required": ["Filtering", "Patterns", "LimitRequests"]
+                },
+                "Bitbucket": { // [ definition: integration information for a bitbucket bot identity. ]
+                    "type": "object",
+                    "properties": {
+                        "RepoEmail": {
+                            "type": "string", // [ definition: email that is automatically generated when a repository access token is created. ]
+                            "format": "email"
+                        },
+                        "Workspace": {
+                            "type": "string" // [ definition: the workspace the specified repository exists under. ]
+                        },
+                        "RepoSlug": {
+                            "type": "string" // [ definition: the name of the specified repository. ]
+                        },
+                        "PostCommentsUri": {
+                            "type": "string", // [ definition: the url to send comment post requests to. ], [ recommendation: "https://api.bitbucket.org/2.0/repositories/" ], [ note: this field is deprecated. ]
+                            "format": "uri"
+                        }
+                    },
+                    "required": ["RepoEmail", "Workspace", "RepoSlug" ]
+                },
+                "Github": { // [ definition: integration information for a github app. ]
+                    "type": "object",
+                    "properties": {
+                        "AppName": {
+                            "type": "string" // [ definition: the name of the github app. ]
+                        },
+                        "AppId": {
+                            "type": "string" // [ definition: the github app id. ]
+                        }
+                    }
                 }
-              },
-              "required": ["Limit", "MaxRequests"]
-            }
-          },
-          "required": ["Filtering", "Patterns", "LimitRequests"]
+            },
+            "required": ["Provider"] // [ note: the github and bitbucket objects are not required since you'll only need one, depending on which provider is being injected. ]
         },
-        "Bitbucket": { // [ definition: integration information for a bitbucket bot identity. ]
-          "type": "object",
-          "properties": {
-            "RepoEmail": {
-              "type": "string", // [ definition: email that is automatically generated when a repository access token is created. ]
-              "format": "email"
+        "Auth": { // [ definition: integration information for authentication value storage and retrieval. ]
+            "type": "object",
+            "properties": {
+                "Provider": {
+                    "type": "string" // [ definition: the location the system will pull authentication values from. ], [ recommendation: "Environment" ], [ note: to see validated types for authentication providers, see the authproviders enum. ]
+                }
             },
-            "Workspace": {
-              "type": "string" // [ definition: the workspace the specified repository exists under. ]
-            },
-            "RepoSlug": {
-              "type": "string" // [ definition: the name of the specified repository. ]
-            },
-            "PostCommentsUri": {
-              "type": "string", // [ definition: the url to send comment post requests to. ], [ recommendation: "https://api.bitbucket.org/2.0/repositories/" ], [ note: this field is deprecated. ]
-              "format": "uri"
-            }
-          },
-          "required": ["RepoEmail", "Workspace", "RepoSlug" ]
+            "required": ["Provider"]
         },
-        "Github": { // [ definition: integration information for a github app. ]
-          "type": "object",
-          "properties": {
-            "AppName": {
-              "type": "string" // [ definition: the name of the github app. ]
+        "Chat": { // [ definition: integration information for ai communication. ]
+            "type": "object",
+            "properties": {
+                "Provider": {
+                    "type": "string" // [ definition: the ai provider.] [ note: see chatproviders enum for an example of validated providers. ]
+                },
+                "Model": {
+                    "type": "string" // [ definition: the ai model for the specified provider. ]
+                },
+                "MaxTokens": {
+                    "type": "integer" // [ definition: the maximum number of tokens a single request can consume. ], [ recommendation: 8192. ]
+                },
+                "Url": {
+                    "type": "string", // [ definition: the url for your specified provider. ], [ note: this field is deprecated for most providers. ]
+                    "format": "uri"
+                },
+                "Timeout": {
+                    "type": "integer" // [ definition: the number of minutes a request should stay open before throwing a timeout error. ], [ recommendation: 10 ]
+                },
+                "Instructions": { // [ definition: the configuration for storage and retrieval of instructions. ]
+                    "type": "object",
+                    "properties": {
+                        "Provider": {
+                            "type": "string" // [ definition: the location the system will pull chat-instructions from. ], [ note: to see validated types for instructions providers, see the instructionsproviders enum. ]
+                        }
+                    },
+                    "required": ["Provider"]
+                },
+                "Filtering": { // [ definition: the configuration for filtering; filtering is a cost saving sift in the pipeline to get rid of changes that do not require review. ]
+                    "type": "object",
+                    "properties": {
+                        "Filter": {
+                            "type": "boolean" // [ definition: the flag to disable or enable review filtering per file. ], [ recommendation: true. ], [ warning: turning this off will dramatically increase the quantity of spent tokens. ]
+                        },
+                        "Timeout": {
+                            "type": "integer" // [ definition: the number of minutes a request should stay open before throwing a timeout error. ], [ recommendation: 2 ]
+                        },
+                        "UseEmbedding": {
+                            "type": "boolean" // [ definition: the flag to disable or enable embedding per file. ], [ recommendation: true. ]
+                        },
+                        "Model": {
+                            "type": "string" // [ definition: the ai model for the specified provider. ]
+                        },
+                        "MaxTokens": {
+                            "type": "integer" // [ definition: the maximum number of tokens a single filtering request can consume. ], [ recommendation: 2048. ]
+                        }
+                    },
+                    "required": ["Filter", "UseEmbedding", "Model", "MaxTokens"]
+                }
             },
-            "AppId": {
-              "type": "string" // [ definition: the github app id. ]
-            }
-          }
+            "required": ["Provider", "Model", "MaxTokens", "Instructions", "Filtering"]
+        },
+        "Host": {
+            "type": "object",
+            "properties": {
+                "Provider": {
+                    "type": "string" // [ definition: the provider running the server. ], [ recommendation: "local" for development. ]
+                },
+                "TokenProvider": {
+                    "type": "string" // [ definition: source to pull tokens from. ], [ note: value must match a value from the token providers enum. ]
+                },
+                "Bitbucket": { // [ definition: bitbucket specific configuration settings. ]
+                    "type": "object",
+                    "properties": { },
+                    "required": []
+                },
+                "Amazon": { // [ definition: amazon specific configuration settings. ]
+                    "type": "object",
+                    "properties": {
+                        "SecretsManagerPath": {
+                            "type": "string" // [ definition: path to stored secrets (secrets are assumed to be stored in JSON format). ]
+                        }
+                    },
+                    "required": ["SecretsManagerPath"]
+                }
+            },
+            "required": ["Provider"]
         }
-      },
-      "required": ["Provider"] // [ note: the github and bitbucket objects are not required since you'll only need one, depending on which provider is being injected. ]
     },
-    "Auth": { // [ definition: integration information for authentication value storage and retrieval. ]
-      "type": "object",
-      "properties": {
-        "Provider": {
-          "type": "string" // [ definition: the location the system will pull authentication values from. ], [ recommendation: "Environment" ], [ note: to see validated types for authentication providers, see the authproviders enum. ]
-        }
-      },
-      "required": ["Provider"]
-    },
-    "Chat": { // [ definition: integration information for ai communication. ]
-      "type": "object",
-      "properties": {
-        "Provider": {
-          "type": "string" // [ definition: the ai provider.] [ note: see chatproviders enum for an example of validated providers. ]
-        },
-        "Model": {
-          "type": "string" // [ definition: the ai model for the specified provider. ]
-        },
-        "MaxTokens": {
-          "type": "integer" // [ definition: the maximum number of tokens a single request can consume. ], [ recommendation: 8192. ]
-        },
-        "Url": {
-          "type": "string", // [ definition: the url for your specified provider. ], [ note: this field is deprecated for most providers. ]
-          "format": "uri"
-        },
-        "Timeout": {
-          "type": "integer" // [ definition: the number of minutes a request should stay open before throwing a timeout error. ], [ recommendation: 10 ]
-        },
-        "Instructions": { // [ definition: the configuration for storage and retrieval of instructions. ]
-          "type": "object",
-          "properties": {
-            "Provider": {
-              "type": "string" // [ definition: the location the system will pull chat-instructions from. ], [ note: to see validated types for instructions providers, see the instructionsproviders enum. ]
-            }
-          },
-          "required": ["Provider"]
-        },
-        "Filtering": { // [ definition: the configuration for filtering; filtering is a cost saving sift in the pipeline to get rid of changes that do not require review. ]
-          "type": "object",
-          "properties": {
-            "Filter": {
-              "type": "boolean" // [ definition: the flag to disable or enable review filtering per file. ], [ recommendation: true. ], [ warning: turning this off will dramatically increase the quantity of spent tokens. ]
-            },
-            "Timeout": {
-              "type": "integer" // [ definition: the number of minutes a request should stay open before throwing a timeout error. ], [ recommendation: 2 ]
-            },
-            "UseEmbedding": {
-              "type": "boolean" // [ definition: the flag to disable or enable embedding per file. ], [ recommendation: true. ]
-            },
-            "Model": {
-              "type": "string" // [ definition: the ai model for the specified provider. ]
-            },
-            "MaxTokens": {
-              "type": "integer" // [ definition: the maximum number of tokens a single filtering request can consume. ], [ recommendation: 2048. ]
-            }
-          },
-          "required": ["Filter", "UseEmbedding", "Model", "MaxTokens"]
-        }
-      },
-      "required": ["Provider", "Model", "MaxTokens", "Instructions", "Filtering"]
-    },
-    "Host": {
-      "type": "object",
-      "properties": {
-        "Provider": {
-          "type": "string" // [ definition: the provider running the server. ], [ recommendation: "local" for development. ]
-        },
-        "TokenProvider": {
-          "type": "string" // [ definition: source to pull tokens from. ], [ note: value must match a value from the token providers enum. ]
-        },
-        "Bitbucket": { // [ definition: bitbucket specific configuration settings. ]
-          "type": "object",
-          "properties": { },
-          "required": []
-        },
-        "Amazon": { // [ definition: amazon specific configuration settings. ]
-          "type": "object",
-          "properties": {
-            "SecretsManagerPath": {
-              "type": "string" // [ definition: path to stored secrets (secrets are assumed to be stored in JSON format). ]
-            }
-          },
-          "required": ["SecretsManagerPath"]
-        }
-      },
-      "required": ["Provider"]
-    }
-  },
-  "required": ["Logging", "Serilog", "Repo", "Auth", "Chat", "Host"]
-
+    "required": ["Logging", "Serilog", "Repo", "Auth", "Chat", "Host"]
 }
+

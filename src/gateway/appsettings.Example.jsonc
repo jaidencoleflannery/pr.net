@@ -1,0 +1,44 @@
+/*
+ * this file is a json format example of the expected appsettings.json structure, with included field definitions and recommendations.
+ * the user running this system is expected to convert the included json format into a valid json file.
+ */
+
+{
+    "type": "object",
+    "properties": {
+        "Logging": { // [ definition: default .net logging object. ]
+            "type": "object",
+            "properties": {
+                "LogLevel": {
+                    "type": "object",
+                    "properties": {
+                        "Default": {
+                            "type": "string"
+                        },
+                        "Microsoft.AspNetCore": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["Default", "Microsoft.AspNetCore"]
+                }
+            },
+            "required": ["LogLevel"]
+        },
+        "Lambda": { // [ definition: target instances of pr.net for invocation. ]
+            "type": "object",
+            "properties": {
+                "FunctionNames": { // [ definition: identifiers for your hosting type. ]
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string" // [ definition: each entry should be a pair: { <identifier>: "host specific identifier (arn)" }. ]
+                        }
+                    }
+                }
+            },
+            "required": ["FunctionNames"]
+        }
+    }
+}
+

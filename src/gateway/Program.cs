@@ -9,8 +9,8 @@ public class Program {
 
         var app = builder.Build();
 
-        string functionName = builder.Configuration["Lambda:FunctionName"]
-            ?? throw new InvalidOperationException("Configuration value for Lambda:FunctionName is invalid.");
+        string[] functionNames = builder.Configuration.GetSection("Lambda:FunctionNames").Get<string[]>()
+            ?? throw new InvalidOperationException("Configuration value for Lambda:FunctionNames is invalid.");
 
         AmazonLambdaClient lambdaClient = new();
 
