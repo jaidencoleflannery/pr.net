@@ -21,6 +21,7 @@ public class Orchestrator(
             return;
 
         // build toolset for query.
+        
 
         // if enabled, filter diffs for ones that are worth review.
         IEnumerable<DiffSection>? filteredDiffFiles = (_configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
