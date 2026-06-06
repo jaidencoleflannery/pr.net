@@ -1,10 +1,8 @@
-using pr.net.Models.Tooling;
-
 namespace pr.net.Services.Tooling;
 
-public interface IToolChain {
+public interface IToolChainService {
 
-    public IEnumerable<ToolSignature> GetToolSignatures();
+    IEnumerable<string> GetToolStrings();
 
 }
 

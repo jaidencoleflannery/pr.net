@@ -14,7 +14,6 @@ public static class TokenProviders {
                 )
             );
 
-    // these being readonly makes them persist for each call, otherwise these calls will be incredibly slow.
     private static readonly Dictionary<string, TokenProvider> TokenMap =
         Enum.GetValues<TokenProvider>()
             .ToDictionary(p => p.ToString().ToLower(), p => p);
