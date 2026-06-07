@@ -1,7 +1,6 @@
 namespace pr.net.Models.Tooling;
 
 public struct ToolMetadata {
-    private bool _invoked { get; init; } = false; 
 
     public string Name { get; init; }
     public string Description { get; init; } 

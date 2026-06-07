@@ -169,6 +169,8 @@ public class Program {
         builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         builder.Services.AddScoped<IToolChainService, EnvironmentToolChainService>();
+        // builtin tooling.
+        builder.Services.AddScoped<IReadFileTreeTool, BitbucketToolChainService>();
 
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 

@@ -2,7 +2,11 @@ namespace pr.net.Models.Tooling;
 
 public class StringToolValue : ToolValue {
 
-    public string? Value { get; init; }
+    public ICollection<string> Value { get; init; }
+
+    public StringToolValue(ICollection<string> value) {
+        this.Value = value;
+    }
 
 }
 

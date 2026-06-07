@@ -22,13 +22,13 @@ public class EnvironmentToolChainService(
 
             [ReadFileTree] = new ToolMetadata {
                 Name = ReadFileTree.ToString(), 
-                Description = "Get repository directory tree.",
+                Description = $"{nameof(ReadFileTree)} Get repository directory tree.",
                 ToolPointer = _readFileTreeTool.InvokeTool
             },
 
             [ReadFile] = new ToolMetadata {
                 Name = ReadFile.ToString(),
-                Description = "Read a specified file from the repository, can only be used after ReadFileTree.",
+                Description = $"{nameof(ReadFile)}: Read a specified file from the repository, can only be used after {nameof(ReadFileTree)} has been invoked.",
                 IsChild = true,
                 ParentPointer = _readFileTreeTool.InvokeTool,
                 ToolPointer = _readFileTool.InvokeTool

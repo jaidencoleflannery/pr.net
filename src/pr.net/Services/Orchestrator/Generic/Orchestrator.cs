@@ -1,5 +1,6 @@
-using pr.net.Services.Chat;
 using pr.net.Services.Repositories.Generic;
+using pr.net.Services.Tooling;
+using pr.net.Services.Chat;
 
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming;
@@ -10,6 +11,7 @@ namespace pr.net.Services.Orchestration;
 public class Orchestrator(
     IConfiguration _configuration, 
     IRepositoryRequestService _repositoryService, 
+    IToolChainService _toolService,
     IChatService _chatService
 ) {
     // each function is expected to handle logging and return null - don't handle errors at this scope.
@@ -21,7 +23,9 @@ public class Orchestrator(
             return;
 
         // build toolset for query.
-        
+        _toolService.Initialize();
+        Console.WriteLine(_toolService.GetToolStrings());
+        return;
 
         // if enabled, filter diffs for ones that are worth review.
         IEnumerable<DiffSection>? filteredDiffFiles = (_configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
