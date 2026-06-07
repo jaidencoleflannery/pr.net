@@ -72,45 +72,7 @@ public class BitbucketApiClient(
             return responses;
         else
             throw new HttpRequestException($"No {nameof(PostReviewsAsync)} calls were successfull, failed to perform review.");
-    }
-
-    public async Task<(bool success, IEnumerable<string>? value)> GetFileTree (PullReviewCreatedEvent prEvent) { 
-        if(prEvent is not BitbucketPullReviewCreatedEventDto request) {
-           _logger.LogError($"{nameof(GetFileTree)}: The type of event does not match the injected service in {nameof(BitbucketApiClient)}, returning early.");
-           return (false, null);
-        }
-
-        BitbucketPullReviewCreatedMetadataDto metadata = new(request); // grab minimum metadata.
-        if(string.IsNullOrWhiteSpace(metadata.CommitHash)
-        || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
-            _logger.LogError($"{nameof(GetFileTree)}: Provided event payload contained an invalid value, returning early.");
-           return (false, null);
-        }
- 
-        // this needs to always use the branch SHA to avoid routing issues.
-        try {
-            using(HttpRequestMessage message = new(HttpMethod.Get, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/src/{metadata.CommitHash}")) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
-                
-                using HttpResponseMessage response = await client.SendAsync(message);
-                // TODO: this is the entire response, need to get the actual response out of it.
-                string content = await response.Content.ReadAsStringAsync();
-                if(response.IsSuccessStatusCode) {
-                    string[] results = new string[] { content };
-                    if(string.IsNullOrWhiteSpace(results[0]))
-                        throw new InvalidOperationException($"{nameof(GetFileTree)}: Failed to fill array with response content, entry was invalid.");
-
-                    return (true, results);
-                } else {
-                    _logger.LogError($"{nameof(GetFileTree)}: Response was unsuccessful.");
-                    return (false, null);
-                }
-            }
-        } catch (Exception error) {
-            _logger.LogError($"{nameof(GetFileTree)}: Failed to fetch file tree for repository. Error encountered: {error}.");
-            return (false, null);
-        } 
-    }
+    } 
 
 }
 

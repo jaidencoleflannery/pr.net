@@ -2,11 +2,11 @@ namespace pr.net.Models.Tooling;
 
 public struct ToolResponse {
     public bool Success { get; init; } = false;
-    public List<string> Value { get; init; } = new() {{ string.Empty }};
+    public ToolValue? Value { get; init; }
 
-    public ToolResponse(bool success, IEnumerable<string> value) {
+    public ToolResponse(bool success, ToolValue value) {
         this.Success = success;
-        this.Value = (List<string>)value;
+        this.Value = (ToolValue)value;
     }
 }
 

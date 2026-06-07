@@ -1,6 +1,6 @@
 namespace pr.net.Models.Tooling;
 
-public struct Tool {
+public struct ToolContainer {
     private bool _invoked { get; init; } = false;
     private Func<string[], Task<ToolResponse>> _toolPointer { get; init; }
 
