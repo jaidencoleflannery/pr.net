@@ -92,12 +92,13 @@ public class BitbucketApiClient(
             using(HttpRequestMessage message = new(HttpMethod.Get, $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/src/{metadata.CommitHash}")) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
                 
-                HttpResponseMessage response = await client.SendAsync(message);
+                using HttpResponseMessage response = await client.SendAsync(message);
+                // TODO: this is the entire response, need to get the actual response out of it.
                 string content = await response.Content.ReadAsStringAsync();
                 if(response.IsSuccessStatusCode) {
-                    string[] results = new string[] { await response.Content.ReadAsStringAsync() };
-                    if(results.Length < 1)
-                        throw new InvalidOperationException($"{nameof(GetFileTree)}: Failed to fill array with response content.");
+                    string[] results = new string[] { content };
+                    if(string.IsNullOrWhiteSpace(results[0]))
+                        throw new InvalidOperationException($"{nameof(GetFileTree)}: Failed to fill array with response content, entry was invalid.");
 
                     return (true, results);
                 } else {
