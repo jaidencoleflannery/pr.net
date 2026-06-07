@@ -6,7 +6,7 @@ namespace pr.net.Tooling;
 
 public interface IReadFileTreeTool : ITool {
 
-    Task<(bool, string? fileTree)> ReadFileTree(PullReviewCreatedEvent prEvent); 
+    Task<(bool Success, string? Result)> ReadFileTree(PullReviewCreatedEvent prEvent); 
 
 }
 

@@ -1,10 +1,16 @@
+using pr.net.Services.Tokens;
+
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Tooling;
 using pr.net.Models.Bitbucket;
 
 namespace pr.net.Tooling;
 
-public class ReadFileTreeTool(ILogger _logger) : IReadFileTreeTool {
+public class BitbucketReadFileTreeTool(
+        HttpClient client, 
+        ITokenService _tokenService,
+        ILogger _logger
+    ) : IReadFileTreeTool {
 
     private ToolResponse _fail = new() {
         Success = false,
@@ -12,26 +18,28 @@ public class ReadFileTreeTool(ILogger _logger) : IReadFileTreeTool {
     };
 
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
-        if(parameters is not ReadFileTreeParameters input) {
+        if(parameters is not ReadFileTreeParameters input
+        || input.prEvent == null) {
             _logger.LogError($"{nameof(ReadFileTree)}: Failed to invoke tool, parameters given were invalid");
             return _fail;
         }
 
         (bool Success, string? Result) result = await ReadFileTree(input.prEvent);
-        if(!result.Success) {
+        if(!result.Success
+        || string.IsNullOrWhiteSpace(result.Result)) {
             _logger.LogError($"{nameof(ReadFileTree): Invocation of tool failed.}");
             return _fail;
         }
 
         return new ToolResponse {
             Success = result.Success,
-            (ToolValue)result.Result;
-        }
+            Value = new StringToolValue { Value = result.Result }
+        };
     }
 
     public async Task<(bool Success, string? Result)> ReadFileTree(PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request) {
-           _logger.LogError($"{nameof(ReadFileTree)}: The type of event does not match the injected service in {nameof(BitbucketApiClient)}, returning early.");
+           _logger.LogError($"{nameof(ReadFileTree)}: The type of event does not match the injected service in {nameof(ReadFileTree)}, returning early.");
            return (false, null);
         }
 
