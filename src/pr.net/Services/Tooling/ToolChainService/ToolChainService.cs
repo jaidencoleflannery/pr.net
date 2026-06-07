@@ -8,26 +8,32 @@ using static pr.net.Models.Enums.ToolSignature;
 namespace pr.net.Services.Tooling;
 
 public class ToolChainService(
-        IReadFileTreeTool _readFileTreeTool
+        IReadFileTreeTool _readFileTreeTool,
+        IReadFileTool _readFileTool
     ) : IToolChainService {
 
     // all added tools need to be populated within the ToolSignature enum and have a populated ToolMetadata instance to be added to the mapping.
-    private static Dictionary<ToolSignature, ToolMetadata> _toolMap = new();
+    private static Dictionary<ToolSignature, ToolMetadata> _requiredToolMap = new();
+    private static Dictionary<ToolSignature, ToolMetadata> _optionalToolMap = new(); 
 
-    public static bool Initialize() {
-        _toolMap = new() {
+    public bool Initialize() {
+        _requiredToolMap = new() { };
 
-            [ReadFileTree] = new ToolMetadata(
+        _optionalToolMap = new() {
+
+            [ReadFileTree] = new ToolMetadata {
                 Name = ReadFileTree.ToString(), 
                 Description = "Get repository directory tree.",
-                ToolPointer = _readFileTreeTool.ReadFileTree
-            ),
+                ToolPointer = _readFileTreeTool.InvokeTool
+            },
 
-            [ReadFile] = new ToolMetadata(
-                Name = ReadFile.ToString(),
-                Description = "Read a specified file in the repository",
-                ToolPointer = /* delegate here */
-            )
+                [ReadFile] = new ToolMetadata {
+                    Name = ReadFile.ToString(),
+                    Description = "Read a specified file from the repository, can only be used after ReadFileTree.",
+                    IsChild = true,
+                    ParentPointer = _readFileTreeTool.InvokeTool,
+                    ToolPointer = _readFileTool.InvokeTool
+                }
 
         };
         return true;
