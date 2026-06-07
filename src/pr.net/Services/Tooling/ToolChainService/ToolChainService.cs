@@ -1,3 +1,5 @@
+using pr.net.Services.Clients.Bitbucket;
+
 using pr.net.Models.Tooling;
 using pr.net.Models.Enums;
 
@@ -17,7 +19,7 @@ public class ToolChainService : IToolChainService {
 
             [ReadFileTree] = new Tool(
                 ReadFileTree.ToString(), 
-                /* delegate here */
+                GetFileTree
             ),
 
             [ReadFile] = new Tool(
