@@ -4,7 +4,7 @@ namespace pr.net.Tooling.Generic;
 
 public interface ITool {
 
-    ValueTask<ToolResponse> InvokeTool(ToolParameters parameters); 
+    ValueTask<ToolResponse> InvokeTool(ToolParameters parameters);
 
 }
 

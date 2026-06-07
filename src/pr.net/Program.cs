@@ -12,11 +12,14 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
+using pr.net.Services.Tooling;
+using pr.net.Services.Tooling.Environment;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
 using pr.net.Configurations.Repo;
 using pr.net.Configurations.Auth;
+using pr.net.Configurations.Tooling;
 
 using pr.net.Endpoints;
 
@@ -65,6 +68,11 @@ public class Program {
 
         builder.Services.AddOptions<HostConfiguration>()
             .Bind(builder.Configuration.GetSection("Host"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        builder.Services.AddOptions<ToolingConfiguration>()
+            .Bind(builder.Configuration.GetSection("Tooling"))
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
@@ -160,6 +168,7 @@ public class Program {
         builder.Services.AddScoped<Orchestrator>();
         builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
+        builder.Services.AddScoped<IToolChainService, EnvironmentToolChainService>();
 
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
