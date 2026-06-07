@@ -6,19 +6,30 @@ namespace pr.net.Tooling;
 
 public class ReadFileTreeTool(ILogger _logger) : IReadFileTreeTool {
 
+    private ToolResponse _fail = new() {
+        Success = false,
+        Value = null
+    };
+
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
-        if(parameters is not ReadFileTreeParameters as input) {
+        if(parameters is not ReadFileTreeParameters input) {
             _logger.LogError($"{nameof(ReadFileTree)}: Failed to invoke tool, parameters given were invalid");
-            return new ToolResponse() {
-                Success = false,
-                Value = null
-            };
+            return _fail;
         }
 
-        return await ReadFileTree(input.prEvent);
+        (bool Success, string? Result) result = await ReadFileTree(input.prEvent);
+        if(!result.Success) {
+            _logger.LogError($"{nameof(ReadFileTree): Invocation of tool failed.}");
+            return _fail;
+        }
+
+        return new ToolResponse {
+            Success = result.Success,
+            (ToolValue)result.Result;
+        }
     }
 
-    public async Task<(bool, string? fileTree)> ReadFileTree(PullReviewCreatedEvent prEvent) {
+    public async Task<(bool Success, string? Result)> ReadFileTree(PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request) {
            _logger.LogError($"{nameof(ReadFileTree)}: The type of event does not match the injected service in {nameof(BitbucketApiClient)}, returning early.");
            return (false, null);
