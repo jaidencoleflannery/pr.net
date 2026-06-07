@@ -1,23 +1,23 @@
 namespace pr.net.Models.Tooling;
 
-public struct ToolContainer {
-    private bool _invoked { get; init; } = false;
-    private Func<string[], Task<ToolResponse>> _toolPointer { get; init; }
+public struct ToolMetadata {
+    private bool _invoked { get; init; } = false; 
 
     public string Name { get; init; }
     public string Description { get; init; } 
+    public Func<string[], Task<ToolResponse>> ToolPointer { get; init; }
 
-    public Tool(
+    public ToolMetadata(
         string name, 
         string description, 
         Func<string[], Task<ToolResponse>> toolPointer
     ) {
         Name = name;
         Description = description;
-        _toolPointer = toolPointer;
+        ToolPointer = toolPointer;
     }
 
     public async Task<ToolResponse> CallTool(string[] input) =>
-        await _toolPointer(input);
+        await ToolPointer(input);
 }
 
