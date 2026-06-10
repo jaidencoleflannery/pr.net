@@ -3,7 +3,7 @@ using pr.net.Models.Tooling;
 
 using static pr.net.Models.Tooling.PresetToolResponses;
 
-namespace pr.net.Tooling;
+namespace pr.net.Services.Tooling;
 
 public class EnvironmentReadFileTool( 
         ILogger _logger,

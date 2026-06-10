@@ -1,7 +1,7 @@
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Tooling;
 
-namespace pr.net.Tooling;
+namespace pr.net.Services.Tooling;
 
 public interface IToolClient {
 

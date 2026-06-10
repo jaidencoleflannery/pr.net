@@ -1,9 +1,9 @@
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Tooling;
 
-using pr.net.Tooling.Generic;
+using pr.net.Services.Tooling.Generic;
 
-namespace pr.net.Tooling;
+namespace pr.net.Services.Tooling;
 
 public interface IReadFileTool : ITool {
 

@@ -6,7 +6,7 @@ using pr.net.Models.Bitbucket;
 
 using static pr.net.Models.Tooling.PresetToolResponses;
 
-namespace pr.net.Tooling;
+namespace pr.net.Services.Tooling;
 
 public class BitbucketToolClient(
         HttpClient client,

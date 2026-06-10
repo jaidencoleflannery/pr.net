@@ -1,6 +1,6 @@
 using pr.net.Models.Tooling;
 
-namespace pr.net.Tooling.Generic;
+namespace pr.net.Services.Tooling.Generic;
 
 public interface ITool {
 
