@@ -14,7 +14,6 @@ public static class HostProviders {
                 )
             );
 
-    // these being readonly makes them persist for each call, otherwise these calls will be incredibly slow.
     private static readonly Dictionary<string, HostProvider> HostMap =
         Enum.GetValues<HostProvider>()
             .ToDictionary(p => p.ToString().ToLower(), p => p);
@@ -25,6 +24,5 @@ public static class HostProviders {
         Environment,
         None
     }
-
 }
 

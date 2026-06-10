@@ -230,11 +230,11 @@
             "type": "object",
             "properties": {
                 "Enabled": "boolean" // [ definition: toggle tool usage availability for the llm. ]
-                "ToolingProvider": "string" // [ definition: type of tool and invocation source indicator. ]
+                "Provider": "string" // [ definition: type of tool and invocation source indicator. ]
             },
             "required": ["Enabled"]
         }
     },
-    "required": ["Logging", "Serilog", "Repo", "Auth", "Chat", "Host"]
+    "required": ["Logging", "Serilog", "Repo", "Auth", "Chat", "Host", "Tooling"]
 }
 

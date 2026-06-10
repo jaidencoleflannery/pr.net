@@ -82,6 +82,7 @@ public class Program {
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
+        ToolingProvider toolingProvider = ValidateToolProvider(builder.Configuration["Tooling:Provider"]);
 
         // register services from config values - unfortunately cannot use the builder options due to lazy loading.
 
@@ -164,13 +165,19 @@ public class Program {
             // chain other types of chat providers here.
         }
 
+        switch(toolingProvider) {
+            case ToolingProvider.Environment:
+                builder.Services.AddScoped<IReadFileTreeTool, EnvironmentChainService>();
+            case ToolingProvider.Amazon:
+                // lambda invocations here.
+        }
+
         // generic services.
         builder.Services.AddScoped<Orchestrator>();
         builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
-        builder.Services.AddScoped<IToolChainService, EnvironmentToolChainService>();
         // builtin tooling.
-        builder.Services.AddScoped<IReadFileTreeTool, BitbucketToolChainService>();
+        builder.Services.AddScoped<IToolChainService, EnvironmentToolChainService>(); 
 
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
