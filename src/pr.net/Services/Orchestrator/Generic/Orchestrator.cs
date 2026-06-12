@@ -5,15 +5,13 @@ using pr.net.Services.Chat;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Generic;
-using pr.net.Models.Enums;
 using pr.net.Models.Tooling;
 
 namespace pr.net.Services.Orchestration;
 
 public class Orchestrator(
     IConfiguration _configuration, 
-    IRepositoryRequestService _repositoryService, 
-    IToolChainService _toolService,
+    IRepositoryRequestService _repositoryService,
     IChatService _chatService
 ) {
     // each function is expected to handle logging and return null - don't handle errors at this scope.
@@ -29,7 +27,7 @@ public class Orchestrator(
             ? await _chatService.FilterDiffsAsync(diffFiles, userId)
             : diffFiles;
         if(filteredDiffFiles == null)
-            return; 
+            return;
 
         // recurse on tools until prompted.
         string context = _chatService.RecurseTools();

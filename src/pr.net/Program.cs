@@ -82,7 +82,7 @@ public class Program {
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
-        ToolingProvider toolingProvider = ValidateToolProvider(builder.Configuration["Tooling:Provider"]);
+        ToolingProvider toolingProvider = ValidateToolingProvider(builder.Configuration["Tooling:Provider"]);
 
         // register services from config values - unfortunately cannot use the builder options due to lazy loading.
 

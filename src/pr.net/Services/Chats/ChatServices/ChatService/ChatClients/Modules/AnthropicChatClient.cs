@@ -188,6 +188,26 @@ public class AnthropicChatClient(
             _logger.LogError($"\n{DateTime.Now}: Failure to serialize Tooling schema in {nameof(QueryForToolUsage)}.\n");
             return null;
         }
+
+        MessageCreateParams messageParams = new() {
+            MaxTokens = maxTokens,
+            Messages = [
+                new() {
+                    Role = Role.User,
+                    Content = $"You are reviewing a diff, here is your :\n```{diff.Contents}```"
+                },
+            ],
+            Model = model!,
+            OutputConfig = new OutputConfig {
+                Format = new JsonOutputFormat { 
+                    Schema = schema 
+                }, 
+            },
+            System = instructions,
+            Temperature = 0.0,
+        };
+
+
     }
-        
+
 }

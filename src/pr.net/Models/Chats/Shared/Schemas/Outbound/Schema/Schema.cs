@@ -21,3 +21,4 @@ public class Schema<TProperties> : IReviewSchema, IFilteringSchema, IToolingSche
     public bool AdditionalProperties { get; set; } = false; 
 
 }
+

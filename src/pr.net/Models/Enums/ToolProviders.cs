@@ -1,8 +1,8 @@
 namespace pr.net.Models.Enums;
 
-public static class ToolProviders {
+public static class ToolingProviders {
 
-    public ToolProvider ValidateToolProvider(string? provider) =>
+    public static ToolProvider ValidateToolingProvider(string? provider) =>
         ToolMap.TryGetValue((provider ?? "").ToLower(), out var foundProvider)
             ? foundProvider
             : throw new InvalidOperationException(
