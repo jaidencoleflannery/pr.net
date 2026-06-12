@@ -13,7 +13,7 @@ namespace pr.net.Services.Clients.Bitbucket;
 public class BitbucketApiClient(
         HttpClient client, 
         ITokenService _tokenService,
-        ILogger _logger
+        ILogger<BitbucketApiClient> _logger
     ) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
@@ -25,7 +25,7 @@ public class BitbucketApiClient(
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
             HttpResponseMessage response = await client.SendAsync(message);
 
-            return (response!= null && response.IsSuccessStatusCode)
+            return (response != null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
                 : throw new Exception($"Failed to get pull review {metadata.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
         }

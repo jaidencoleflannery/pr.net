@@ -7,7 +7,10 @@ using pr.net.Models.Generic;
 
 namespace pr.net.Services.Requests;
 
-public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger, IRepositoryApiClient _client) : IRepositoryRequestService {
+public class RepositoryRequestService(
+        ILogger<RepositoryRequestService> _logger, 
+        IRepositoryApiClient _client
+    ) : IRepositoryRequestService {
 
     // returns a dictionary of key: file, value: diff.
     public async Task<IEnumerable<DiffSection>?> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {

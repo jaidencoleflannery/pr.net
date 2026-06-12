@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Schemas;
 
-public class Schema<TProperties> : IReviewSchema, IFilteringSchema where TProperties : IProperties, new() {
+public class Schema<TProperties> : IReviewSchema, IFilteringSchema, IToolingSchema where TProperties : IProperties, new() {
 
     public Schema() {
         this.Required = [..Properties.GetRequiredFields()];

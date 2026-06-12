@@ -6,7 +6,7 @@ using static pr.net.Models.Tooling.PresetToolResponses;
 namespace pr.net.Services.Tooling;
 
 public class EnvironmentReadFileTool( 
-        ILogger _logger,
+        ILogger<EnvironmentReadFileTool> _logger,
         IToolClient _toolClient
     ) : IReadFileTool {
 

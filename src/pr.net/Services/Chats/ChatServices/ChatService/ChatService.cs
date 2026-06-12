@@ -94,5 +94,15 @@ public class ChatService(
 
         return await _chatClient.RequestReviewsAsync(diffSections, maxTokens, model, instructions, timeout);
     }
+
+    public async Task<string> RecurseTools(IEnumerable<DiffSection> diffSections) {
+        if(diffSections.Count() < 1) {
+            _logger.LogError($"{DateTime.Now}: No diffs provided to {nameof(RecurseTools)}.\n");
+            return string.Empty;
+        }
+
+
+
+    }
  
 }

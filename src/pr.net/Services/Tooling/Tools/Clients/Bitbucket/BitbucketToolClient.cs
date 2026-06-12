@@ -11,7 +11,7 @@ namespace pr.net.Services.Tooling;
 public class BitbucketToolClient(
         HttpClient client,
         ITokenService _tokenService,
-        ILogger _logger
+        ILogger<BitbucketToolClient> _logger
     ) : IToolClient {
 
     public async ValueTask<ToolResponse> FetchFileTree(PullReviewCreatedEvent prEvent) =>

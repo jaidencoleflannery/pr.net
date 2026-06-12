@@ -7,7 +7,7 @@ namespace pr.net.Services.Tooling;
 
 public class EnvironmentReadFileTreeTool(
         IToolClient _toolClient,
-        ILogger _logger
+        ILogger<EnvironmentReadFileTreeTool> _logger
     ) : IReadFileTreeTool {
 
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
