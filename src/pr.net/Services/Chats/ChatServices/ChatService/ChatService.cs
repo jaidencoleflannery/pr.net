@@ -7,7 +7,6 @@ using pr.net.Configurations.Chat;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
-using pr.net.Models.Schemas;
 
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -18,7 +17,7 @@ public class ChatService(
     ILogger<ChatService> _logger,
     IChatClient _chatClient,
     IInstructionsService _instructionsService,
-    IToolingService _toolingService 
+    IToolingService _toolingService
 ) : IChatService { 
 
     private ChatProvider? _provider = _configuration.Value.Provider;
@@ -93,19 +92,18 @@ public class ChatService(
         if(timeout == null) {
             _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
-        } 
+        }
 
         return await _chatClient.RequestReviewsAsync(diffSections, maxTokens, model, instructions, timeout);
     }
 
-    public async Task<string> RecurseTools(IEnumerable<DiffSection> diffSections) {
+    public async Task<DiffSection, DiffContext> RecurseTools(IEnumerable<DiffSection> diffSections) {
         if(diffSections.Count() < 1) {
             _logger.LogError($"{DateTime.Now}: No diffs provided to {nameof(RecurseTools)}.\n");
             return string.Empty;
         }
 
-        _chatClient.QueryForToolUsage
-
-    }
- 
+        _chatClient.QueryForToolUsage();
+    } 
 }
+

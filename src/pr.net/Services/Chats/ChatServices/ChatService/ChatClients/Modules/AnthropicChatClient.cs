@@ -194,7 +194,7 @@ public class AnthropicChatClient(
             Messages = [
                 new() {
                     Role = Role.User,
-                    Content = $"You are reviewing a diff, here is your :\n```{diff.Contents}```"
+                    Content = $"You will be reviewing a diff, but first, you need to gather all the necesarry context. Here is the diff and your available tools:\n```{diff.Contents}```"
                 },
             ],
             Model = model!,
@@ -206,8 +206,6 @@ public class AnthropicChatClient(
             System = instructions,
             Temperature = 0.0,
         };
-
-
     }
 
 }
