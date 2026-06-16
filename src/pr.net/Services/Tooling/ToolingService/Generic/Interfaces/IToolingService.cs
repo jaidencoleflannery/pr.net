@@ -3,9 +3,7 @@ using pr.net.Models.Enums;
 
 namespace pr.net.Services.Tooling;
 
-public interface IToolChainService {
-
-    bool Initialize();
+public interface IToolingService {
 
     IEnumerable<string> GetToolStrings();
 

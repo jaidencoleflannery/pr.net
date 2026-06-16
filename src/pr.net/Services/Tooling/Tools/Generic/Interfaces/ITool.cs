@@ -6,5 +6,7 @@ public interface ITool {
 
     ValueTask<ToolResponse> InvokeTool(ToolParameters parameters);
 
+    ToolMetadata GetToolMetadata();
+
 }
 

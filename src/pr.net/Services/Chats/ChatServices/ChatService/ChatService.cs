@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Options;
 
 using pr.net.Services.Chat.Instructions;
+using pr.net.Services.Tooling;
 
 using pr.net.Configurations.Chat;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
+using pr.net.Models.Schemas;
 
 using static pr.net.Models.Enums.ChatProviders;
 
@@ -15,7 +17,8 @@ public class ChatService(
     IOptions<ChatConfiguration> _configuration, 
     ILogger<ChatService> _logger,
     IChatClient _chatClient,
-    IInstructionsService _instructionsService
+    IInstructionsService _instructionsService,
+    IToolingService _toolingService 
 ) : IChatService { 
 
     private ChatProvider? _provider = _configuration.Value.Provider;
@@ -93,6 +96,16 @@ public class ChatService(
         } 
 
         return await _chatClient.RequestReviewsAsync(diffSections, maxTokens, model, instructions, timeout);
+    }
+
+    public async Task<string> RecurseTools(IEnumerable<DiffSection> diffSections) {
+        if(diffSections.Count() < 1) {
+            _logger.LogError($"{DateTime.Now}: No diffs provided to {nameof(RecurseTools)}.\n");
+            return string.Empty;
+        }
+
+        _chatClient.QueryForToolUsage
+
     }
  
 }

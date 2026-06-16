@@ -82,7 +82,7 @@ public class Program {
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
-        ToolingProvider toolingProvider = ValidateToolProvider(builder.Configuration["Tooling:Provider"]);
+        ToolingProvider toolingProvider = ValidateToolingProvider(builder.Configuration["Tooling:Provider"]);
 
         // register services from config values - unfortunately cannot use the builder options due to lazy loading.
 
@@ -178,12 +178,18 @@ public class Program {
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         // builtin tooling.
         builder.Services.AddScoped<IToolChainService, EnvironmentToolChainService>(); 
+        // core tools.
+        builder.Services.AddScoped<IReadFileTreeTool, EnvironmentReadFileTreeTool>();
+        builder.Services.AddScoped<IReadFileTool, EnvironmentReadFileTool>();
+        // core tool dependencies.
+        builder.Services.AddScoped<IToolClient, BitbucketToolClient>();
 
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
         // schemas to format ai output.
         builder.Services.AddSingleton<IReviewSchema, Schema<ReviewProperties>>();
         builder.Services.AddSingleton<IFilteringSchema, Schema<FilteringProperties>>();
+        builder.Services.AddSingleton<IToolingSchema, Schema<ToolingProperties>>();
         // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
         // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 
@@ -212,7 +218,7 @@ public class Program {
             @$"  
             {'\u2873'}{'\u28F6'}{'\u28A5'}{'\u282E'} is running in {env} mode.
 
-            | Configuration |
+            | Configuration |  
             | * Host:       | [{hostProvider}]
             | * Repository: | [{repoProvider}]
             | * Chat:       | [{chatProvider}]

@@ -18,7 +18,8 @@ public class AnthropicChatClient(
     ILogger<AnthropicChatClient> _logger,
     IAnthropicClient _client,
     IFilteringSchema _filterSchema, 
-    IReviewSchema _reviewSchema
+    IReviewSchema _reviewSchema,
+    IToolingSchema _toolingSchema
 ) : IChatClient {
     
     public async Task<IEnumerable<DiffSection>?> RequestFilteringAsync(
@@ -172,5 +173,41 @@ public class AnthropicChatClient(
             ? reviewPerPath
             : null;
     }
-        
+
+    public async Task<List<(DiffSection, ChatResponse)>?> QueryForToolUsage(
+        IEnumerable<DiffSection> diffSections,
+        long maxTokens,
+        string model,
+        string instructions,
+        TimeSpan? timeout
+    ) {
+        // push schema into anthropic's required type for the format field.
+        string schemaString = Serialize(_toolingSchema, _toolingSchema.GetType());
+        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
+        if(schema == null) {
+            _logger.LogError($"\n{DateTime.Now}: Failure to serialize Tooling schema in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
+        MessageCreateParams messageParams = new() {
+            MaxTokens = maxTokens,
+            Messages = [
+                new() {
+                    Role = Role.User,
+                    Content = $"You are reviewing a diff, here is your :\n```{diff.Contents}```"
+                },
+            ],
+            Model = model!,
+            OutputConfig = new OutputConfig {
+                Format = new JsonOutputFormat { 
+                    Schema = schema 
+                }, 
+            },
+            System = instructions,
+            Temperature = 0.0,
+        };
+
+
+    }
+
 }

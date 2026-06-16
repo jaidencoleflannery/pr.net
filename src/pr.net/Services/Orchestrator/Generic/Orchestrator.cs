@@ -5,13 +5,13 @@ using pr.net.Services.Chat;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Generic;
+using pr.net.Models.Tooling;
 
 namespace pr.net.Services.Orchestration;
 
 public class Orchestrator(
     IConfiguration _configuration, 
-    IRepositoryRequestService _repositoryService, 
-    IToolChainService _toolService,
+    IRepositoryRequestService _repositoryService,
     IChatService _chatService
 ) {
     // each function is expected to handle logging and return null - don't handle errors at this scope.
@@ -20,12 +20,7 @@ public class Orchestrator(
         // get each file's associated diff.
         IEnumerable<DiffSection>? diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
         if(diffFiles == null)
-            return;
-
-        // build toolset for query.
-        _toolService.Initialize();
-        Console.WriteLine(_toolService.GetToolStrings());
-        return;
+            return; 
 
         // if enabled, filter diffs for ones that are worth review.
         IEnumerable<DiffSection>? filteredDiffFiles = (_configuration.GetValue<bool>("Chat:Filtering:Filter") is true)
@@ -33,6 +28,9 @@ public class Orchestrator(
             : diffFiles;
         if(filteredDiffFiles == null)
             return;
+
+        // recurse on tools until prompted.
+        string context = _chatService.RecurseTools();
 
         // get each review object (object contains file).
         IEnumerable<(DiffSection, ChatResponse)>? reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles, userId);
