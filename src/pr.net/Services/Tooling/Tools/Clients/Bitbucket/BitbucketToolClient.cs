@@ -54,7 +54,7 @@ public class BitbucketToolClient(
 
                     return new ToolResponse {
                         Success = true,
-                        Result = new StringToolValue([content])
+                        Result = [content]
                     };
                 }
                 _logger.LogError($"{nameof(FetchFile)}: Fetch request was unsuccessful.");

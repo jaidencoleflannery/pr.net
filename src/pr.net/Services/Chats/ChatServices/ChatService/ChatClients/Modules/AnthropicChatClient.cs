@@ -189,7 +189,7 @@ public class AnthropicChatClient(
             : null;
     }
 
-    public async Task<List<(DiffSection, ChatResponse)>?> QueryForToolUsage(
+    public async Task<List<(DiffSection, ToolResponse)>?> QueryForToolUsage(
         IEnumerable<DiffSection> diffSections,
         long maxTokens,
         string model,
@@ -269,7 +269,7 @@ public class AnthropicChatClient(
                         List<Review>? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<Review>>()
                             ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
                         foreach(Review review in response) {
-                            AnthropicResponse result = new();
+                            AnthropicResponse result = new(); // TODO: this most likely isn't going to work. needs to be the model.
                             result.Content.Add(
                                 new ChatContent() {
                                     Text = review.Body,
