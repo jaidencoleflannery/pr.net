@@ -216,6 +216,11 @@ public class AnthropicChatClient(
         // build all requests.
         List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
         foreach(DiffSection diff in diffSections) {
+            if(diff.Contents.Length > 100000) {
+                _logger.LogInformation($"\n{DateTime.Now}: File ({diff.Path}) was too large to run tools on in {nameof(QueryForToolUsage)}.\n");
+                continue;
+            }
+
             if(!string.IsNullOrWhiteSpace(diff.Contents)) {
                 string prompt = 
                     // diff files.

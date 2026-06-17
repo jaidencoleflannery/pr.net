@@ -3,7 +3,7 @@ using pr.net.Models.Tooling;
 
 using static pr.net.Models.Enums.ToolSignature;
 
-namespace pr.net.Services.Tooling.Environment;
+namespace pr.net.Services.Tooling;
 
 public class EnvironmentToolingService : IToolingService {
 

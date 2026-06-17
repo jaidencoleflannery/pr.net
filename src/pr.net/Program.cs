@@ -13,7 +13,6 @@ using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
 using pr.net.Services.Tooling;
-using pr.net.Services.Tooling.Environment;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
@@ -30,6 +29,7 @@ using static pr.net.Models.Enums.TokenProviders;
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
 using static pr.net.Models.Enums.ChatProviders;
+using static pr.net.Models.Enums.ToolingProviders;
 
 namespace pr.net;
 
@@ -165,11 +165,16 @@ public class Program {
             // chain other types of chat providers here.
         }
 
+        // optional tools.
         switch(toolingProvider) {
             case ToolingProvider.Environment:
-                builder.Services.AddScoped<IReadFileTreeTool, EnvironmentChainService>();
+                builder.Services.AddScoped<IReadFileTreeTool, EnvironmentReadFileTreeTool>();
+                builder.Services.AddScoped<IReadFileTool, EnvironmentReadFileTool>();
+                break;
+
             case ToolingProvider.Amazon:
-                // lambda invocations here.
+                // lambda invocations.
+                break;
         }
 
         // generic services.
@@ -177,7 +182,7 @@ public class Program {
         builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
         // builtin tooling.
-        builder.Services.AddScoped<IToolChainService, EnvironmentToolChainService>(); 
+        builder.Services.AddScoped<IToolingService, EnvironmentToolingService>(); 
         // core tools.
         builder.Services.AddScoped<IReadFileTreeTool, EnvironmentReadFileTreeTool>();
         builder.Services.AddScoped<IReadFileTool, EnvironmentReadFileTool>();

@@ -2,7 +2,6 @@ namespace pr.net.Models.Enums;
 
 public static class HostProviders {
 
-    // O(1) lookup (TryParse is O(n)).
     public static HostProvider ValidateHostProvider(string? provider) => 
         HostMap.TryGetValue((provider ?? "").ToLower(), out var foundProvider) 
             ? foundProvider 
