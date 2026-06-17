@@ -7,7 +7,7 @@ namespace pr.net.Services.Tooling;
 
 public interface IReadFileTreeTool : ITool {
 
-    ToolMetadata GetToolMetadata() ReadFileTree(PullReviewCreatedEvent prEvent);  
+    Task<ToolResponse> ReadFileTree(PullReviewCreatedEvent prEvent);
 
 }
 
