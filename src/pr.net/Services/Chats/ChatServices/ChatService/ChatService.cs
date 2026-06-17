@@ -96,8 +96,8 @@ public class ChatService(
         return await _chatClient.RequestReviewsAsync(diffSections, maxTokens, model, instructions, timeout);
     }
 
-    public async Task<IEnumerable<(DiffSection, ToolResponse)>?> GetChatContextAsync(
-        IEnumerable<DiffSection> diffSections, 
+    public async Task<IEnumerable<DiffSection>?> GetChatContextAsync(
+        DiffSection[] diffSections, 
         string userId
     ) {
         if(diffSections.Count() < 1) {
@@ -107,29 +107,35 @@ public class ChatService(
 
         string? model = _configuration.Value.Model;
         if(string.IsNullOrWhiteSpace(model)) {
-            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Model could not be found or read in {nameof(GetChatContextAsync)}. ]\n");
+            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:Model could not be found or read in {nameof(GetChatContextAsync)}.\n");
             return null;
         }
 
         long maxTokens = _configuration.Value.MaxTokens ?? 0;
         if(maxTokens is <= 0 or > 8192) {
-            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:MaxTokens could not be found or read in {nameof(GetChatContextAsync)}. ]\n");
+            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:MaxTokens could not be found or read in {nameof(GetChatContextAsync)}.\n");
             return null;
         } 
 
         string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
         if(string.IsNullOrWhiteSpace(instructions)) {
-            _logger.LogError($"\n{DateTime.Now}: [ Could not fetch filtering instructions in {nameof(GetChatContextAsync)}. ]\n");
+            _logger.LogError($"\n{DateTime.Now}: Could not fetch filtering instructions in {nameof(GetChatContextAsync)}.\n");
             return null;
         }  
 
         TimeSpan? timeout = _configuration.Value.Filtering?.Timeout;
         if(timeout == null) {
-            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatContextAsync)}. ]\n");
+            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatContextAsync)}.\n");
             return null;
         }
 
-        return await _chatClient.QueryForToolUsage(diffSections, maxTokens, model, instructions, timeout);
+        DiffSection[]? contextResults = await _chatClient.QueryForToolUsage(diffSections, maxTokens, model, instructions, timeout);
+        if(contextResults == null) {
+            _logger.LogError($"\n{DateTime.Now}: Failed to query for tool usage, response was null.");
+            return null;
+        }
+
+        return contextResults;
     } 
 }
 

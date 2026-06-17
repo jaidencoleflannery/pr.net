@@ -1,11 +1,9 @@
 using pr.net.Services.Repositories.Generic;
-using pr.net.Services.Tooling;
 using pr.net.Services.Chat;
 
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Generic;
-using pr.net.Models.Tooling;
 
 namespace pr.net.Services.Orchestration;
 
@@ -29,8 +27,8 @@ public class Orchestrator(
         if(filteredDiffFiles == null)
             return;
 
-        // recurse on tools.
-        IEnumerable<(DiffSection, ToolResponse)>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, userId);
+        // run tools for context.
+        IEnumerable<DiffSection>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, userId);
         if(context == null)
             return;
 

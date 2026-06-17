@@ -189,8 +189,8 @@ public class AnthropicChatClient(
             : null;
     }
 
-    public async Task<List<(DiffSection, ToolResponse)>?> QueryForToolUsage(
-        IEnumerable<DiffSection> diffSections,
+    public async Task<DiffSection[]?> QueryForToolUsage(
+        DiffSection[] diffSections,
         long maxTokens,
         string model,
         string instructions,
@@ -224,13 +224,18 @@ public class AnthropicChatClient(
             if(!string.IsNullOrWhiteSpace(diff.Contents)) {
                 string prompt = 
                     // diff files.
-                    $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n" +
-                    $"Here is the diff:\n" +
-                    $"```\nPath: {diff.Path}.\nContents: {diff.Contents}\n```\n" +
+                    $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
+                    + $"Your goal is to gather the minimal amount possible. Err towards using no tools unless it is critical.\n"
+                    + $"Here is the diff:\n"
+                    + $"```\nPath: {diff.Path}.\nContents: {diff.Contents}\n```\n"
                     // tools.
-                    $"For tools, note that some tools can only be called after their parent is called.\n" +
-                    $"Here are your available tools and their associated descriptions:\n" +
-                    $"```\n{availableTools.Values.Select(tool => $"Tool: {{ {tool.Name}.\n Description: {tool.Description}.\n }}\n")}```\n";
+                    + $"For tools, note that some tools can only be called after their parent is called.\n"
+                    + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
+                    + $"```\n{availableTools.Values.Select(tool => $"Tool: {{ {tool.Name}.\n Description: {tool.Description}.\n }}\n")}```\n"
+                    + $"If context is not needed, set the \"RunTool\" field to false,\n"
+                    + $"Else if context is needed, set the \"RunTool\" field to true.\n"
+                    + $"If \"RunTool\" is true, set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
+                    + $"Else, if \"RunTool\" is false, just leave \"ToolId\" empty.\n";
                 
                 requestsPerPath.Add(
                     (diff,
@@ -255,8 +260,7 @@ public class AnthropicChatClient(
             }
         }
 
-        // iterate over every request and send them individually.
-        List<(DiffSection, ChatResponse)> reviewPerPath = [];
+        // iterate over every request and send them individually. 
         var exceptions = new List<Exception>();
 
         foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) { 
@@ -269,13 +273,13 @@ public class AnthropicChatClient(
                         List<Review>? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<Review>>()
                             ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
                         foreach(Review review in response) {
-                            AnthropicResponse result = new(); // TODO: this most likely isn't going to work. needs to be the model.
+                            AnthropicResponse result = new();
                             result.Content.Add(
                                 new ChatContent() {
                                     Text = review.Body,
                                     Line = review.Line
                                 });
-                            reviewPerPath.Add((section, result));
+                            section.Context = result;
                         }
                     } else {
                         _logger.LogError($"\n{DateTime.Now}: Anthropic call could not be made, could not parse text block from request.");
@@ -288,9 +292,7 @@ public class AnthropicChatClient(
             }
         }
 
-        return (reviewPerPath.Count > 0)
-            ? reviewPerPath
-            : null;
+        return diffSections;
     }
 
 }
