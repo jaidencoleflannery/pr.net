@@ -44,7 +44,7 @@ public static class GithubPullRequestEndpoints {
             // validate webhook secret.
             string secretHeader = request.Headers["X-Hub-Signature-256"].ToString();
             if(!await validator.ValidateWebhookSecretAsync(secretHeader, body))
-                return null;
+                return Empty;
 
             GithubPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<GithubPullReviewCreatedEventDto>(body)
                 ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 

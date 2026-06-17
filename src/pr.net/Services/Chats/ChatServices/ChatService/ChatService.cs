@@ -97,7 +97,7 @@ public class ChatService(
     }
 
     public async Task<IEnumerable<DiffSection>?> GetChatContextAsync(
-        DiffSection[] diffSections, 
+        IEnumerable<DiffSection> diffSections, 
         string userId
     ) {
         if(diffSections.Count() < 1) {
@@ -129,7 +129,7 @@ public class ChatService(
             return null;
         }
 
-        DiffSection[]? contextResults = await _chatClient.QueryForToolUsage(diffSections, maxTokens, model, instructions, timeout);
+        IEnumerable<DiffSection>? contextResults = await _chatClient.QueryForToolUsage(diffSections, maxTokens, model, instructions, timeout);
         if(contextResults == null) {
             _logger.LogError($"\n{DateTime.Now}: Failed to query for tool usage, response was null.");
             return null;

@@ -21,8 +21,8 @@ public interface IChatClient {
         TimeSpan? timeout
     );
 
-    Task<DiffSection[]?> QueryForToolUsage(
-        DiffSection[] diffSections,
+    Task<IEnumerable<DiffSection>> QueryForToolUsage(
+        IEnumerable<DiffSection> diffSections,
         long maxTokens,
         string model,
         string instructions,
@@ -30,3 +30,4 @@ public interface IChatClient {
     );
     
 }
+

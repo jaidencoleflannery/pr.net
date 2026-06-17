@@ -189,8 +189,8 @@ public class AnthropicChatClient(
             : null;
     }
 
-    public async Task<DiffSection[]?> QueryForToolUsage(
-        DiffSection[] diffSections,
+    public async Task<IEnumerable<DiffSection>?> QueryForToolUsage(
+        IEnumerable<DiffSection> diffSections,
         long maxTokens,
         string model,
         string instructions,
@@ -261,7 +261,8 @@ public class AnthropicChatClient(
         }
 
         // iterate over every request and send them individually. 
-        var exceptions = new List<Exception>();
+        List<(DiffSection, ToolingQuery)> toolingQueries = [];
+        List<Exception> exceptions = [];
 
         foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) { 
             // note that the apikey is injected from the environment at init by the anthropic sdk.
@@ -270,17 +271,9 @@ public class AnthropicChatClient(
                 message = await _client.Messages.Create(parameter); 
                 foreach(ContentBlock content in message.Content) {
                     if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
-                        List<Review>? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<Review>>()
-                            ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
-                        foreach(Review review in response) {
-                            AnthropicResponse result = new();
-                            result.Content.Add(
-                                new ChatContent() {
-                                    Text = review.Body,
-                                    Line = review.Line
-                                });
-                            section.Context = result;
-                        }
+                        ToolingQuery? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<ToolingQuery>()
+                            ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(QueryForToolUsage)}");
+                        toolingQueries.Add((section, response));
                     } else {
                         _logger.LogError($"\n{DateTime.Now}: Anthropic call could not be made, could not parse text block from request.");
                         continue;

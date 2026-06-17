@@ -6,7 +6,7 @@ public class ToolingConfiguration {
 
     public bool Enabled { get; private set; } = true;
 
-    public string ToolingProvider { get; private set; } = string.Empty;
+    public string Provider { get; private set; } = string.Empty;
 
     public int MaxInvocations { get; private set; } = -1;
  
@@ -14,7 +14,7 @@ public class ToolingConfiguration {
     [ConfigurationKeyName("Enabled")] 
     public string? EnabledString { get; set { 
         if(value == null)
-            throw new InvalidOperationException($"\n{DateTime.Now}: Tooling configuration is malformed.");
+            throw new InvalidOperationException($"\n{DateTime.Now}: Tooling configuration field for Enabled is malformed.");
 
         bool.TryParse(value, out bool parseResult); 
         Enabled = parseResult; 
@@ -22,12 +22,12 @@ public class ToolingConfiguration {
     }}
 
     [Required]
-    [ConfigurationKeyName("ToolingProvider")]
-    public string? ToolingProviderString { get; set {
+    [ConfigurationKeyName("Provider")]
+    public string? ProviderString { get; set {
         if(value == null)
-            throw new InvalidOperationException($"\n{DateTime.Now}: Tooling configuration is malformed.");
+            throw new InvalidOperationException($"\n{DateTime.Now}: Tooling configuration field for Provider is malformed.");
 
-        ToolingProvider = value;
+        Provider = value;
         field = value;
     }} 
 

@@ -180,7 +180,7 @@ public class AmazonChatClient(
             : null;
     }
 
-    public Task<List<(DiffSection, ToolResponse)>?> QueryForToolUsage(
+    public Task<IEnumerable<DiffSection>?> QueryForToolUsage(
         IEnumerable<DiffSection> diffSections,
         long maxTokens,
         string model,

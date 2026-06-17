@@ -1,0 +1,14 @@
+using System.Text.Json.Serialization;
+
+namespace pr.net.Models.Schemas;
+
+public class ToolingQuery {
+ 
+    [JsonPropertyName("runTool")]
+    public bool? RunTool { get; set; } = null;
+
+    [JsonPropertyName("toolId")]
+    public int? ToolId { get; set; } = null;
+
+}
+

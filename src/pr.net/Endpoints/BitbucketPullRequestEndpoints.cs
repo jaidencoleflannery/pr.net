@@ -27,6 +27,7 @@ public static class BitbucketPullRequestEndpoints {
         group.MapPost("/created", async (
             [FromServices] Orchestrator _orchestrator,
             [FromServices] IWebhookValidator _validator,
+            [FromServices] ILogger<Program> _logger,
             HttpRequest _request,
             HttpContext _context
         ) => { 
@@ -41,24 +42,26 @@ public static class BitbucketPullRequestEndpoints {
 
             // validate webhook secret.
             string secretHeader = _request.Headers["X-Hub-Signature"].ToString();
-            if(string.IsNullOrWhiteSpace(secretHeader) || !await _validator.ValidateWebhookSecretAsync(secretHeader, body))
-                return null;
+            if(string.IsNullOrWhiteSpace(secretHeader) || !await _validator.ValidateWebhookSecretAsync(secretHeader, body)) {
+                _logger.LogError($"\n{DateTime.Now}: Webhook secret validation failed. Rejecting request.\n");
+                return Empty;
+            }
 
             BitbucketPullReviewCreatedEventDto prEvent = JsonSerializer.Deserialize<BitbucketPullReviewCreatedEventDto>(body)
-                ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize _request payload."); 
+                ?? throw new InvalidOperationException("Unexpected error encountered attempting to deserialize request payload."); 
 
             // validate webhook event type.
             string? eventHeader = _request.Headers["X-Event-Key"].ToString();
             if(!ValidateEvent(eventHeader, RepoProvider.Bitbucket))
-                throw new InvalidOperationException("Event type not configured or invalid, rejecting _request.");
+                throw new InvalidOperationException("Event type not configured or invalid, rejecting request.");
 
             // validate that user is in list of approved users.
             if(!_validator.ValidateUser(prEvent.PullRequest.Author.AccountId))
-                throw new InvalidOperationException("Author not found on whitelist, rejecting _request.");
+                throw new InvalidOperationException("Author not found on whitelist, rejecting request.");
 
             // filter event type from configuration.
             if(!_validator.ValidateEventType(eventHeader, RepoProvider.Bitbucket))
-                throw new InvalidOperationException("System is not configured to accept provided event type, rejecting _request.");
+                throw new InvalidOperationException("System is not configured to accept provided event type, rejecting request.");
 
             // logic pipelines.
             await _orchestrator.ProcessNewPullRequest(prEvent, prEvent.PullRequest.Author.AccountId);
