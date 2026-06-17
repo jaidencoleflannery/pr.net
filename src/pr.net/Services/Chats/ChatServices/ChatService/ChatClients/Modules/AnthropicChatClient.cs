@@ -264,6 +264,8 @@ public class AnthropicChatClient(
         List<(DiffSection, ToolingQuery)> toolingQueries = [];
         List<Exception> exceptions = [];
 
+        // TODO: this needs to become a recursive call, take Tooling:MaxInvocation from settings into account.
+
         foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) { 
             // note that the apikey is injected from the environment at init by the anthropic sdk.
             Message message;
