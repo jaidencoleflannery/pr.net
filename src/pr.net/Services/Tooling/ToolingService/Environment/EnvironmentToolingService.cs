@@ -29,7 +29,7 @@ public class EnvironmentToolingService : IToolingService {
     }
 
     public IEnumerable<string> GetToolStrings() =>
-        Enum.GetNames<ToolSignature>().ToList();
+        Enum.GetNames<ToolSignature>().ToList(); 
 
     public Dictionary<ToolSignature, ToolMetadata> GetRequiredTools() =>
         _requiredToolMap;

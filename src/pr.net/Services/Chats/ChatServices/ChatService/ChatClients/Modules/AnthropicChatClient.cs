@@ -5,10 +5,14 @@ using Anthropic;
 using Anthropic.Models.Messages;
 using Anthropic.Exceptions;
 
+using pr.net.Services.Tooling;
+
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Incoming.Anthropic;
 using pr.net.Models.Schemas;
+using pr.net.Models.Tooling;
+using pr.net.Models.Enums;
 
 using static System.Text.Json.JsonSerializer;
 
@@ -16,10 +20,11 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatClient(
     ILogger<AnthropicChatClient> _logger,
+    IToolingService _toolingService,
     IAnthropicClient _client,
     IFilteringSchema _filterSchema, 
     IReviewSchema _reviewSchema,
-    IToolingSchema _toolingSchema
+    IToolingSchema _toolingSchema 
 ) : IChatClient {
     
     public async Task<IEnumerable<DiffSection>?> RequestFilteringAsync(
@@ -29,6 +34,11 @@ public class AnthropicChatClient(
         string instructions,
         TimeSpan? timeout
     ) {
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(RequestFilteringAsync)}.\n");
+            return null;
+        }
+
         // push schema into provider's required type for the format field.
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema, _filterSchema.GetType())); 
         if(schema == null) {
@@ -104,6 +114,11 @@ public class AnthropicChatClient(
         string instructions,
         TimeSpan? timeout
     ) {
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(RequestReviewsAsync)}.\n");
+            return null;
+        }
+
         // push schema into anthropic's required type for the format field.
         string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
@@ -181,7 +196,13 @@ public class AnthropicChatClient(
         string instructions,
         TimeSpan? timeout
     ) {
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
         // push schema into anthropic's required type for the format field.
+        // this is our desired structured output.
         string schemaString = Serialize(_toolingSchema, _toolingSchema.GetType());
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
         if(schema == null) {
@@ -189,23 +210,83 @@ public class AnthropicChatClient(
             return null;
         }
 
-        MessageCreateParams messageParams = new() {
-            MaxTokens = maxTokens,
-            Messages = [
-                new() {
-                    Role = Role.User,
-                    Content = $"You will be reviewing a diff, but first, you need to gather all the necesarry context. Here is the diff and your available tools:\n```{diff.Contents}```"
-                },
-            ],
-            Model = model!,
-            OutputConfig = new OutputConfig {
-                Format = new JsonOutputFormat { 
-                    Schema = schema 
-                }, 
-            },
-            System = instructions,
-            Temperature = 0.0,
-        };
+        // fetch available tools.
+        Dictionary<ToolSignature, ToolMetadata> availableTools = _toolingService.GetOptionalTools();
+ 
+        // build all requests.
+        List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
+        foreach(DiffSection diff in diffSections) {
+            if(!string.IsNullOrWhiteSpace(diff.Contents)) {
+                string prompt = 
+                    // diff files.
+                    $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n" +
+                    $"Here is the diff:\n" +
+                    $"```\nPath: {diff.Path}.\nContents: {diff.Contents}\n```\n" +
+                    // tools.
+                    $"For tools, note that some tools can only be called after their parent is called.\n" +
+                    $"Here are your available tools and their associated descriptions:\n" +
+                    $"```\n{availableTools.Values.Select(tool => $"Tool: {{ {tool.Name}.\n Description: {tool.Description}.\n }}\n")}```\n";
+                
+                requestsPerPath.Add(
+                    (diff,
+                    new MessageCreateParams {
+                        MaxTokens = maxTokens,
+                        Messages = [
+                            new() {
+                                Role = Role.User,
+                                Content = prompt
+                            },
+                        ],
+                        Model = model!,
+                        OutputConfig = new OutputConfig {
+                            Format = new JsonOutputFormat { 
+                                Schema = schema 
+                            }, 
+                        },
+                        System = instructions,
+                        Temperature = 0.0,
+                    }
+                ));
+            }
+        }
+
+        // iterate over every request and send them individually.
+        List<(DiffSection, ChatResponse)> reviewPerPath = [];
+        var exceptions = new List<Exception>();
+
+        foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) { 
+            // note that the apikey is injected from the environment at init by the anthropic sdk.
+            Message message;
+            try {
+                message = await _client.Messages.Create(parameter); 
+                foreach(ContentBlock content in message.Content) {
+                    if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
+                        List<Review>? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<List<Review>>()
+                            ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(RequestReviewsAsync)}");
+                        foreach(Review review in response) {
+                            AnthropicResponse result = new();
+                            result.Content.Add(
+                                new ChatContent() {
+                                    Text = review.Body,
+                                    Line = review.Line
+                                });
+                            reviewPerPath.Add((section, result));
+                        }
+                    } else {
+                        _logger.LogError($"\n{DateTime.Now}: Anthropic call could not be made, could not parse text block from request.");
+                        continue;
+                    }
+                }
+            } catch(AnthropicApiException exception) {
+                _logger.LogError($"\n{DateTime.Now}: [ Anthropic call failed: {exception.Message} in {nameof(RequestReviewsAsync)}. ]\n");
+                exceptions.Add(exception);
+            }
+        }
+
+        return (reviewPerPath.Count > 0)
+            ? reviewPerPath
+            : null;
     }
 
 }
+

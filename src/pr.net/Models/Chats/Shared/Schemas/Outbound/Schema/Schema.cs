@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Schemas;
 
+// TODO: this is a bad implementation, redo.
 public class Schema<TProperties> : IReviewSchema, IFilteringSchema, IToolingSchema where TProperties : IProperties, new() {
 
     public Schema() {

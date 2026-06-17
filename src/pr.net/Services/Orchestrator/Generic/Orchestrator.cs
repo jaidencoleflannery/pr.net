@@ -14,7 +14,7 @@ public class Orchestrator(
     IRepositoryRequestService _repositoryService,
     IChatService _chatService
 ) {
-    // each function is expected to handle logging and return null - don't handle errors at this scope.
+    // each function is expected to handle errors and logging - don't handle at this scope.
     public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent, string userId) {  
 
         // get each file's associated diff.
@@ -29,8 +29,10 @@ public class Orchestrator(
         if(filteredDiffFiles == null)
             return;
 
-        // recurse on tools until prompted.
-        string context = _chatService.RecurseTools();
+        // recurse on tools.
+        IEnumerable<(DiffSection, ToolResponse)>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, userId);
+        if(context == null)
+            return;
 
         // get each review object (object contains file).
         IEnumerable<(DiffSection, ChatResponse)>? reviews = await _chatService.GetChatReviewsAsync(filteredDiffFiles, userId);
