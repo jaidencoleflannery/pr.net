@@ -1,5 +1,6 @@
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
+using pr.net.Models.Schemas;
 
 namespace pr.net.Services.Chat;
 
@@ -21,8 +22,8 @@ public interface IChatClient {
         TimeSpan? timeout
     );
 
-    Task<IEnumerable<DiffSection>> QueryForToolUsage(
-        IEnumerable<DiffSection> diffSections,
+    Task<ToolingQuery?> QueryForToolUsage(
+        DiffSection diffSection,
         long maxTokens,
         string model,
         string instructions,

@@ -10,5 +10,6 @@ public struct ToolResponse {
         this.ToolName = toolName;
         this.Result = result;
     }
+
 }
 

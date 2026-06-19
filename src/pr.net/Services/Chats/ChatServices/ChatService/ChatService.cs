@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Options;
 
 using pr.net.Services.Chat.Instructions;
+using pr.net.Services.Tooling;
 
 using pr.net.Configurations.Chat;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
+using pr.net.Models.Schemas;
 using pr.net.Models.Tooling;
 
 using static pr.net.Models.Enums.ChatProviders;
@@ -15,6 +17,7 @@ namespace pr.net.Services.Chat;
 public class ChatService(
     IOptions<ChatConfiguration> _configuration, 
     ILogger<ChatService> _logger,
+    IToolingService _toolingService,
     IChatClient _chatClient,
     IInstructionsService _instructionsService
 ) : IChatService { 
@@ -129,13 +132,37 @@ public class ChatService(
             return null;
         }
 
-        IEnumerable<DiffSection>? contextResults = await _chatClient.QueryForToolUsage(diffSections, maxTokens, model, instructions, timeout);
-        if(contextResults == null) {
-            _logger.LogError($"\n{DateTime.Now}: Failed to query for tool usage, response was null.");
+        List<ToolingQuery> invocationRequests = [];
+        foreach(DiffSection diff in diffSections) {
+            ToolingQuery? contextQueryResult = await _chatClient.QueryForToolUsage(diff, maxTokens, model, instructions, timeout);
+            if(contextQueryResult == null) {
+                _logger.LogError($"\n{DateTime.Now}: Failed to query for tool usage, response was null.");
+                continue;
+            }
+
+            if(contextQueryResult.RunTool != null && contextQueryResult.RunTool == true)
+                invocationRequests.Add(contextQueryResult);
+        }
+
+        if(invocationRequests.Count < 1) {
+            _logger.LogInformation($"\n{DateTime.Now}: No tool invocations were requested.");
             return null;
         }
 
-        return contextResults;
+        foreach(ToolingQuery invocation in invocationRequests) {
+            // safety check, but these should already all be true.
+            if(invocation.RunTool == null 
+            || invocation.RunTool == false)
+                continue;
+
+            if(invocation.RunTool == true
+            && invocation.ToolId != null) {
+                _logger.LogInformation($"\n{DateTime.Now}: Tool invocation was requested for Tool ID: {invocation.ToolId}.");
+                ToolResponse toolResponse = await _toolingService.InvokeToolAsync(invocation.ToolId);
+            }
+        }
+
+        return invocationRequests;
     } 
 }
 

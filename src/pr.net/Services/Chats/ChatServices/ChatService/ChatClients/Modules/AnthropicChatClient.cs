@@ -189,8 +189,8 @@ public class AnthropicChatClient(
             : null;
     }
 
-    public async Task<IEnumerable<DiffSection>?> QueryForToolUsage(
-        IEnumerable<DiffSection> diffSections,
+    public async Task<ToolingQuery?> QueryForToolUsage(
+        DiffSection diffSection,
         long maxTokens,
         string model,
         string instructions,
@@ -212,82 +212,71 @@ public class AnthropicChatClient(
 
         // fetch available tools.
         Dictionary<ToolSignature, ToolMetadata> availableTools = _toolingService.GetOptionalTools();
+
+        if(string.IsNullOrWhiteSpace(diffSection.Contents)) {
+            _logger.LogInformation($"\n{DateTime.Now}: File ({diffSection.Path})'s contents were empty in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
  
-        // build all requests.
-        List<(DiffSection, MessageCreateParams)> requestsPerPath = [];
-        foreach(DiffSection diff in diffSections) {
-            if(diff.Contents.Length > 100000) {
-                _logger.LogInformation($"\n{DateTime.Now}: File ({diff.Path}) was too large to run tools on in {nameof(QueryForToolUsage)}.\n");
-                continue;
-            }
-
-            if(!string.IsNullOrWhiteSpace(diff.Contents)) {
-                string prompt = 
-                    // diff files.
-                    $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
-                    + $"Your goal is to gather the minimal amount possible. Err towards using no tools unless it is critical.\n"
-                    + $"Here is the diff:\n"
-                    + $"```\nPath: {diff.Path}.\nContents: {diff.Contents}\n```\n"
-                    // tools.
-                    + $"For tools, note that some tools can only be called after their parent is called.\n"
-                    + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
-                    + $"```\n{availableTools.Values.Select(tool => $"Tool: {{ {tool.Name}.\n Description: {tool.Description}.\n }}\n")}```\n"
-                    + $"If context is not needed, set the \"RunTool\" field to false,\n"
-                    + $"Else if context is needed, set the \"RunTool\" field to true.\n"
-                    + $"If \"RunTool\" is true, set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
-                    + $"Else, if \"RunTool\" is false, just leave \"ToolId\" empty.\n";
-                
-                requestsPerPath.Add(
-                    (diff,
-                    new MessageCreateParams {
-                        MaxTokens = maxTokens,
-                        Messages = [
-                            new() {
-                                Role = Role.User,
-                                Content = prompt
-                            },
-                        ],
-                        Model = model!,
-                        OutputConfig = new OutputConfig {
-                            Format = new JsonOutputFormat { 
-                                Schema = schema 
-                            }, 
-                        },
-                        System = instructions,
-                        Temperature = 0.0,
-                    }
-                ));
-            }
+        if(diffSection.Contents.Length > 100000) {
+            _logger.LogInformation($"\n{DateTime.Now}: File ({diffSection.Path}) was too large to run tools on in {nameof(QueryForToolUsage)}.\n");
+            return null;
         }
 
-        // iterate over every request and send them individually. 
-        List<(DiffSection, ToolingQuery)> toolingQueries = [];
-        List<Exception> exceptions = [];
+        string prompt = 
+            // diff files.
+            $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
+            + $"Your goal is to gather the minimal amount possible. Err towards using no tools unless it is critical.\n"
+            + $"Here is the diff:\n"
+            + $"```\nPath: {diffSection.Path}.\nContents: {diffSection.Contents}\n```\n"
+            // tools.
+            + $"For tools, note that some tools can only be called after their parent is called.\n"
+            + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
+            + $"```\n{availableTools.Values.Select(tool => $"Tool: {{ {tool.Name}.\n Description: {tool.Description}.\n }}\n")}```\n"
+            + $"If context is not needed, set the \"RunTool\" field to false,\n"
+            + $"Else if context is needed, set the \"RunTool\" field to true.\n"
+            + $"If \"RunTool\" is true, set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
+            + $"Else, if \"RunTool\" is false, just leave \"ToolId\" empty.\n";
+        
+        MessageCreateParams requestParameter = new() {
+            MaxTokens = maxTokens,
+            Messages = [
+                new() {
+                    Role = Role.User,
+                    Content = prompt
+                },
+            ],
+            Model = model!,
+            OutputConfig = new OutputConfig {
+                Format = new JsonOutputFormat { 
+                    Schema = schema 
+                }, 
+            },
+            System = instructions,
+            Temperature = 0.0,
+        }; 
 
-        // TODO: this needs to become a recursive call, take Tooling:MaxInvocation from settings into account.
-
-        foreach((DiffSection section, MessageCreateParams parameter) in requestsPerPath) { 
-            // note that the apikey is injected from the environment at init by the anthropic sdk.
-            Message message;
-            try {
-                message = await _client.Messages.Create(parameter); 
-                foreach(ContentBlock content in message.Content) {
-                    if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
-                        ToolingQuery? response = JsonNode.Parse(textBlock!.Text)!["reviews"].Deserialize<ToolingQuery>()
-                            ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(QueryForToolUsage)}");
-                        toolingQueries.Add((section, response));
-                    } else {
-                        _logger.LogError($"\n{DateTime.Now}: Anthropic call could not be made, could not parse text block from request.");
-                        continue;
-                    }
+        // note that the apikey is injected from the environment at init by the anthropic sdk.
+        ToolingQuery toolingQueryResult = new();
+        Message message;
+        try {
+            message = await _client.Messages.Create(requestParameter); 
+            foreach(ContentBlock content in message.Content) {
+                if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
+                    ToolingQuery? response = JsonNode.Parse(textBlock!.Text)!.Deserialize<ToolingQuery>()
+                        ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(QueryForToolUsage)}");
+                    toolingQueryResult = response;
+                } else {
+                    _logger.LogError($"\n{DateTime.Now}: Anthropic call could not be made, could not parse text block from request.");
+                    continue;
                 }
-            } catch(AnthropicApiException exception) {
-                _logger.LogError($"\n{DateTime.Now}: [ Anthropic call failed: {exception.Message} in {nameof(RequestReviewsAsync)}. ]\n");
-                exceptions.Add(exception);
             }
+        } catch(AnthropicApiException exception) {
+            _logger.LogError($"\n{DateTime.Now}: Anthropic call failed: {exception.Message} in {nameof(RequestReviewsAsync)}.\n");
+            return null;
         }
 
-        return diffSections;
+        return toolingQueryResult;
     }
 
 }
