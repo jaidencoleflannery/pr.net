@@ -30,7 +30,7 @@ public class Orchestrator(
             return;
 
         // run tools for context.
-        IEnumerable<DiffSection>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, userId);
+        List<DiffSection>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, userId);
         if(context == null)
             return;
 
@@ -41,6 +41,7 @@ public class Orchestrator(
 
         // post reviews to branch
         await _repositoryService.PostChatReviews(reviews, prEvent);
+        return;
     }
 }
 

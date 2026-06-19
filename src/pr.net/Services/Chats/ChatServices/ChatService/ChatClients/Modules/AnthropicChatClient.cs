@@ -232,7 +232,7 @@ public class AnthropicChatClient(
             // tools.
             + $"For tools, note that some tools can only be called after their parent is called.\n"
             + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
-            + $"```\n{availableTools.Values.Select(tool => $"Tool: {{ {tool.Name}.\n Description: {tool.Description}.\n }}\n")}```\n"
+            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
             + $"If context is not needed, set the \"RunTool\" field to false,\n"
             + $"Else if context is needed, set the \"RunTool\" field to true.\n"
             + $"If \"RunTool\" is true, set the \"ToolId\" field with the ID of the tool you'd like to run.\n"

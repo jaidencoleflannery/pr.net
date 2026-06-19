@@ -178,16 +178,15 @@ public class AmazonChatClient(
         return (reviewPerPath.Count > 0)
             ? reviewPerPath
             : null;
-    }
+    } 
 
-    public Task<IEnumerable<DiffSection>?> QueryForToolUsage(
-        IEnumerable<DiffSection> diffSections,
+    public Task<ToolingQuery?> QueryForToolUsage(
+        DiffSection diffSection,
         long maxTokens,
         string model,
         string instructions,
         TimeSpan? timeout
     ) {
-        // TODO: IMPLEMENT.
         return null;
     }
         
