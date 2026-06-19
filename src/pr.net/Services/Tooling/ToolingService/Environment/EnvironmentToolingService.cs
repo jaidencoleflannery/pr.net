@@ -44,7 +44,7 @@ public class EnvironmentToolingService : IToolingService {
     public Dictionary<ToolSignature, ToolMetadata> GetOptionalTools() =>
         _optionalToolMap;
 
-    public async Task<ToolResponse> InvokeToolAsync(int toolId, ToolParameters? toolParameters = null) { 
+    public async ValueTask<ToolResponse> InvokeToolAsync(int toolId, ToolParameters? toolParameters = null) { 
         ToolSignature? signature = (Enum.IsDefined(typeof(ToolSignature), toolId))
             ? (ToolSignature)toolId
             : null;

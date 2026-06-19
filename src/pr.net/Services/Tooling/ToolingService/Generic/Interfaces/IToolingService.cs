@@ -11,5 +11,6 @@ public interface IToolingService {
 
     Dictionary<ToolSignature, ToolMetadata> GetOptionalTools();
 
-}
+    ValueTask<ToolResponse> InvokeToolAsync(int toolId, ToolParameters? toolParameters = null);
 
+}

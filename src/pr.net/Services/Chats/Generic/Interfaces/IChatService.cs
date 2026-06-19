@@ -9,7 +9,7 @@ public interface IChatService {
         string userId
     );
 
-    Task<IEnumerable<DiffSection>?> GetChatContextAsync(
+    Task<List<DiffSection>?> GetChatContextAsync(
         IEnumerable<DiffSection> diffSections, 
         string userId
     );

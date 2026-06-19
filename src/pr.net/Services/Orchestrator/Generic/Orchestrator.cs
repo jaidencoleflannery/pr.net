@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 using pr.net.Services.Repositories.Generic;
 using pr.net.Services.Chat;
 
@@ -7,13 +9,13 @@ using pr.net.Models.Generic;
 
 namespace pr.net.Services.Orchestration;
 
-public class Orchestrator(
+public class Orchestrator( 
     IConfiguration _configuration, 
     IRepositoryRequestService _repositoryService,
     IChatService _chatService
 ) {
     // each function is expected to handle errors and logging - don't handle at this scope.
-    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent, string userId) {  
+    public async Task ProcessNewPullRequest(PullReviewCreatedEvent prEvent, string userId) {   
 
         // get each file's associated diff.
         IEnumerable<DiffSection>? diffFiles = await _repositoryService.GetPullReviewFiles(prEvent); 
