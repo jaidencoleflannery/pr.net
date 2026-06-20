@@ -8,6 +8,7 @@ public class ToolingQuery {
     public bool? RunTool { get; set; } = null;
 
     [JsonPropertyName("toolId")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int? ToolId { get; set; } = null;
 
 }

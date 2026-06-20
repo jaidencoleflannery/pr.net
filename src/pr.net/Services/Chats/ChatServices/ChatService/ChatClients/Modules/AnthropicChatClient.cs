@@ -223,6 +223,7 @@ public class AnthropicChatClient(
             return null;
         }
 
+        /*
         string prompt = 
             // diff files.
             $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
@@ -237,6 +238,16 @@ public class AnthropicChatClient(
             + $"Else if context is needed, set the \"RunTool\" field to true.\n"
             + $"If \"RunTool\" is true, set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
             + $"Else, if \"RunTool\" is false, just leave \"ToolId\" empty.\n";
+        */
+
+        string prompt = 
+            // diff files.
+            $"Call a tool. doesn't matter which one, just call one.\n"
+            // tools.
+            + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
+            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
+            + $"Set the \"RunTool\" field to true.\n"
+            + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n";
         
         MessageCreateParams requestParameter = new() {
             MaxTokens = maxTokens,

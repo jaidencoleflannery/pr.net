@@ -65,7 +65,7 @@ public static class BitbucketPullRequestEndpoints {
 
             // logic pipelines.
             await _orchestrator.ProcessNewPullRequest(prEvent, prEvent.PullRequest.Author.AccountId);
-            return Ok("Successfully posted reviews.");
+            return Ok("Processed PR event notification.");
         });
     } 
 }
