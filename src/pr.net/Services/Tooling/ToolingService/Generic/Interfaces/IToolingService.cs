@@ -1,3 +1,4 @@
+using pr.net.Models.Outbound.Generic;
 using pr.net.Models.Tooling;
 using pr.net.Models.Enums;
 
@@ -11,6 +12,6 @@ public interface IToolingService {
 
     Dictionary<ToolSignature, ToolMetadata> GetOptionalTools();
 
-    ValueTask<ToolResponse> InvokeToolAsync(int toolId, ToolParameters? toolParameters = null);
+    ValueTask<ToolResponse> InvokeToolAsync(int toolId, ToolParameters? parameters = null);
 
 }

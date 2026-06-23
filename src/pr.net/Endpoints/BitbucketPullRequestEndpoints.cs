@@ -31,6 +31,7 @@ public static class BitbucketPullRequestEndpoints {
             HttpRequest _request,
             HttpContext _context
         ) => { 
+            _logger.LogError(_request.ToString());
             // early return to avoid duplicate repository webhooks.
             _context.Response.StatusCode = 200;
             await _context.Response.CompleteAsync();

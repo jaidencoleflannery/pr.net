@@ -12,8 +12,8 @@ public class BitbucketPullReviewCreatedMetadataDto : PullReviewCreatedMetadata {
 
     public BitbucketPullReviewCreatedMetadataDto(BitbucketPullReviewCreatedEventDto request) {
         this.Id = request.PullRequest.Id;
-        this.CommitHash = request?.PullRequest?.MergeCommit?.Hash ?? string.Empty;
-        this.RepoSlug = request.Repository.FullName;
+        this.CommitHash = request.PullRequest?.MergeCommit?.Hash ?? string.Empty;
+        this.RepoSlug = request.Repository?.FullName ?? string.Empty;
         this.Url = request.PullRequest?.Links?.Diff?.Href ?? string.Empty;
     } 
 }

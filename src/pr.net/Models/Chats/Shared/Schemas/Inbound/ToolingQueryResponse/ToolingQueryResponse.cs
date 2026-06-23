@@ -11,5 +11,8 @@ public class ToolingQuery {
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public int? ToolId { get; set; } = null;
 
+    [JsonPropertyName("toolInput")]
+    public string? ToolInput { get; set; } = null;
+
 }
 

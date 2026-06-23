@@ -1,6 +1,8 @@
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Tooling;
 using pr.net.Models.Enums;
+using pr.net.Models.Generic;
+using pr.net.Models.Outbound.Generic;
 
 using static pr.net.Models.Tooling.PresetToolResponses;
 
@@ -18,14 +20,8 @@ public class EnvironmentReadFileTreeTool(
             ToolPointer = this.InvokeTool
         };
 
-    public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
-        if(parameters is not ReadFileTreeParameters input
-        || input.prEvent == null) {
-            _logger.LogError($"{nameof(ReadFileTree)}: Failed to invoke tool, parameters given were invalid");
-            return ToolFail();
-        }
-
-        ToolResponse toolResponse = await ReadFileTree(input.prEvent);
+    public async ValueTask<ToolResponse> InvokeTool(PullReviewCreatedMetadata metadata, DiffSection[]? diffSections = null) {
+        ToolResponse toolResponse = await ReadFileTree(metadata);
         if(!toolResponse.Success
         || toolResponse.Result == null) {
             _logger.LogError($"{nameof(ReadFileTree): Invocation of tool failed.}");
@@ -35,7 +31,7 @@ public class EnvironmentReadFileTreeTool(
         return toolResponse;
     }
 
-    public async Task<ToolResponse> ReadFileTree(PullReviewCreatedEvent prEvent) =>
+    private async Task<ToolResponse> ReadFileTree(PullReviewCreatedMetadata prEvent) =>
         await _toolClient.FetchFileTree(prEvent);
 
 }

@@ -1,5 +1,6 @@
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
+using pr.net.Models.Incoming.Generic;
 
 namespace pr.net.Services.Chat;
 
@@ -11,6 +12,7 @@ public interface IChatService {
 
     Task<List<DiffSection>?> GetChatContextAsync(
         IEnumerable<DiffSection> diffSections, 
+        PullReviewCreatedEvent prEvent, 
         string userId
     );
     
@@ -18,5 +20,6 @@ public interface IChatService {
         IEnumerable<DiffSection> diffSections, 
         string userId
     );
+
 }
 

@@ -7,6 +7,7 @@ using pr.net.Configurations.Chat;
 using pr.net.Configurations.Tooling;
 
 using pr.net.Models.Generic;
+using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Schemas;
 using pr.net.Models.Tooling;
@@ -101,10 +102,7 @@ public class ChatService(
         return await _chatClient.RequestReviewsAsync(diffSections, maxTokens, model, instructions, timeout);
     }
 
-    public async Task<List<DiffSection>?> GetChatContextAsync(
-        IEnumerable<DiffSection> diffSections, 
-        string userId
-    ) {
+    public async Task<List<DiffSection>?> GetChatContextAsync(IEnumerable<DiffSection> diffSections, PullReviewCreatedEvent prEvent, string userId) {
         if(diffSections.Count() < 1) {
             _logger.LogError($"{DateTime.Now}: No diffs provided to {nameof(GetChatContextAsync)}.\n");
             return null;
@@ -169,7 +167,7 @@ public class ChatService(
                 }
 
                 _logger.LogInformation($"\n{DateTime.Now}: Tool invocation was requested for Tool ID: {invocation.ToolId}.");
-                ToolResponse toolResponse = await _toolingService.InvokeToolAsync(invocation.ToolId.Value);
+                ToolResponse toolResponse = await _toolingService.InvokeToolAsync(invocation.ToolId.Value, metadata);
                 if(!toolResponse.Success
                 || toolResponse.Result.Count() < 1) {
                     _logger.LogError($"\n{DateTime.Now}: Invocation failure for Tool ID: {invocation.ToolId}.");

@@ -30,7 +30,7 @@ public class Orchestrator(
             return;
 
         // run tools for context.
-        List<DiffSection>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, userId);
+        List<DiffSection>? context = await _chatService.GetChatContextAsync(filteredDiffFiles, prEvent, userId);
         if(context == null)
             return;
 
