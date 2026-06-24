@@ -247,7 +247,8 @@ public class AnthropicChatClient(
             + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
             + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
             + $"Set the \"RunTool\" field to true.\n"
-            + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n";
+            + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
+            + $"Set the \"ToolInput\" field to your desired input.\n";
         
         MessageCreateParams requestParameter = new() {
             MaxTokens = maxTokens,

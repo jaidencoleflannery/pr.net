@@ -6,9 +6,9 @@ namespace pr.net.Services.Tooling;
 
 public interface IToolClient {
 
-    ValueTask<ToolResponse> FetchFileTree(PullReviewCreatedMetadata metadata);
+    ValueTask<ToolResponse> FetchFileTree(ToolParameters parameters);
 
-    ValueTask<ToolResponse> FetchFile(PullReviewCreatedMetadata metadata, string filePath);
+    ValueTask<ToolResponse> FetchFile(ToolParameters parameters);
 
 }
 

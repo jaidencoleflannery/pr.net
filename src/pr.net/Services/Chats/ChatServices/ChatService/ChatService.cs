@@ -140,7 +140,7 @@ public class ChatService(
                 continue;
             }
 
-            if(contextQueryResult.RunTool != null 
+            if(contextQueryResult.RunTool != null
             && contextQueryResult.RunTool == true)
                 invocationRequestsPerDiff.Add((diff, contextQueryResult));
         }
@@ -166,8 +166,15 @@ public class ChatService(
                     break;
                 }
 
+                if(invocation.ToolId < 0) {
+                    _logger.LogError($"\n{DateTime.Now}: Invalid ToolID was given: {invocation.ToolId}, skipping invocation.");
+                    continue;
+                }
+
                 _logger.LogInformation($"\n{DateTime.Now}: Tool invocation was requested for Tool ID: {invocation.ToolId}.");
-                ToolResponse toolResponse = await _toolingService.InvokeToolAsync(invocation.ToolId.Value, metadata);
+
+                ToolParameters parameters = new((uint)invocation.ToolId.Value, [invocation.ToolInput], prEvent, diffSections);
+                ToolResponse toolResponse = await _toolingService.InvokeToolAsync(parameters);
                 if(!toolResponse.Success
                 || toolResponse.Result.Count() < 1) {
                     _logger.LogError($"\n{DateTime.Now}: Invocation failure for Tool ID: {invocation.ToolId}.");

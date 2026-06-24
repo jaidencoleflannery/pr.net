@@ -14,22 +14,34 @@ public class BitbucketToolClient(
         ILogger<BitbucketToolClient> _logger
     ) : IToolClient {
 
-    public async ValueTask<ToolResponse> FetchFileTree(PullReviewCreatedEvent prEvent) =>
-        await this.Fetch(prEvent);
+    // this is obviously wrong.
+    public async ValueTask<ToolResponse> FetchFileTree(ToolParameters parameters) =>
+        await this.Fetch(parameters);
 
-    public async ValueTask<ToolResponse> FetchFile(PullReviewCreatedEvent prEvent, string path) =>
-        await this.Fetch(prEvent, path);
+    public async ValueTask<ToolResponse> FetchFile(ToolParameters parameters) =>
+        await this.Fetch(parameters);
 
-    private async ValueTask<ToolResponse> Fetch(PullReviewCreatedEvent prEvent, string path = "") {
-        if(prEvent is not BitbucketPullReviewCreatedEventDto request) {
-           _logger.LogError($"{nameof(FetchFile)}: The type of event does not match the injected service, returning early.");
+    private async ValueTask<ToolResponse> Fetch(ToolParameters parameters) {
+        if(parameters.PrEvent is null or not BitbucketPullReviewCreatedEventDto) {
+           _logger.LogError($"{nameof(Fetch)}: The type of event does not match the injected service, or is invalid, short circuiting.");
            return ToolFail();
         }
 
-        BitbucketPullReviewCreatedMetadataDto metadata = new(request); // grab minimum metadata.
+        if(parameters.ToolInput.Count() != 1) {
+            _logger.LogError($"{nameof(Fetch)}: Input for Fetch was invalid.");
+           return ToolFail();
+        }
+
+        BitbucketPullReviewCreatedMetadataDto metadata = new((BitbucketPullReviewCreatedEventDto)parameters.PrEvent); // grab minimum metadata.
         if(string.IsNullOrWhiteSpace(metadata.CommitHash)
         || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
-            _logger.LogError($"{nameof(FetchFile)}: Provided event payload contained an invalid value, returning early.");
+            _logger.LogError($"{nameof(Fetch)}: Provided event payload contained an invalid value, short circuiting.");
+           return ToolFail();
+        }
+
+        string? path = parameters.ToolInput.First();
+        if(string.IsNullOrWhiteSpace(path)) {
+            _logger.LogError($"{nameof(Fetch)}: Path was invalid.");
            return ToolFail();
         }
 
@@ -41,7 +53,7 @@ public class BitbucketToolClient(
             ) {
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
                     "Bearer", 
-                    await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent)
+                    await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, parameters.PrEvent)
                 );
                 
                 using HttpResponseMessage response = await client.SendAsync(message);
