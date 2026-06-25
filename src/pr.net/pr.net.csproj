@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <None Include="*.md" CopyToOutputDirectory="Always" />
-    <None Include="**/*.md" CopyToOutputDirectory="Always" />
+    <None Include="Instructions/**/*.md" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
 </Project>

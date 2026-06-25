@@ -4,13 +4,13 @@ using pr.net.Models.Generic;
 namespace pr.net.Models.Tooling;
 
 public class ToolParameters(
-    uint toolId,
+    int toolId,
     IEnumerable<string?> toolInput,
     PullReviewCreatedEvent? prEvent,
     IEnumerable<DiffSection?> diffSections
  ) {
 
-    public uint ToolId { get; set; } = toolId;
+    public int ToolId { get; set; } = toolId;
 
     public IEnumerable<string?> ToolInput { get; set; } = toolInput;
 

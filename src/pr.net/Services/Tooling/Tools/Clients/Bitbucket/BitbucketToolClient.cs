@@ -44,7 +44,7 @@ public class BitbucketToolClient(
             _logger.LogError($"{nameof(Fetch)}: Path was invalid.");
            return ToolFail();
         }
-
+// 
         // this needs to always use the branch sha to avoid routing issues.
         try {
             using(HttpRequestMessage message = new(

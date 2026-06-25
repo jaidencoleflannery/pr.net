@@ -173,8 +173,9 @@ public class ChatService(
 
                 _logger.LogInformation($"\n{DateTime.Now}: Tool invocation was requested for Tool ID: {invocation.ToolId}.");
 
-                ToolParameters parameters = new((uint)invocation.ToolId.Value, [invocation.ToolInput], prEvent, diffSections);
+                ToolParameters parameters = new(invocation.ToolId.Value, [invocation.ToolInput], prEvent, diffSections);
                 ToolResponse toolResponse = await _toolingService.InvokeToolAsync(parameters);
+                ++invocationCount;
                 if(!toolResponse.Success
                 || toolResponse.Result.Count() < 1) {
                     _logger.LogError($"\n{DateTime.Now}: Invocation failure for Tool ID: {invocation.ToolId}.");
