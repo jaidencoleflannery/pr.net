@@ -1,3 +1,6 @@
+using pr.net.Services.Tooling.Generic;
+using pr.net.Services.Tooling;
+
 using pr.net.Models.Outbound.Generic;
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Generic;
@@ -8,7 +11,10 @@ using static pr.net.Models.Tooling.PresetToolResponses;
 
 namespace pr.net.Services.Tooling;
 
-public class EnvironmentReadFileTool(ILogger<EnvironmentReadFileTool> _logger, IToolClient _toolClient) : IReadFileTool {
+public class EnvironmentReadFileTool(
+    ILogger<EnvironmentReadFileTool> _logger, 
+    IToolClient _toolClient
+) : IReadFileTool {
     public ToolMetadata GetToolMetadata() => 
         new() {
             Name = ToolSignature.ReadFile.ToString(),
@@ -17,8 +23,8 @@ public class EnvironmentReadFileTool(ILogger<EnvironmentReadFileTool> _logger, I
             ToolPointer = this.InvokeTool
         };
 
-    public async ValueTask<ToolResponse> InvokeTool(PullReviewCreatedMetadata metadata, DiffSection[]? diffSections = null) { 
-        ToolResponse result = await ReadFile(metadata, diffSections);
+    public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) { 
+        ToolResponse result = await ReadFile(parameters);
         if(!result.Success
         || result.Result == null) {
             _logger.LogError($"{nameof(ReadFile): Invocation of tool failed.}");
@@ -31,8 +37,7 @@ public class EnvironmentReadFileTool(ILogger<EnvironmentReadFileTool> _logger, I
         };
     }
 
-    public async Task<ToolResponse> ReadFile(PullReviewCreatedEvent prEvent, string filePath) =>
-        await _toolClient.FetchFile(prEvent, filePath); 
+    public async Task<ToolResponse> ReadFile(ToolParameters parameters) =>
+        await _toolClient.FetchFile(parameters); 
 
 }
-

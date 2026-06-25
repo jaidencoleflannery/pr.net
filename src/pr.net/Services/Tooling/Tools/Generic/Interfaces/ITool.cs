@@ -6,7 +6,7 @@ namespace pr.net.Services.Tooling.Generic;
 
 public interface ITool {
 
-    ValueTask<ToolResponse> InvokeTool(PullReviewCreatedMetadata metadata, DiffSection[]? diffSections = null);
+    ValueTask<ToolResponse> InvokeTool(ToolParameters parameters);
 
     ToolMetadata GetToolMetadata();
 

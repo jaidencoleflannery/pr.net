@@ -3,27 +3,19 @@ using pr.net.Models.Generic;
 
 namespace pr.net.Models.Tooling;
 
-public class ToolParameters {
+public class ToolParameters(
+    uint toolId,
+    IEnumerable<string?> toolInput,
+    PullReviewCreatedEvent? prEvent,
+    IEnumerable<DiffSection?> diffSections
+ ) {
 
-    public uint ToolId { get; set; }
+    public uint ToolId { get; set; } = toolId;
 
-    public IEnumerable<string?> ToolInput { get; set; }
+    public IEnumerable<string?> ToolInput { get; set; } = toolInput;
 
-    public PullReviewCreatedEvent? PrEvent { get; set; } 
+    public PullReviewCreatedEvent? PrEvent { get; set; } = prEvent;
 
-    public IEnumerable<DiffSection?> DiffSections { get; set; } 
+    public IEnumerable<DiffSection?> DiffSections { get; set; } = diffSections;
 
-    public ToolParameters(
-        uint toolId, 
-        IEnumerable<string?> toolInput, 
-        PullReviewCreatedEvent? prEvent, 
-        IEnumerable<DiffSection?> diffSections
-    ) {
-        this.ToolId = toolId;
-        this.ToolInput = toolInput ?? [];
-        this.PrEvent = prEvent;
-        this.DiffSections = diffSections ?? [];
-    } 
-    
 }
-

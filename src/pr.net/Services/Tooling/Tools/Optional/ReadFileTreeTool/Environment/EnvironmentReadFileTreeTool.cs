@@ -1,3 +1,5 @@
+using pr.net.Services.Tooling.Generic;
+
 using pr.net.Models.Incoming.Generic;
 using pr.net.Models.Tooling;
 using pr.net.Models.Enums;
@@ -14,14 +16,14 @@ public class EnvironmentReadFileTreeTool(
     ) : IReadFileTreeTool {
 
     public ToolMetadata GetToolMetadata() => 
-        new ToolMetadata {
-            Name = ToolSignature.ReadFileTree.ToString(), 
+        new() {
+            Name = ToolSignature.ReadFileTree.ToString() ?? string.Empty, 
             Description = "Get repository directory tree.",
             ToolPointer = this.InvokeTool
         };
 
-    public async ValueTask<ToolResponse> InvokeTool(PullReviewCreatedMetadata metadata, DiffSection[]? diffSections = null) {
-        ToolResponse toolResponse = await ReadFileTree(metadata);
+    public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
+        ToolResponse toolResponse = await ReadFileTree(parameters);
         if(!toolResponse.Success
         || toolResponse.Result == null) {
             _logger.LogError($"{nameof(ReadFileTree): Invocation of tool failed.}");
@@ -31,8 +33,8 @@ public class EnvironmentReadFileTreeTool(
         return toolResponse;
     }
 
-    private async Task<ToolResponse> ReadFileTree(PullReviewCreatedMetadata prEvent) =>
-        await _toolClient.FetchFileTree(prEvent);
+    private async Task<ToolResponse> ReadFileTree(ToolParameters parameters) =>
+        await _toolClient.FetchFileTree(parameters);
 
 }
 
