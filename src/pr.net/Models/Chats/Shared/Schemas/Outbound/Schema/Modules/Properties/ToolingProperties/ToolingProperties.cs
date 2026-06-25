@@ -12,10 +12,10 @@ public class ToolingProperties : IProperties {
     [JsonPropertyName("toolId")]
     public StringType ToolId { get; set; } = new();
 
-    [JsonPropertyName("ToolInput")]
+    [JsonPropertyName("toolInput")]
     public StringType ToolInput { get; set; } = new();
 
-    public List<string> GetRequiredFields() => ["runTool"];
+    public List<string> GetRequiredFields() => ["runTool", "toolId", "toolInput"];
 
 }
  

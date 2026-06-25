@@ -9,3 +9,6 @@ Tool: { ID: 1.
  Name: ReadFile.
  Description: Read a specified file from the repository, can only be used after ReadFileTree has been invoked..
  }```
+
+
+ ValueKind = Object : "{"type":"text","text":"{\"runTool\":true,\"toolId\":\"0\",\"ToolInput\":\"\"}"}"
