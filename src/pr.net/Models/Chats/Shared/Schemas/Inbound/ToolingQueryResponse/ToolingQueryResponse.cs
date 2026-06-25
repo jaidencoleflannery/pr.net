@@ -5,7 +5,7 @@ namespace pr.net.Models.Schemas;
 public class ToolingQuery {
  
     [JsonPropertyName("runTool")]
-    public bool? RunTool { get; set; } = null;
+    public bool? RunTool { get; set; } = false;
 
     [JsonPropertyName("toolId")]
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
