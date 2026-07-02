@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 
 using pr.net.Services.Tokens;
+using pr.net.Services.Tooling;
 
 using pr.net.Configurations.Chat;
 
@@ -25,7 +26,14 @@ public class BitbucketToolClient(
     private readonly uint _fileTreePageLength = 100;
     private readonly uint _maxFileTreeNumPages = 25;
 
-    public async ValueTask<ToolResponse> FetchFileTree(ToolParameters parameters) {
+    public async ValueTask<ToolResponse> FetchFileTree(ToolParameters parameters, ToolMetadata toolMetadata) {
+
+        ToolResponse toolFail = new() {
+            Success = false,
+            ToolName = toolMetadata.Name,
+            Description = toolMetadata.Description
+        };
+
         if(parameters is null) {
             _logger.LogError($"{nameof(FetchFileTree)}: Provided parameters were null, tool invocation failed.");
            return ToolFail();
@@ -41,7 +49,7 @@ public class BitbucketToolClient(
         || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
             _logger.LogError($"{nameof(FetchFileTree)}: Provided event payload contained an invalid value, short circuiting.");
            return ToolFail();
-        } 
+        }
 
         // https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/src/{branch_or_commit}/?max_depth=25&pagelen=100&fields=values.path,values.type,next
         string url = $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/src/{metadata.CommitHash}/"
@@ -148,7 +156,7 @@ public class BitbucketToolClient(
         }
     }
 
-    public async ValueTask<ToolResponse> FetchFile(ToolParameters parameters) {
+    public async ValueTask<ToolResponse> FetchFile(ToolParameters parameters, ToolMetadata toolMetadata) {
         if(parameters is null) {
             _logger.LogError($"{nameof(FetchFile)}: Provided parameters were null, short circuiting.");
            return ToolFail();

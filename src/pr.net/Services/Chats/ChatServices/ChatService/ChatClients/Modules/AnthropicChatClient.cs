@@ -248,7 +248,8 @@ public class AnthropicChatClient(
 
         string prompt = 
             // diff files.
-            $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
+            $"(this is a test call, invoke a tool to prove that you can do it.)\n"
+            + $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
             + $"Your goal is to gather the most important context. Keep in mind that you can only make a maximum of {_toolingConfiguration.Value.MaxInvocations} tool invocations."
             + $"Here is the diff:\n"
             + $"```\nPath: {diffSection.Path}.\nContents: {diffSection.Contents}\n```\n"
@@ -263,7 +264,7 @@ public class AnthropicChatClient(
             + $"Set the \"ToolInput\" field to the required input (leave blank if no input is needed).\n"
             // previous invocations.
             + $"If you have previously ran any tools, their results are appended:\n"
-            + $"```\n{diffSection.Context.Select(invocation => $"Tool: {{ \nName: {invocation.ToolName}. \nDescription: {invocation.Description}. \nResult: {string.Join(", ", invocation.Result)}. \n}}")}```\n"
+            + $"```\n{string.Join("; \n", diffSection.Context.Select(invocation => $"Tool: {{ \nName: {invocation.ToolName}. \nDescription: {invocation.Description}. \nResult: {string.Join(", ", invocation.Result)}. \n}}"))}\n```\n"
             + $"If a tool has already ran, do not try it again unless you have evidence it will succeed on retry.";
 
         MessageCreateParams requestParameter = new() {

@@ -15,4 +15,3 @@ public class ToolingQuery {
     public string? ToolInput { get; set; } = null;
 
 }
-
