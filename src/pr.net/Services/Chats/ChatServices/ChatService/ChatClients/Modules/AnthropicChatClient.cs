@@ -290,7 +290,7 @@ public class AnthropicChatClient(
                 }
             }
         } catch(AnthropicApiException exception) {
-            _logger.LogError($"\n{DateTime.Now}: Anthropic call failed: {exception.Message} in {nameof(RequestReviewsAsync)}.\n");
+            _logger.LogError($"\n{DateTime.Now}: Anthropic call failed: {exception.Message} in {nameof(QueryForToolUsage)}.\n");
             return null;
         }
 
