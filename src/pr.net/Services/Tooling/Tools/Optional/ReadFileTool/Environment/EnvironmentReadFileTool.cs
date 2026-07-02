@@ -31,10 +31,7 @@ public class EnvironmentReadFileTool(
             return ToolFail();
         }
 
-        return new ToolResponse {
-            Success = result.Success,
-            Result = result.Result
-        };
+        return result; 
     }
 
 }
