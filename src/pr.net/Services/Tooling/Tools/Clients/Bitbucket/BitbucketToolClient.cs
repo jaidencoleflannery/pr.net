@@ -30,11 +30,6 @@ public class BitbucketToolClient(
            return ToolFail();
         }
 
-        if(parameters.ToolInput.Count() != 0) {
-            _logger.LogError($"{nameof(FetchFileTree)}: Input for Fetch was invalid.");
-           return ToolFail();
-        }
-
         BitbucketPullReviewCreatedMetadataDto metadata = new((BitbucketPullReviewCreatedEventDto)parameters.PrEvent); // grab minimum metadata.
         if(string.IsNullOrWhiteSpace(metadata.CommitHash)
         || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
@@ -92,21 +87,28 @@ public class BitbucketToolClient(
             : await FetchFileTreePage(page.Next, token, accumulated);
     }
 
-    // collapses the flat path list down to just directories so it's an indented tree.
+    // expands the flat path list into an indented tree of directories and files.
     private static string BuildFolderTree(List<BitbucketFileTreeEntryDto> entries) {
-        SortedDictionary<string, object> root = new(StringComparer.Ordinal);
+        SortedDictionary<string, object?> root = new(StringComparer.Ordinal);
 
         foreach(BitbucketFileTreeEntryDto entry in entries) {
             string[] segments = entry.Path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if(segments.Length == 0)
+                continue;
 
-            int folderSegmentCount = entry.Type == "commit_directory" ? segments.Length : segments.Length - 1;
+            // everything except the last segment is always a directory; the last
+            // segment is a directory for commit_directory entries and a file otherwise.
+            bool lastIsFile = entry.Type != "commit_directory";
 
-            SortedDictionary<string, object> current = root;
-            for(int i = 0; i < folderSegmentCount; i++) {
-                if(current.TryGetValue(segments[i], out object? child)) {
-                    current = (SortedDictionary<string, object>)child;
+            SortedDictionary<string, object?> current = root;
+            for(int i = 0; i < segments.Length; i++) {
+                bool isFile = lastIsFile && i == segments.Length - 1;
+                if(current.TryGetValue(segments[i], out object? child) && child is SortedDictionary<string, object?> existing) {
+                    current = existing;
+                } else if(isFile) {
+                    current[segments[i]] = null; // leaf file node.
                 } else {
-                    SortedDictionary<string, object> next = new(StringComparer.Ordinal);
+                    SortedDictionary<string, object?> next = new(StringComparer.Ordinal);
                     current[segments[i]] = next;
                     current = next;
                 }
@@ -115,13 +117,18 @@ public class BitbucketToolClient(
 
         StringBuilder builder = new();
         AppendFolderTree(root, builder, 0);
-        return builder.Length > 0 ? builder.ToString() : "(no subdirectories)";
+        return builder.Length > 0 ? builder.ToString() : "(empty repository)";
     }
 
-    private static void AppendFolderTree(SortedDictionary<string, object> node, StringBuilder builder, int depth) {
-        foreach((string name, object child) in node) {
-            builder.Append(' ', depth * 2).Append(name).Append('/').Append('\n');
-            AppendFolderTree((SortedDictionary<string, object>)child, builder, depth + 1);
+    private static void AppendFolderTree(SortedDictionary<string, object?> node, StringBuilder builder, int depth) {
+        foreach((string name, object? child) in node) {
+            builder.Append(' ', depth * 2).Append(name);
+            if(child is SortedDictionary<string, object?> children) {
+                builder.Append('/').Append('\n');
+                AppendFolderTree(children, builder, depth + 1);
+            } else {
+                builder.Append('\n');
+            }
         }
     }
 

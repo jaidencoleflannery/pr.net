@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -137,7 +138,7 @@ public class AnthropicChatClient(
                         Messages = [
                             new() {
                                 Role = Role.User,
-                                Content = $"Review this diff:\n```{diff.Contents}```"
+                                Content = $"Review this diff:\n```{diff.Contents}```\n\nHere is the context that was gathered for this diff:\n{FormatContext(diff.Context)}"
                             },
                         ],
                         Model = model!,
@@ -189,6 +190,23 @@ public class AnthropicChatClient(
             : null;
     }
 
+    private static string FormatContext(IEnumerable<ToolResponse> context) {
+        List<ToolResponse> successful = context.Where(c => c.Success && c.Result.Length > 0).ToList();
+        if(successful.Count == 0)
+            return "No additional context was gathered for this diff.";
+
+        StringBuilder sb = new();
+        sb.AppendLine("<context>");
+        foreach(ToolResponse tool in successful) {
+            sb.AppendLine($"  <tool name=\"{tool.ToolName}\">");
+            foreach(string line in tool.Result)
+                sb.AppendLine($"    {line}");
+            sb.AppendLine("  </tool>");
+        }
+        sb.Append("</context>");
+        return sb.ToString();
+    }
+
     public async Task<ToolingQuery?> QueryForToolUsage(
         DiffSection diffSection,
         long maxTokens,
@@ -223,7 +241,6 @@ public class AnthropicChatClient(
             return null;
         }
 
-        /*
         string prompt = 
             // diff files.
             $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
@@ -234,21 +251,10 @@ public class AnthropicChatClient(
             + $"For tools, note that some tools can only be called after their parent is called.\n"
             + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
             + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{\n ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
-            + $"If context is not needed, set the \"RunTool\" field to false,\n"
-            + $"Else if context is needed, set the \"RunTool\" field to true.\n"
-            + $"If \"RunTool\" is true, set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
-            + $"Else, if \"RunTool\" is false, just leave \"ToolId\" empty.\n";
-        */
-
-        string prompt = 
-            // diff files.
-            $"Call a tool. doesn't matter which one, just call one.\n"
-            // tools.
-            + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
-            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
+            + $"If you'd like to run a tool:\n"
             + $"Set the \"RunTool\" field to true.\n"
             + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
-            + $"Set the \"ToolInput\" field to your desired input.\n";
+            + $"Set the \"ToolInput\" field to the required input (leave blank if no input is needed).\n";
         
         MessageCreateParams requestParameter = new() {
             MaxTokens = maxTokens,

@@ -39,7 +39,7 @@ public class Orchestrator(
         if(reviews == null)
             return;
 
-        // post reviews to branch
+        // post reviews to branch.
         await _repositoryService.PostChatReviews(reviews, prEvent);
         return;
     }
