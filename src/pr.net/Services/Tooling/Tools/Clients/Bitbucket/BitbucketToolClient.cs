@@ -121,12 +121,17 @@ public class BitbucketToolClient(
     }
 
     public async ValueTask<ToolResponse> FetchFile(ToolParameters parameters) {
+        if(parameters is null) {
+            _logger.LogError($"{nameof(FetchFile)}: Provided parameters were null, short circuiting.");
+           return ToolFail();
+        }
+
         if(parameters.PrEvent is null or not BitbucketPullReviewCreatedEventDto) {
            _logger.LogError($"{nameof(FetchFile)}: The type of event does not match the injected service, or is invalid, short circuiting.");
            return ToolFail();
         }
 
-        if(parameters.ToolInput.Count() != 1) {
+        if(parameters.ToolInput is null || parameters.ToolInput.Count() != 1) {
             _logger.LogError($"{nameof(FetchFile)}: Input for Fetch was invalid.");
            return ToolFail();
         }
