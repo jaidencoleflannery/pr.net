@@ -156,7 +156,6 @@ public class BitbucketToolClient(
                 );
                 
                 using HttpResponseMessage response = await client.SendAsync(message);
-                // TODO: this is the entire response, need to get the actual response out of it.
                 string content = await response.Content.ReadAsStringAsync();
                 if(response.IsSuccessStatusCode) {
                     if(string.IsNullOrWhiteSpace(content))
