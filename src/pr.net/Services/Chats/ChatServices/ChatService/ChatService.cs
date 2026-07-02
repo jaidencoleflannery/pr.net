@@ -25,6 +25,8 @@ public class ChatService(
     IInstructionsService _instructionsService
 ) : IChatService { 
 
+    private uint _invocationCount = 0;
+
     private ChatProvider? _provider = _chatConfiguration.Value.Provider; 
 
     public async Task<IEnumerable<DiffSection>?> FilterDiffsAsync(IEnumerable<DiffSection> diffSections, string userId) { 
@@ -116,7 +118,7 @@ public class ChatService(
 
         long maxTokens = _chatConfiguration.Value.MaxTokens ?? 0;
         if(maxTokens is <= 0 or > 8192) {
-            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:MaxTokens could not be found or read in {nameof(GetChatContextAsync)}.\n");
+            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:MaxTokens was invalid or not found in {nameof(GetChatContextAsync)}.\n");
             return null;
         } 
 
@@ -124,7 +126,7 @@ public class ChatService(
         if(string.IsNullOrWhiteSpace(instructions)) {
             _logger.LogError($"\n{DateTime.Now}: Could not fetch instructions in {nameof(GetChatContextAsync)}.\n");
             return null;
-        }  
+        }
 
         TimeSpan? timeout = _chatConfiguration.Value.Timeout;
         if(timeout == null) {
@@ -132,7 +134,39 @@ public class ChatService(
             return null;
         }
 
-        List<(DiffSection, ToolingQuery)> invocationRequestsPerDiff = [];
+        uint fetchDepth = 0;
+        uint totalSuccessfulInvocations = 0;
+        List<(DiffSection, ToolingQuery)>? invocationRequestPerDiff = [];
+
+        while(fetchDepth < _toolingConfiguration.Value.MaxInvocations) {
+            // get tool invocation requests - accumulated invocation results are stored in diffSections.
+            invocationRequestPerDiff = await this.GetRequestedToolInvocations(diffSections, maxTokens, model, instructions, timeout.Value); 
+            if(invocationRequestPerDiff == null) {
+                _logger.LogError($"\n{DateTime.Now}: Failed to get fetch tool invocations.");
+                break;
+            }
+
+            uint numSuccessfulInvocations = await this.RunToolInvocations(invocationRequestPerDiff, prEvent); 
+            if(numSuccessfulInvocations == 0) {
+                _logger.LogError($"\n{DateTime.Now}: Failed to invoke tools.");
+                break;
+            }
+            totalSuccessfulInvocations += numSuccessfulInvocations;
+
+            ++fetchDepth;
+        }
+
+        return [..diffSections];
+    }
+
+    private async Task<List<(DiffSection, ToolingQuery)>?> GetRequestedToolInvocations(
+        IEnumerable<DiffSection> diffSections,
+        long maxTokens,
+        string model,
+        string instructions,
+        TimeSpan timeout
+    ) {
+        List<(DiffSection, ToolingQuery)>? invocationRequestPerDiff = [];
         foreach(DiffSection diff in diffSections) {
             ToolingQuery? contextQueryResult = await _chatClient.QueryForToolUsage(diff, maxTokens, model, instructions, timeout);
             if(contextQueryResult == null) {
@@ -140,53 +174,59 @@ public class ChatService(
                 continue;
             }
 
-            if(contextQueryResult.RunTool != null
-            && contextQueryResult.RunTool == true)
-                invocationRequestsPerDiff.Add((diff, contextQueryResult));
+            if(contextQueryResult.RunTool == true)
+                invocationRequestPerDiff.Add((diff, contextQueryResult));
         }
 
-        if(invocationRequestsPerDiff.Count < 1) {
+        if(invocationRequestPerDiff.Count < 1) {
             _logger.LogInformation($"\n{DateTime.Now}: No tool invocations were requested.");
             return null;
+        } else
+            return invocationRequestPerDiff;
+    }
+
+    private async Task<uint> RunToolInvocations(
+        IEnumerable<(DiffSection, ToolingQuery)> invocationRequestPerDiff,
+        PullReviewCreatedEvent prEvent
+    ) {
+        if(invocationRequestPerDiff == null) {
+            _logger.LogError($"\n{DateTime.Now}: {nameof(invocationRequestPerDiff)} was invalid.");
+            return 0;
         }
 
-        uint invocationCount = 0;
-        List<DiffSection> invocationResults = [];
+        uint numSuccessfulInvocations = 0;
 
-        foreach(var (diff, invocation) in invocationRequestsPerDiff) {
+        // invoke. 
+        foreach(var (diff, invocation) in invocationRequestPerDiff) {
+            if(_invocationCount >= _toolingConfiguration.Value.MaxInvocations) {
+                _logger.LogError($"\n{DateTime.Now}: Maximum number of tool invocations was reached, short circuiting path.");
+                break;
+            }
+
             // safety check, but these should already all be true.
-            if(invocation.RunTool == null 
-            || invocation.RunTool == false)
+            if(invocation.RunTool is null or false)
                 continue;
 
-            if(invocation.RunTool == true
-            && invocation.ToolId != null) {
-                if(invocationCount >= _toolingConfiguration.Value.MaxInvocations) {
-                    _logger.LogError($"\n{DateTime.Now}: Maximum number of tool invocations was reached, short circuiting path.");
-                    break;
-                }
-
-                if(invocation.ToolId < 0) {
-                    _logger.LogError($"\n{DateTime.Now}: Invalid ToolID was given: {invocation.ToolId}, skipping invocation.");
-                    continue;
-                }
-
-                _logger.LogInformation($"\n{DateTime.Now}: Tool invocation was requested for Tool ID: {invocation.ToolId}.");
-
-                ToolParameters parameters = new(invocation.ToolId.Value, [invocation.ToolInput], prEvent, diffSections);
-                ToolResponse toolResponse = await _toolingService.InvokeToolAsync(parameters);
-                ++invocationCount;
-                if(!toolResponse.Success
-                || toolResponse.Result.Count() < 1) {
-                    _logger.LogError($"\n{DateTime.Now}: Invocation failure for Tool ID: {invocation.ToolId}.");
-                    continue;
-                }
-                diff.Context.Add(toolResponse);
-                invocationResults.Add(diff);
+            if(invocation.ToolId is null or < 0) {
+                _logger.LogError($"\n{DateTime.Now}: Invalid ToolID was given: {invocation.ToolId}, skipping invocation.");
+                continue;
             }
+
+            _logger.LogInformation($"\n{DateTime.Now}: Tool invocation was requested for Tool ID: {invocation.ToolId}.");
+
+            ToolParameters parameters = new(invocation.ToolId.Value, [invocation.ToolInput], prEvent, diff);
+            ToolResponse toolResponse = await _toolingService.InvokeToolAsync(parameters);
+            ++_invocationCount;
+            if(!toolResponse.Success
+            || toolResponse.Result.Count() < 1) {
+                _logger.LogError($"\n{DateTime.Now}: Invocation failure for Tool ID: {invocation.ToolId}.");
+                continue;
+            }
+            diff.Context.Add(toolResponse);
+            ++numSuccessfulInvocations;
         }
 
-        return invocationResults;
+        return numSuccessfulInvocations;
     }
-}
 
+}

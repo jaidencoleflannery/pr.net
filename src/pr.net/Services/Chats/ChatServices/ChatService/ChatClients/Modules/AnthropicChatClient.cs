@@ -1,12 +1,15 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Options;
 
 using Anthropic;
 using Anthropic.Models.Messages;
 using Anthropic.Exceptions;
 
 using pr.net.Services.Tooling;
+
+using pr.net.Configurations.Tooling;
 
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
@@ -21,6 +24,7 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatClient(
     ILogger<AnthropicChatClient> _logger,
+    IOptions<ToolingConfiguration> _toolingConfiguration,
     IToolingService _toolingService,
     IAnthropicClient _client,
     IFilteringSchema _filterSchema, 
@@ -214,22 +218,12 @@ public class AnthropicChatClient(
         string instructions,
         TimeSpan? timeout
     ) {
-        if(string.IsNullOrWhiteSpace(model)) {
-            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(QueryForToolUsage)}.\n");
+        if(diffSection == null
+        || string.IsNullOrWhiteSpace(model) 
+        || maxTokens < 1) {
+            _logger.LogError($"\n{DateTime.Now}: Provided parameters were invalid in {nameof(QueryForToolUsage)}.\n");
             return null;
         }
-
-        // push schema into anthropic's required type for the format field.
-        // this is our desired structured output.
-        string schemaString = Serialize(_toolingSchema, _toolingSchema.GetType());
-        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
-        if(schema == null) {
-            _logger.LogError($"\n{DateTime.Now}: Failure to serialize Tooling schema in {nameof(QueryForToolUsage)}.\n");
-            return null;
-        }
-
-        // fetch available tools.
-        Dictionary<ToolSignature, ToolMetadata> availableTools = _toolingService.GetOptionalTools();
 
         if(string.IsNullOrWhiteSpace(diffSection.Contents)) {
             _logger.LogInformation($"\n{DateTime.Now}: File ({diffSection.Path})'s contents were empty in {nameof(QueryForToolUsage)}.\n");
@@ -241,23 +235,40 @@ public class AnthropicChatClient(
             return null;
         }
 
+        // push schema into anthropic's required type for the format field.
+        string schemaString = Serialize(_toolingSchema, _toolingSchema.GetType());
+        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
+        if(schema == null) {
+            _logger.LogError($"\n{DateTime.Now}: Failure to serialize Tooling Query schema in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
+        // fetch available tools.
+        Dictionary<ToolSignature, ToolMetadata> availableTools = _toolingService.GetOptionalTools(); 
+
         string prompt = 
             // diff files.
             $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
-            + $"Your goal is to gather the minimal amount possible. Err towards using no tools unless it is critical.\n"
+            + $"Your goal is to gather the most important context. Keep in mind that you can only make a maximum of {_toolingConfiguration.Value.MaxInvocations} tool invocations."
             + $"Here is the diff:\n"
             + $"```\nPath: {diffSection.Path}.\nContents: {diffSection.Contents}\n```\n"
             // tools.
-            + $"For tools, note that some tools can only be called after their parent is called.\n"
+            + $"Tools:\n"
+            + $"For tools, note that some tools can only be called after their parent is called. Each time you are prompted, you can only invoke one tool, then the result of the tool will be given back to you so you can invoke another.\n"
             + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
-            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{\n ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
+            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ \nID: {(int)keyToolPair.Key}. \nName: {keyToolPair.Value.Name}. \nDescription: {keyToolPair.Value.Description}. \n}}"))}``` \n"
             + $"If you'd like to run a tool:\n"
             + $"Set the \"RunTool\" field to true.\n"
             + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
-            + $"Set the \"ToolInput\" field to the required input (leave blank if no input is needed).\n";
-        
+            + $"Set the \"ToolInput\" field to the required input (leave blank if no input is needed).\n"
+            // previous invocations.
+            + $"If you have previously ran any tools, their results are appended:\n"
+            + $"```\n{diffSection.Context.Select(invocation => $"Tool: {{ \nName: {invocation.ToolName}. \nDescription: {invocation.Description}. \nResult: {string.Join(", ", invocation.Result)}. \n}}")}```\n"
+            + $"If a tool has already ran, do not try it again unless you have evidence it will succeed on retry.";
+
         MessageCreateParams requestParameter = new() {
             MaxTokens = maxTokens,
+            // we avoid the tool field in the api so we have full control over flow. 
             Messages = [
                 new() {
                     Role = Role.User,

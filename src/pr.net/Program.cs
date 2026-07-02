@@ -181,6 +181,7 @@ public class Program {
         builder.Services.AddScoped<Orchestrator>();
         builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
+        // TODO: these tools should be dispensed from a service, not injected.
         // builtin tooling.
         builder.Services.AddScoped<IToolingService, EnvironmentToolingService>(); 
         // core tools.
