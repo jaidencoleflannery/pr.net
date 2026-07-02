@@ -23,18 +23,15 @@ public class EnvironmentReadFileTreeTool(
         };
 
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
-        ToolResponse toolResponse = await ReadFileTree(parameters);
+        ToolResponse toolResponse = await _toolClient.FetchFileTree(parameters);
         if(!toolResponse.Success
         || toolResponse.Result == null) {
-            _logger.LogError($"{nameof(ReadFileTree): Invocation of tool failed.}");
+            _logger.LogError($"{nameof(EnvironmentReadFileTreeTool)}-{nameof(InvokeTool)}: Invocation of tool failed.");
             return ToolFail();
         }
 
         return toolResponse;
     }
-
-    private async Task<ToolResponse> ReadFileTree(ToolParameters parameters) =>
-        await _toolClient.FetchFileTree(parameters);
 
 }
 
