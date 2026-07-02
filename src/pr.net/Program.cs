@@ -12,11 +12,13 @@ using pr.net.Services.Clients.Github;
 using pr.net.Services.Repositories.Generic; 
 using pr.net.Services.Orchestration;
 using pr.net.Services.Validations;
+using pr.net.Services.Tooling;
 
 using pr.net.Configurations.Host;
 using pr.net.Configurations.Chat;
 using pr.net.Configurations.Repo;
 using pr.net.Configurations.Auth;
+using pr.net.Configurations.Tooling;
 
 using pr.net.Endpoints;
 
@@ -27,6 +29,7 @@ using static pr.net.Models.Enums.TokenProviders;
 using static pr.net.Models.Enums.RepoProviders;
 using static pr.net.Models.Enums.InstructionsProviders;
 using static pr.net.Models.Enums.ChatProviders;
+using static pr.net.Models.Enums.ToolingProviders;
 
 namespace pr.net;
 
@@ -68,12 +71,18 @@ public class Program {
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        builder.Services.AddOptions<ToolingConfiguration>()
+            .Bind(builder.Configuration.GetSection("Tooling"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         // one time fetch for injection maps.
         HostProvider hostProvider = ValidateHostProvider(builder.Configuration["Host:Provider"]);
         TokenProvider tokenProvider = ValidateTokenProvider(builder.Configuration["Host:TokenProvider"]);
         RepoProvider repoProvider = ValidateRepoProvider(builder.Configuration["Repo:Provider"]);
         InstructionsProvider instructionsProvider = ValidateInstructionsProvider(builder.Configuration["Chat:Instructions:Provider"]);
         ChatProvider chatProvider = ValidateChatProvider(builder.Configuration["Chat:Provider"]);
+        ToolingProvider toolingProvider = ValidateToolingProvider(builder.Configuration["Tooling:Provider"]);
 
         // register services from config values - unfortunately cannot use the builder options due to lazy loading.
 
@@ -156,16 +165,36 @@ public class Program {
             // chain other types of chat providers here.
         }
 
+        // optional tools.
+        switch(toolingProvider) {
+            case ToolingProvider.Environment:
+                builder.Services.AddScoped<IReadFileTreeTool, EnvironmentReadFileTreeTool>();
+                builder.Services.AddScoped<IReadFileTool, EnvironmentReadFileTool>();
+                break;
+
+            case ToolingProvider.Amazon:
+                // lambda invocations.
+                break;
+        }
+
         // generic services.
         builder.Services.AddScoped<Orchestrator>();
         builder.Services.AddScoped<IChatService, ChatService>(); 
         builder.Services.AddScoped<IRepositoryRequestService, RepositoryRequestService>();
+        // builtin tooling.
+        builder.Services.AddScoped<IToolingService, EnvironmentToolingService>(); 
+        // core tools.
+        builder.Services.AddScoped<IReadFileTreeTool, EnvironmentReadFileTreeTool>();
+        builder.Services.AddScoped<IReadFileTool, EnvironmentReadFileTool>();
+        // core tool dependencies.
+        builder.Services.AddScoped<IToolClient, BitbucketToolClient>();
 
         builder.Services.AddSingleton<ITokenService, TokenService>();
         builder.Services.AddSingleton<IWebhookValidator, WebhookValidator>(); 
         // schemas to format ai output.
         builder.Services.AddSingleton<IReviewSchema, Schema<ReviewProperties>>();
         builder.Services.AddSingleton<IFilteringSchema, Schema<FilteringProperties>>();
+        builder.Services.AddSingleton<IToolingSchema, Schema<ToolingProperties>>();
         // patterns have not been implemented - need to figure out a sound strategy and convert them into a format that can be better analyzed.
         // builder.Services.AddSingleton<IPatternService, LocalPatternService>(); 
 
@@ -194,7 +223,7 @@ public class Program {
             @$"  
             {'\u2873'}{'\u28F6'}{'\u28A5'}{'\u282E'} is running in {env} mode.
 
-            | Configuration |
+            | Configuration |  
             | * Host:       | [{hostProvider}]
             | * Repository: | [{repoProvider}]
             | * Chat:       | [{chatProvider}]

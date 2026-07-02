@@ -11,5 +11,7 @@ public class ChatContent {
     public string Text { get; set; } = string.Empty;
 
     [JsonPropertyName("line")]
-    public int Line { get; set; } = -1;
+    public int? Line { get; set; } = null;
+
 }
+

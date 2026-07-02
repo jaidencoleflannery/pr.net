@@ -7,7 +7,10 @@ using pr.net.Models.Generic;
 
 namespace pr.net.Services.Requests;
 
-public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger, IRepositoryApiClient _client) : IRepositoryRequestService {
+public class RepositoryRequestService(
+        ILogger<RepositoryRequestService> _logger, 
+        IRepositoryApiClient _client
+    ) : IRepositoryRequestService {
 
     // returns a dictionary of key: file, value: diff.
     public async Task<IEnumerable<DiffSection>?> GetPullReviewFiles(PullReviewCreatedEvent prEvent) {
@@ -32,7 +35,9 @@ public class RepositoryRequestService(ILogger<RepositoryRequestService> _logger,
 
     // posts reviews to specific pull review
     public async Task PostChatReviews(IEnumerable<(DiffSection, ChatResponse)> reviews, PullReviewCreatedEvent prEvent) {  
-        var result = await _client.PostReviewsAsync(reviews, prEvent);
+        List<string?> result = await _client.PostReviewsAsync(reviews, prEvent);
+        _logger.LogInformation($"\n{DateTime.Now}: Posted total of ({result.Count}) reviews..\n");
+        return;
     }
 
 }

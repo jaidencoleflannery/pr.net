@@ -26,3 +26,4 @@ public class AnthropicResponse : ChatResponse {
     public AnthropicUsage Usage { get; set; } = new AnthropicUsage();
 
 }
+

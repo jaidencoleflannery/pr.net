@@ -2,7 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Schemas;
 
-public class Schema<TProperties> : IReviewSchema, IFilteringSchema where TProperties : IProperties, new() {
+// TODO: this is a bad implementation, redo.
+public class Schema<TProperties> : IReviewSchema, IFilteringSchema, IToolingSchema where TProperties : IProperties, new() {
 
     public Schema() {
         this.Required = [..Properties.GetRequiredFields()];
@@ -21,3 +22,4 @@ public class Schema<TProperties> : IReviewSchema, IFilteringSchema where TProper
     public bool AdditionalProperties { get; set; } = false; 
 
 }
+

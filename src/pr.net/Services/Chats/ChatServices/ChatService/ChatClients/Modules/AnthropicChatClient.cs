@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -5,10 +6,14 @@ using Anthropic;
 using Anthropic.Models.Messages;
 using Anthropic.Exceptions;
 
+using pr.net.Services.Tooling;
+
 using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Incoming.Anthropic;
 using pr.net.Models.Schemas;
+using pr.net.Models.Tooling;
+using pr.net.Models.Enums;
 
 using static System.Text.Json.JsonSerializer;
 
@@ -16,9 +21,11 @@ namespace pr.net.Services.Chat;
 
 public class AnthropicChatClient(
     ILogger<AnthropicChatClient> _logger,
+    IToolingService _toolingService,
     IAnthropicClient _client,
     IFilteringSchema _filterSchema, 
-    IReviewSchema _reviewSchema
+    IReviewSchema _reviewSchema,
+    IToolingSchema _toolingSchema 
 ) : IChatClient {
     
     public async Task<IEnumerable<DiffSection>?> RequestFilteringAsync(
@@ -28,6 +35,11 @@ public class AnthropicChatClient(
         string instructions,
         TimeSpan? timeout
     ) {
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(RequestFilteringAsync)}.\n");
+            return null;
+        }
+
         // push schema into provider's required type for the format field.
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(Serialize(_filterSchema, _filterSchema.GetType())); 
         if(schema == null) {
@@ -103,6 +115,11 @@ public class AnthropicChatClient(
         string instructions,
         TimeSpan? timeout
     ) {
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(RequestReviewsAsync)}.\n");
+            return null;
+        }
+
         // push schema into anthropic's required type for the format field.
         string schemaString = Serialize(_reviewSchema, _reviewSchema.GetType());
         Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
@@ -121,7 +138,7 @@ public class AnthropicChatClient(
                         Messages = [
                             new() {
                                 Role = Role.User,
-                                Content = $"Review this diff:\n```{diff.Contents}```"
+                                Content = $"Review this diff:\n```{diff.Contents}```\n\nHere is the context that was gathered for this diff:\n{FormatContext(diff.Context)}"
                             },
                         ],
                         Model = model!,
@@ -172,5 +189,113 @@ public class AnthropicChatClient(
             ? reviewPerPath
             : null;
     }
+
+    private static string FormatContext(IEnumerable<ToolResponse> context) {
+        List<ToolResponse> successful = context.Where(c => c.Success && c.Result.Length > 0).ToList();
+        if(successful.Count == 0)
+            return "No additional context was gathered for this diff.";
+
+        StringBuilder sb = new();
+        sb.AppendLine("<context>");
+        foreach(ToolResponse tool in successful) {
+            sb.AppendLine($"  <tool name=\"{tool.ToolName}\">");
+            foreach(string line in tool.Result)
+                sb.AppendLine($"    {line}");
+            sb.AppendLine("  </tool>");
+        }
+        sb.Append("</context>");
+        return sb.ToString();
+    }
+
+    public async Task<ToolingQuery?> QueryForToolUsage(
+        DiffSection diffSection,
+        long maxTokens,
+        string model,
+        string instructions,
+        TimeSpan? timeout
+    ) {
+        if(string.IsNullOrWhiteSpace(model)) {
+            _logger.LogError($"\n{DateTime.Now}: Parameter for model was invalid in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
+        // push schema into anthropic's required type for the format field.
+        // this is our desired structured output.
+        string schemaString = Serialize(_toolingSchema, _toolingSchema.GetType());
+        Dictionary<string, JsonElement>? schema = Deserialize<Dictionary<string, JsonElement>>(schemaString);
+        if(schema == null) {
+            _logger.LogError($"\n{DateTime.Now}: Failure to serialize Tooling schema in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
+        // fetch available tools.
+        Dictionary<ToolSignature, ToolMetadata> availableTools = _toolingService.GetOptionalTools();
+
+        if(string.IsNullOrWhiteSpace(diffSection.Contents)) {
+            _logger.LogInformation($"\n{DateTime.Now}: File ({diffSection.Path})'s contents were empty in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+ 
+        if(diffSection.Contents.Length > 100000) {
+            _logger.LogInformation($"\n{DateTime.Now}: File ({diffSection.Path}) was too large to run tools on in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
+        string prompt = 
+            // diff files.
+            $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
+            + $"Your goal is to gather the minimal amount possible. Err towards using no tools unless it is critical.\n"
+            + $"Here is the diff:\n"
+            + $"```\nPath: {diffSection.Path}.\nContents: {diffSection.Contents}\n```\n"
+            // tools.
+            + $"For tools, note that some tools can only be called after their parent is called.\n"
+            + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
+            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{\n ID: {(int)keyToolPair.Key}.\n Name: {keyToolPair.Value.Name}.\n Description: {keyToolPair.Value.Description}.\n }}"))}```\n"
+            + $"If you'd like to run a tool:\n"
+            + $"Set the \"RunTool\" field to true.\n"
+            + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
+            + $"Set the \"ToolInput\" field to the required input (leave blank if no input is needed).\n";
         
+        MessageCreateParams requestParameter = new() {
+            MaxTokens = maxTokens,
+            Messages = [
+                new() {
+                    Role = Role.User,
+                    Content = prompt
+                },
+            ],
+            Model = model!,
+            OutputConfig = new OutputConfig {
+                Format = new JsonOutputFormat { 
+                    Schema = schema 
+                }, 
+            },
+            System = instructions,
+            Temperature = 0.0,
+        }; 
+
+        // note that the apikey is injected from the environment at init by the anthropic sdk.
+        ToolingQuery toolingQueryResult = new();
+        Message message;
+        try {
+            message = await _client.Messages.Create(requestParameter); 
+            foreach(ContentBlock content in message.Content) {
+                if(content.TryPickText(out TextBlock? textBlock) && textBlock != null) {
+                    ToolingQuery? response = JsonNode.Parse(textBlock!.Text)!.Deserialize<ToolingQuery>()
+                        ?? throw new InvalidOperationException($"Could not parse text from response in {nameof(QueryForToolUsage)}");
+                    toolingQueryResult = response;
+                } else {
+                    _logger.LogError($"\n{DateTime.Now}: Anthropic call could not be made, could not parse text block from request.");
+                    continue;
+                }
+            }
+        } catch(AnthropicApiException exception) {
+            _logger.LogError($"\n{DateTime.Now}: Anthropic call failed: {exception.Message} in {nameof(QueryForToolUsage)}.\n");
+            return null;
+        }
+
+        return toolingQueryResult;
+    }
+
 }
+

@@ -10,7 +10,11 @@ using pr.net.Models.Generic;
 
 namespace pr.net.Services.Clients.Bitbucket;
 
-public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) : IRepositoryApiClient {
+public class BitbucketApiClient(
+        HttpClient client, 
+        ITokenService _tokenService,
+        ILogger<BitbucketApiClient> _logger
+    ) : IRepositoryApiClient {
 
     public async Task<string> GetPullRequestDataAsync(PullReviewCreatedEvent prEvent) {
         if(prEvent is not BitbucketPullReviewCreatedEventDto request)
@@ -21,7 +25,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
             message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, prEvent));
             HttpResponseMessage response = await client.SendAsync(message);
 
-            return (response!= null && response.IsSuccessStatusCode)
+            return (response != null && response.IsSuccessStatusCode)
                 ? await response.Content.ReadAsStringAsync()
                 : throw new Exception($"Failed to get pull review {metadata.Id}'s data, status: {response?.StatusCode} - {response?.Content}");
         }
@@ -53,7 +57,6 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
                 message.Content = new StringContent(JsonSerializer.Serialize(comment, jsonSettings), System.Text.Encoding.UTF8, "application/json"); 
 
                 var response = await client.SendAsync(message); 
-                var content = response.Content.ReadAsStringAsync();
                 if(response.IsSuccessStatusCode)
                     responses.Add(await response.Content.ReadAsStringAsync());
                 else
@@ -69,6 +72,7 @@ public class BitbucketApiClient(HttpClient client, ITokenService _tokenService) 
             return responses;
         else
             throw new HttpRequestException($"No {nameof(PostReviewsAsync)} calls were successfull, failed to perform review.");
-    }
+    } 
 
 }
+

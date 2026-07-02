@@ -6,6 +6,8 @@ public static class Events {
 
     // O(1) lookup (TryParse is O(n)).
     public static bool ValidateEvent(string? eventString, RepoProvider provider) {
+        if(eventString is null)
+            return false;
         switch(provider) {
             case RepoProvider.Github:
                 return GithubEventMap.TryGetValue(eventString ?? string.Empty, out _);

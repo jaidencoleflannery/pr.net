@@ -5,6 +5,7 @@ using pr.net.Models.Generic;
 using pr.net.Models.Incoming;
 using pr.net.Models.Schemas;
 using pr.net.Models.Incoming.Amazon;
+using pr.net.Models.Tooling;
 
 using static System.Text.Json.JsonSerializer;
 
@@ -177,6 +178,16 @@ public class AmazonChatClient(
         return (reviewPerPath.Count > 0)
             ? reviewPerPath
             : null;
+    } 
+
+    public Task<ToolingQuery?> QueryForToolUsage(
+        DiffSection diffSection,
+        long maxTokens,
+        string model,
+        string instructions,
+        TimeSpan? timeout
+    ) {
+        return null;
     }
         
 }
