@@ -4,7 +4,7 @@ public static class PresetToolResponses {
 
     private static ToolResponse _fail = new() {
         Success = false,
-        Result = null
+        Result = []
     };
 
     // function call incase we want to extend tool failure logic in the future.

@@ -26,7 +26,7 @@ public class ChatConfiguration {
 
     [Required]
     [ConfigurationKeyName("Timeout")]
-    public int? Timeout { get; init; }
+    public TimeSpan? Timeout { get; init; }
 
     [Required]
     [ConfigurationKeyName("Instructions")]

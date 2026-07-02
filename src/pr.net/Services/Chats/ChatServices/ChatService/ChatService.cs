@@ -93,9 +93,9 @@ public class ChatService(
             return null;
         }  
 
-        TimeSpan? timeout = _chatConfiguration.Value.Filtering?.Timeout;
+        TimeSpan? timeout = _chatConfiguration.Value.Timeout;
         if(timeout == null) {
-            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatReviewsAsync)}. ]\n");
+            _logger.LogError($"\n{DateTime.Now}: [ Configuration for Chat:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatReviewsAsync)}. ]\n");
             return null;
         }
 
@@ -122,13 +122,13 @@ public class ChatService(
 
         string? instructions = string.Join(' ', await _instructionsService.GetInstructions(isForFiltering: false));
         if(string.IsNullOrWhiteSpace(instructions)) {
-            _logger.LogError($"\n{DateTime.Now}: Could not fetch filtering instructions in {nameof(GetChatContextAsync)}.\n");
+            _logger.LogError($"\n{DateTime.Now}: Could not fetch instructions in {nameof(GetChatContextAsync)}.\n");
             return null;
         }  
 
-        TimeSpan? timeout = _chatConfiguration.Value.Filtering?.Timeout;
+        TimeSpan? timeout = _chatConfiguration.Value.Timeout;
         if(timeout == null) {
-            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:Filtering:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatContextAsync)}.\n");
+            _logger.LogError($"\n{DateTime.Now}: Configuration for Chat:Timeout could not be found or read, or is in an invalid format in {nameof(GetChatContextAsync)}.\n");
             return null;
         }
 
