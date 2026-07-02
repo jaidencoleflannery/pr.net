@@ -17,17 +17,17 @@ public class EnvironmentReadFileTool(
 ) : IReadFileTool {
     public ToolMetadata GetToolMetadata() => 
         new() {
-            Name = ToolSignature.ReadFile.ToString(),
-            Description = $"Read a specified file from the repository, can only be used after {ToolSignature.ReadFileTree.ToString()} has been invoked.",
+            Name = nameof(ToolSignature.ReadFile),
+            Description = $"Read a specified file from the repository, can only be used after {nameof(ToolSignature.ReadFileTree)} has been invoked.",
             IsChild = true,
             ToolPointer = this.InvokeTool
         };
 
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) { 
-        ToolResponse result = await ReadFile(parameters);
+        ToolResponse result = await _toolClient.FetchFile(parameters); 
         if(!result.Success
         || result.Result == null) {
-            _logger.LogError($"{nameof(ReadFile): Invocation of tool failed.}");
+            _logger.LogError($"{nameof(EnvironmentReadFileTool)}-{nameof(InvokeTool)}: Invocation of tool failed.");
             return ToolFail();
         }
 
@@ -36,8 +36,5 @@ public class EnvironmentReadFileTool(
             Result = result.Result
         };
     }
-
-    public async Task<ToolResponse> ReadFile(ToolParameters parameters) =>
-        await _toolClient.FetchFile(parameters); 
 
 }

@@ -17,7 +17,7 @@ public class EnvironmentReadFileTreeTool(
 
     public ToolMetadata GetToolMetadata() => 
         new() {
-            Name = ToolSignature.ReadFileTree.ToString() ?? string.Empty, 
+            Name = nameof(ToolSignature.ReadFileTree),
             Description = "Get repository directory tree.",
             ToolPointer = this.InvokeTool
         };
