@@ -19,12 +19,18 @@ public class BitbucketToolClient(
     ITokenService _tokenService,
     IOptions<ChatConfiguration> _chatConfiguration, 
     ILogger<BitbucketToolClient> _logger
-) : IToolClient {
+) : IToolClient { 
 
-    private readonly uint _maxFileTreeDepth = 25;
+    private readonly uint _maxFileTreeDepth = 25; 
     private readonly uint _fileTreePageLength = 100;
+    private readonly uint _maxFileTreeNumPages = 25;
 
     public async ValueTask<ToolResponse> FetchFileTree(ToolParameters parameters) {
+        if(parameters is null) {
+            _logger.LogError($"{nameof(FetchFileTree)}: Provided parameters were null, tool invocation failed.");
+           return ToolFail();
+        }
+
         if(parameters.PrEvent is null or not BitbucketPullReviewCreatedEventDto) {
            _logger.LogError($"{nameof(FetchFileTree)}: The type of event does not match the injected service, or is invalid, short circuiting.");
            return ToolFail();
@@ -35,7 +41,7 @@ public class BitbucketToolClient(
         || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
             _logger.LogError($"{nameof(FetchFileTree)}: Provided event payload contained an invalid value, short circuiting.");
            return ToolFail();
-        }
+        } 
 
         // https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/src/{branch_or_commit}/?max_depth=25&pagelen=100&fields=values.path,values.type,next
         string url = $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/src/{metadata.CommitHash}/"
@@ -48,7 +54,8 @@ public class BitbucketToolClient(
                 return ToolFail();
             }
 
-            List<BitbucketFileTreeEntryDto>? entries = await FetchFileTreePage(url, token, []);
+            uint recursionDepth = 0;
+            List<BitbucketFileTreeEntryDto>? entries = await FetchFileTreePage(url, token, recursionDepth, []);
             if(entries is null)
                 return ToolFail();
 
@@ -62,29 +69,50 @@ public class BitbucketToolClient(
         }
     }
 
-    private async ValueTask<List<BitbucketFileTreeEntryDto>?> FetchFileTreePage(string url, string token, List<BitbucketFileTreeEntryDto> accumulated) {
+    private async ValueTask<List<BitbucketFileTreeEntryDto>?> FetchFileTreePage(string url, string token, uint recursionDepth, List<BitbucketFileTreeEntryDto> accumulated) {
+        if(recursionDepth > _maxFileTreeDepth) {
+            _logger.LogError($"{nameof(FetchFileTreePage)}: Failed to fetch file tree page.");
+            return null;
+        }
+
         using HttpRequestMessage message = new(HttpMethod.Get, url);
         message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         using HttpResponseMessage response = await client.SendAsync(message);
         if(!response.IsSuccessStatusCode) {
-            _logger.LogError($"{nameof(FetchFileTree)}: Fetch request was unsuccessful.");
+            _logger.LogError($"{nameof(FetchFileTreePage)}: Fetch request was unsuccessful.");
             return null;
         }
 
         string content = await response.Content.ReadAsStringAsync();
-        if(string.IsNullOrWhiteSpace(content))
-            // this is within the try/catch, don't throw upchain in tools.
-            throw new InvalidOperationException($"{nameof(FetchFileTree)}: Response content was invalid, failed to fetch.");
+        if(string.IsNullOrWhiteSpace(content)) {
+            _logger.LogError($"{nameof(FetchFileTreePage)}: Response content was invalid, failed to fetch.");
+            return null;
+        }
 
-        BitbucketFileTreeResponseDto? page = JsonSerializer.Deserialize<BitbucketFileTreeResponseDto>(content)
-            ?? throw new InvalidOperationException($"{nameof(FetchFileTree)}: Failed to deserialize file tree response.");
+        BitbucketFileTreeResponseDto? page = JsonSerializer.Deserialize<BitbucketFileTreeResponseDto>(content);
+        if(page == null) {
+            _logger.LogError($"{nameof(FetchFileTreePage)}: Failed to deserialize file tree response.");
+            return null;
+        }
 
         accumulated.AddRange(page.Values);
 
-        return string.IsNullOrWhiteSpace(page.Next)
-            ? accumulated
-            : await FetchFileTreePage(page.Next, token, accumulated);
+        if(string.IsNullOrWhiteSpace(page.Next)) {
+            return accumulated;
+        } else {
+            List<BitbucketFileTreeEntryDto>? treePage = await FetchFileTreePage(page.Next, token, ++recursionDepth, accumulated);
+            if(treePage == null) {
+                accumulated.Add(new() {
+                    Path = "Failed to fetch.",
+                    Type = "commit_directory"
+                });
+
+                return accumulated;
+            }
+
+            return treePage;
+        }
     }
 
     // collapses the flat path list down to just directories so it's an indented tree.
@@ -167,9 +195,10 @@ public class BitbucketToolClient(
                 using HttpResponseMessage response = await client.SendAsync(message);
                 string content = await response.Content.ReadAsStringAsync();
                 if(response.IsSuccessStatusCode) {
-                    if(string.IsNullOrWhiteSpace(content))
-                        // this is within the try/catch, don't throw upchain in tools.
-                        throw new InvalidOperationException($"{nameof(FetchFile)}: Response content was invalid, failed to fetch.");
+                    if(string.IsNullOrWhiteSpace(content)) {
+                        _logger.LogError($"{nameof(FetchFile)}: Response content was invalid, failed to fetch.");
+                        return ToolFail();
+                    }
 
                     return new ToolResponse {
                         Success = true,
@@ -186,4 +215,3 @@ public class BitbucketToolClient(
     }
 
 }
-
