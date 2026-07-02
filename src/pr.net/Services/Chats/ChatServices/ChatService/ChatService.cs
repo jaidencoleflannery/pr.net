@@ -161,7 +161,7 @@ public class ChatService(
 
             if(invocation.RunTool == true
             && invocation.ToolId != null) {
-                if(invocationCount > _toolingConfiguration.Value.MaxInvocations) {
+                if(invocationCount >= _toolingConfiguration.Value.MaxInvocations) {
                     _logger.LogError($"\n{DateTime.Now}: Maximum number of tool invocations was reached, short circuiting path.");
                     break;
                 }
