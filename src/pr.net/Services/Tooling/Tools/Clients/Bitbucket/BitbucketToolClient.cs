@@ -155,10 +155,14 @@ public class BitbucketToolClient(
                 HttpMethod.Get, 
                 $"https://api.bitbucket.org/2.0/repositories/{metadata.RepoSlug}/src/{metadata.CommitHash}/{path}")
             ) {
-                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-                    "Bearer", 
-                    await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, parameters.PrEvent)
-                );
+
+                string? token = await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, parameters.PrEvent);
+                if(string.IsNullOrWhiteSpace(token)) {
+                    _logger.LogError($"{nameof(FetchFile)}: Failed to retrieve token.");
+                    return ToolFail();
+                }
+
+                message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 
                 using HttpResponseMessage response = await client.SendAsync(message);
                 string content = await response.Content.ReadAsStringAsync();
