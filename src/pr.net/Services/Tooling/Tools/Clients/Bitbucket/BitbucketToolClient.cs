@@ -218,7 +218,7 @@ public class BitbucketToolClient(
                         Success = true,
                         ToolName = toolMetadata.Name,
                         Description = toolMetadata.Description,
-                        Result = (content.Length > _maximumFileSize)
+                        Result = (content.Length <= _maximumFileSize)
                             ? [content]
                             : ["File size was too large to read."]
                     };
