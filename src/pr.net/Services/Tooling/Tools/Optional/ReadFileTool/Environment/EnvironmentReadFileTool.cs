@@ -24,7 +24,7 @@ public class EnvironmentReadFileTool(
         };
 
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) { 
-        ToolResponse result = await _toolClient.FetchFile(parameters); 
+        ToolResponse result = await _toolClient.FetchFile(parameters, GetToolMetadata()); 
         if(!result.Success
         || result.Result == null) {
             _logger.LogError($"{nameof(EnvironmentReadFileTool)}-{nameof(InvokeTool)}: Invocation of tool failed.");

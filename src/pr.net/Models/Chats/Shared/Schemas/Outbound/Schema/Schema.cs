@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace pr.net.Models.Schemas;
 
-// TODO: this is a bad implementation, redo.
+// TODO: make a factory to dispense these instead of injecting them.
 public class Schema<TProperties> : IReviewSchema, IFilteringSchema, IToolingSchema where TProperties : IProperties, new() {
 
     public Schema() {

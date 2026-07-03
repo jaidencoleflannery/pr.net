@@ -10,10 +10,10 @@ public class ToolingProperties : IProperties {
     public BooleanType RunTool { get; set; } = new();
 
     [JsonPropertyName("toolId")]
-    public StringType ToolId { get; set; } = new();
+    public NullableIntType ToolId { get; set; } = new();
 
     [JsonPropertyName("toolInput")]
-    public StringType ToolInput { get; set; } = new();
+    public NullableStringType ToolInput { get; set; } = new();
 
     public List<string> GetRequiredFields() => ["runTool", "toolId", "toolInput"];
 

@@ -7,7 +7,7 @@ public class ToolParameters(
     int toolId,
     IEnumerable<string?> toolInput,
     PullReviewCreatedEvent? prEvent,
-    IEnumerable<DiffSection?> diffSections
+    DiffSection? diffSection
  ) {
 
     public int ToolId { get; set; } = toolId;
@@ -16,6 +16,6 @@ public class ToolParameters(
 
     public PullReviewCreatedEvent? PrEvent { get; set; } = prEvent;
 
-    public IEnumerable<DiffSection?> DiffSections { get; set; } = diffSections;
+    public DiffSection? DiffSections { get; set; } = diffSection;
 
 }

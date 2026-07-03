@@ -1,6 +1,3 @@
-using pr.net.Models.Outbound.Generic;
-using pr.net.Models.Generic;
-
 namespace pr.net.Models.Tooling;
 
 public struct ToolMetadata {
@@ -11,8 +8,8 @@ public struct ToolMetadata {
     public Func<ToolParameters, ValueTask<ToolResponse>> ToolPointer { get; init; }
 
     public ToolMetadata(
-        string name, 
-        string description, 
+        string name,
+        string description,
         bool isChild,
         Func<ToolParameters, ValueTask<ToolResponse>> toolPointer
     ) {
@@ -25,4 +22,3 @@ public struct ToolMetadata {
     public async readonly Task<ToolResponse> CallTool(ToolParameters parameters) =>
         await ToolPointer(parameters);
 }
-

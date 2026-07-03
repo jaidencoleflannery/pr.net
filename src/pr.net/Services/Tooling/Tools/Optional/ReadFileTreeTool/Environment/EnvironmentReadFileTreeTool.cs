@@ -19,11 +19,11 @@ public class EnvironmentReadFileTreeTool(
         new() {
             Name = nameof(ToolSignature.ReadFileTree),
             Description = "Get repository directory tree.",
-            ToolPointer = this.InvokeTool
+            ToolPointer = InvokeTool
         };
 
     public async ValueTask<ToolResponse> InvokeTool(ToolParameters parameters) {
-        ToolResponse toolResponse = await _toolClient.FetchFileTree(parameters);
+        ToolResponse toolResponse = await _toolClient.FetchFileTree(parameters, GetToolMetadata());
         if(!toolResponse.Success
         || toolResponse.Result == null) {
             _logger.LogError($"{nameof(EnvironmentReadFileTreeTool)}-{nameof(InvokeTool)}: Invocation of tool failed.");
