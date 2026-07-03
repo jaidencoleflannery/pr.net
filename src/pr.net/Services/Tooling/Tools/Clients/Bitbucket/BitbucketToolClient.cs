@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 
 using Microsoft.Extensions.Options;
@@ -10,24 +9,21 @@ using pr.net.Configurations.Chat;
 
 using pr.net.Models.Tooling;
 using pr.net.Models.Bitbucket;
-
-using static pr.net.Models.Tooling.PresetToolResponses;
+using pr.net.Models.Tooling.FetchFileTree;
 
 namespace pr.net.Services.Tooling;
 
 public class BitbucketToolClient(
     HttpClient client,
     ITokenService _tokenService,
-    IOptions<ChatConfiguration> _chatConfiguration, 
     ILogger<BitbucketToolClient> _logger
 ) : IToolClient { 
 
     private readonly uint _maxFileTreeDepth = 25; 
     private readonly uint _fileTreePageLength = 100;
-    private readonly uint _maxFileTreeNumPages = 25;
+    private readonly uint _maximumFileSize = 50_000;
 
     public async ValueTask<ToolResponse> FetchFileTree(ToolParameters parameters, ToolMetadata toolMetadata) {
-
         ToolResponse toolFail = new() {
             Success = false,
             ToolName = toolMetadata.Name,
@@ -36,19 +32,19 @@ public class BitbucketToolClient(
 
         if(parameters is null) {
             _logger.LogError($"{nameof(FetchFileTree)}: Provided parameters were null, tool invocation failed.");
-           return ToolFail();
+           return toolFail;
         }
 
         if(parameters.PrEvent is null or not BitbucketPullReviewCreatedEventDto) {
            _logger.LogError($"{nameof(FetchFileTree)}: The type of event does not match the injected service, or is invalid, short circuiting.");
-           return ToolFail();
+           return toolFail;
         }
 
         BitbucketPullReviewCreatedMetadataDto metadata = new((BitbucketPullReviewCreatedEventDto)parameters.PrEvent); // grab minimum metadata.
         if(string.IsNullOrWhiteSpace(metadata.CommitHash)
         || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
             _logger.LogError($"{nameof(FetchFileTree)}: Provided event payload contained an invalid value, short circuiting.");
-           return ToolFail();
+           return toolFail;
         }
 
         // https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/src/{branch_or_commit}/?max_depth=25&pagelen=100&fields=values.path,values.type,next
@@ -59,27 +55,29 @@ public class BitbucketToolClient(
             string? token = await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, parameters.PrEvent);
             if(string.IsNullOrWhiteSpace(token)) {
                 _logger.LogError($"{nameof(FetchFileTree)}: Failed to retrieve a valid token, short circuiting.");
-                return ToolFail();
+                return toolFail;
             }
 
             uint recursionDepth = 0;
             List<BitbucketFileTreeEntryDto>? entries = await FetchFileTreePage(url, token, recursionDepth, []);
             if(entries is null)
-                return ToolFail();
+                return toolFail;
 
             return new ToolResponse {
                 Success = true,
+                ToolName = toolMetadata.Name,
+                Description = toolMetadata.Description,
                 Result = [BuildFolderTree(entries)]
-            };
+            }; 
         } catch (Exception error) {
             _logger.LogError($"{nameof(FetchFileTree)}: Failed to fetch file tree. Error encountered: {error}.");
-            return ToolFail();
+            return toolFail;
         }
     }
 
     private async ValueTask<List<BitbucketFileTreeEntryDto>?> FetchFileTreePage(string url, string token, uint recursionDepth, List<BitbucketFileTreeEntryDto> accumulated) {
         if(recursionDepth > _maxFileTreeDepth) {
-            _logger.LogError($"{nameof(FetchFileTreePage)}: Failed to fetch file tree page.");
+            _logger.LogError($"{nameof(FetchFileTreePage)}: Failed to fetch file tree page, max depth reached.");
             return null;
         }
 
@@ -123,66 +121,74 @@ public class BitbucketToolClient(
         }
     }
 
-    // collapses the flat path list down to just directories so it's an indented tree.
+    // convert repo structure string into json structure of folders + files.
     private static string BuildFolderTree(List<BitbucketFileTreeEntryDto> entries) {
-        SortedDictionary<string, object> root = new(StringComparer.Ordinal);
+        List<FetchFileTreeFile> root = [];
 
         foreach(BitbucketFileTreeEntryDto entry in entries) {
             string[] segments = entry.Path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if(segments.Length == 0)
+                continue;
 
-            int folderSegmentCount = entry.Type == "commit_directory" ? segments.Length : segments.Length - 1;
+            bool isFile = (entry.Type != "commit_directory");
 
-            SortedDictionary<string, object> current = root;
-            for(int i = 0; i < folderSegmentCount; i++) {
-                if(current.TryGetValue(segments[i], out object? child)) {
-                    current = (SortedDictionary<string, object>)child;
-                } else {
-                    SortedDictionary<string, object> next = new(StringComparer.Ordinal);
-                    current[segments[i]] = next;
-                    current = next;
+            List<FetchFileTreeFile> current = root;
+            for(int cursor = 0; cursor < segments.Length; cursor++) {
+                bool leafIsFile = ((cursor == segments.Length - 1) && isFile);
+
+                FetchFileTreeFile? node = current.FirstOrDefault(child => child.Name == segments[cursor]);
+                if(node is null) {
+                    node = new FetchFileTreeFile {
+                        Name = segments[cursor],
+                        Type = leafIsFile ? "file" : "directory"
+                    };
+                    current.Add(node);
                 }
+
+                if(leafIsFile)
+                    break;
+
+                current = node.Children;
             }
         }
 
-        StringBuilder builder = new();
-        AppendFolderTree(root, builder, 0);
-        return builder.Length > 0 ? builder.ToString() : "(no subdirectories)";
-    }
-
-    private static void AppendFolderTree(SortedDictionary<string, object> node, StringBuilder builder, int depth) {
-        foreach((string name, object child) in node) {
-            builder.Append(' ', depth * 2).Append(name).Append('/').Append('\n');
-            AppendFolderTree((SortedDictionary<string, object>)child, builder, depth + 1);
-        }
+        return JsonSerializer.Serialize(root);
     }
 
     public async ValueTask<ToolResponse> FetchFile(ToolParameters parameters, ToolMetadata toolMetadata) {
+        ToolResponse toolFail = new() {
+            Success = false,
+            ToolName = toolMetadata.Name,
+            Description = toolMetadata.Description,
+            Result = []
+        };
+
         if(parameters is null) {
             _logger.LogError($"{nameof(FetchFile)}: Provided parameters were null, short circuiting.");
-           return ToolFail();
+           return toolFail;
         }
 
         if(parameters.PrEvent is null or not BitbucketPullReviewCreatedEventDto) {
            _logger.LogError($"{nameof(FetchFile)}: The type of event does not match the injected service, or is invalid, short circuiting.");
-           return ToolFail();
+           return toolFail;
         }
 
         if(parameters.ToolInput is null || parameters.ToolInput.Count() != 1) {
             _logger.LogError($"{nameof(FetchFile)}: Input for Fetch was invalid.");
-           return ToolFail();
+           return toolFail;
         }
 
         BitbucketPullReviewCreatedMetadataDto metadata = new((BitbucketPullReviewCreatedEventDto)parameters.PrEvent); // grab minimum metadata.
         if(string.IsNullOrWhiteSpace(metadata.CommitHash)
         || string.IsNullOrWhiteSpace(metadata.RepoSlug)) {
             _logger.LogError($"{nameof(FetchFile)}: Provided event payload contained an invalid value, short circuiting.");
-           return ToolFail();
+           return toolFail;
         }
 
         string? path = parameters.ToolInput.First();
         if(string.IsNullOrWhiteSpace(path)) {
             _logger.LogError($"{nameof(FetchFile)}: Path was invalid.");
-           return ToolFail();
+           return toolFail;
         }
 
         // this needs to always use the branch sha to avoid routing issues.
@@ -195,7 +201,7 @@ public class BitbucketToolClient(
                 string? token = await _tokenService.GetTokenAsync(Token.PR_NET_REPO_TOKEN, parameters.PrEvent);
                 if(string.IsNullOrWhiteSpace(token)) {
                     _logger.LogError($"{nameof(FetchFile)}: Failed to retrieve token.");
-                    return ToolFail();
+                    return toolFail;
                 }
 
                 message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -205,20 +211,24 @@ public class BitbucketToolClient(
                 if(response.IsSuccessStatusCode) {
                     if(string.IsNullOrWhiteSpace(content)) {
                         _logger.LogError($"{nameof(FetchFile)}: Response content was invalid, failed to fetch.");
-                        return ToolFail();
+                        return toolFail;
                     }
 
                     return new ToolResponse {
                         Success = true,
-                        Result = [content]
+                        ToolName = toolMetadata.Name,
+                        Description = toolMetadata.Description,
+                        Result = (content.Length > _maximumFileSize)
+                            ? [content]
+                            : ["File size was too large to read."]
                     };
                 }
                 _logger.LogError($"{nameof(FetchFile)}: Fetch request was unsuccessful.");
-                return ToolFail();
+                return toolFail;
             }
         } catch (Exception error) {
             _logger.LogError($"{nameof(FetchFile)}: Failed to fetch file contents. Error encountered: {error}.");
-            return ToolFail();
+            return toolFail;
         }
     }
 

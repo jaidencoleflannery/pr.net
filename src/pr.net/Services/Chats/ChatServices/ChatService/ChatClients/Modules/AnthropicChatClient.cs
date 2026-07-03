@@ -247,24 +247,24 @@ public class AnthropicChatClient(
         Dictionary<ToolSignature, ToolMetadata> availableTools = _toolingService.GetOptionalTools(); 
 
         string prompt = 
-            // diff files.
-            $"(this is a test call, invoke a tool to prove that you can do it.)\n"
-            + $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
+            // prompt.
+            $"You will be reviewing a diff, but first, you need to gather all the necesarry context.\n"
             + $"Your goal is to gather the most important context. Keep in mind that you can only make a maximum of {_toolingConfiguration.Value.MaxInvocations} tool invocations."
+            // diff files.
             + $"Here is the diff:\n"
             + $"```\nPath: {diffSection.Path}.\nContents: {diffSection.Contents}\n```\n"
             // tools.
             + $"Tools:\n"
             + $"For tools, note that some tools can only be called after their parent is called. Each time you are prompted, you can only invoke one tool, then the result of the tool will be given back to you so you can invoke another.\n"
             + $"Here are your available tools, their associated descriptions, and their ID for invocation:\n"
-            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ \nID: {(int)keyToolPair.Key}. \nName: {keyToolPair.Value.Name}. \nDescription: {keyToolPair.Value.Description}. \n}}"))}``` \n"
+            + $"```\n{string.Join("; \n", availableTools.Select(keyToolPair => $"Tool: {{ \n    ID: {(int)keyToolPair.Key}. \n    Name: {keyToolPair.Value.Name}. \n    Description: {keyToolPair.Value.Description}. \n}}"))}``` \n"
             + $"If you'd like to run a tool:\n"
             + $"Set the \"RunTool\" field to true.\n"
             + $"Set the \"ToolId\" field with the ID of the tool you'd like to run.\n"
             + $"Set the \"ToolInput\" field to the required input (leave blank if no input is needed).\n"
             // previous invocations.
             + $"If you have previously ran any tools, their results are appended:\n"
-            + $"```\n{string.Join("; \n", diffSection.Context.Select(invocation => $"Tool: {{ \nName: {invocation.ToolName}. \nDescription: {invocation.Description}. \nResult: {string.Join(", ", invocation.Result)}. \n}}"))}\n```\n"
+            + $"```\n{string.Join("; \n", diffSection.Context.Select(invocation => $"Tool: {{ \n    Name: {invocation.ToolName}. \n    Description: {invocation.Description}. \n    Result: {string.Join(", ", invocation.Result)}. \n}}"))}\n```\n"
             + $"If a tool has already ran, do not try it again unless you have evidence it will succeed on retry.";
 
         MessageCreateParams requestParameter = new() {
