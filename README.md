@@ -1,7 +1,7 @@
 # pr.net
 an open source, automated ai pull-request review system.
 
-> [!NOTE]
+> **status**: functional, but still in development.
 > all code in this repository is handwritten.
 
 ## license
