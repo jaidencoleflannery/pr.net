@@ -1,8 +1,8 @@
+> this project has been deprecated, and is no longer in active development.
+> all code in this repository is handwritten.
+
 # pr.net
 an open source, automated ai pull-request review system.
-
-> functional, but still in development.
-> all code in this repository is handwritten.
 
 ## license
 this project is licensed under the [business source license 1.1](https://github.com/jaidencoleflannery/pr.net/blob/main/LICENSE). you may use it for any purpose, including internal business operations, but for-profit use is prohibited. 
