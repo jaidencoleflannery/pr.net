@@ -1,4 +1,4 @@
-> this project has been deprecated, and is no longer in active development.
+> this project has been deprecated, and is no longer in active development. <br>
 > all code in this repository is handwritten.
 
 # pr.net
